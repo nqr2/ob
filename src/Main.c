@@ -255,14 +255,6 @@ Object *obj_pop() {
   return obj;
 }
 
-void mark_stack() {
-  auto data = (Object **)stack.data;
-
-  for (size_t i = 0; i < stack.size / sizeof(Object *); i++) {
-    obj_mark(data[i]);
-  }
-}
-
 typedef enum {
   TES_EMPTY = 0,
   TES_USED = 1,
@@ -557,6 +549,7 @@ typedef struct {
   Object *env;
   Array parameters;
   Array bytecode;
+  Array literals;
 } ObjClosure;
 
 typedef void (*FnCFunction)();
@@ -582,10 +575,19 @@ void obj__destroy(Object *obj) {
   obj_visit(obj, obj__unref_);
 
   switch (HEADER_GET_TAG(obj->header)) {
+
   case OBJ_SLOTS: {
     ObjSlots *data = obj_payload(obj);
     tbl_free(&data->slots);
     obj_unref(data->prototype);
+  } break;
+
+  case OBJ_CLOSURE: {
+    ObjClosure *data = obj_payload(obj);
+    arr_free(&data->parameters);
+    arr_free(&data->literals);
+    arr_free(&data->bytecode);
+    obj_unref(data->env);
   } break;
 
     // TODO: implement uninterning afterwards
@@ -612,13 +614,61 @@ void obj_visit(Object *obj, FnVisitor visit) {
     obj_visit(data->prototype, visit);
   } break;
 
+  case OBJ_CLOSURE: {
+    ObjClosure *data = obj_payload(obj);
+
+    for (size_t i = 0; i < data->literals.size / sizeof(Object *); i++) {
+      Object *item = ((Object **)data->literals.data)[i];
+
+      obj_visit(item, visit);
+    }
+
+    obj_visit(data->env, visit);
+  }; break;
+
   default:
     break;
   }
 }
 
+Object *base_prototypes[16];
+
+Object *obj_getproto(Object *obj) {
+  auto tag = HEADER_GET_TAG(obj->header);
+
+  if (tag == OBJ_SLOTS) {
+    ObjSlots *data = obj_payload(obj);
+
+    if (data->prototype != NULL) {
+      return data->prototype;
+    }
+  }
+
+  return base_prototypes[tag];
+}
+
+void init_prototypes(VtAllocator *alloc) {
+  for (int i = 0; i < 16; i++) {
+    base_prototypes[i] = obj_create(alloc, sizeof(ObjSlots));
+  }
+}
+
+void mark() {
+  for (int i = 0; i < 16; i++) {
+    obj_mark(base_prototypes[i]);
+  }
+
+  auto data = (Object **)stack.data;
+
+  for (size_t i = 0; i < stack.size / sizeof(Object *); i++) {
+    obj_mark(data[i]);
+  }
+}
+
 int main() {
   auto alloc = get_libc_allocator();
+
+  init_prototypes(&alloc);
 
   arr_init(&stack, &alloc);
 
