@@ -1,5 +1,7 @@
+#include <stdbit.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define IGNORE (void)
 
@@ -58,16 +60,16 @@ void deallocate(VtAllocator *alloc, Ptr source) {
 typedef uint16_t Header;
 
 typedef enum Tag {
-  OBJ_NIL = 0,
-  OBJ_SYMBOL = 1,
-  OBJ_STRING = 2,
-  OBJ_SLOTS = 3,
-  OBJ_INTEGER = 4,
-  OBJ_REAL = 5,
-  OBJ_CLOSURE = 6,
-  OBJ_R7 = 7,
-  OBJ_R8 = 8,
-  OBJ_R9 = 9,
+  OBJ_NIL = 0,       // the nil object
+  OBJ_SYMBOL = 1,    // #... / #a:b:...y:z: / #'...' / #+...-
+  OBJ_STRING = 2,    // '...'
+  OBJ_SLOTS = 3,     // slot objects
+  OBJ_INTEGER = 4,   // integers
+  OBJ_REAL = 5,      // floats
+  OBJ_CLOSURE = 6,   // closures
+  OBJ_CFUNCTION = 7, // functions from C
+  OBJ_CDATA = 8,     // data from C
+  OBJ_ENV = 9,       // environment objects
   OBJ_Ra = 10,
   OBJ_Rb = 11,
   OBJ_Rc = 12,
@@ -121,24 +123,113 @@ bool obj_unref(Object *obj) {
 
 typedef struct {
   VtAllocator *allocator;
-  size_t length, capacity, item_size;
+  size_t size, capacity;
   Ptr data;
 } Array;
 
-void arr_init(Array *arr, VtAllocator *alloc, size_t item) {
+void arr_init(Array *arr, VtAllocator *alloc) {
   arr->allocator = alloc;
-  arr->item_size = item;
 
-  arr->length = 0;
+  arr->size = 0;
   arr->capacity = 0;
   arr->data = NULL;
 }
 
-#define ARR_INIT_T(Arr, Alloc, T) arr_init((Arr), (Alloc), sizeof(T))
-
 void arr_free(Array *arr) {
   deallocate(arr->allocator, arr->data);
-  arr_init(arr, NULL, 0);
+  arr_init(arr, NULL);
 }
 
-int main() { return 0; }
+void arr_reserve(Array *arr, size_t newcap) {
+  auto capacity = stdc_bit_ceil(newcap);
+
+  if (capacity > arr->capacity) {
+    arr->capacity = capacity;
+    arr->data = reallocate(arr->allocator, arr->data, arr->capacity);
+  }
+}
+
+void arr_push(Array *arr, size_t len, const void *data) {
+  arr_reserve(arr, arr->size + len);
+
+  memcpy(((uint8_t *)arr->data) + arr->size, data, len);
+
+  arr->size += len;
+}
+
+bool arr_pop(Array *arr, size_t len, void *data) {
+  if (arr->size < len) {
+    return false;
+  }
+
+  arr->size -= len;
+
+  if (data != NULL) {
+    memcpy(data, ((uint8_t *)arr->data) + arr->size, len);
+  }
+
+  return true;
+}
+
+Object *live = NULL;
+
+Object *obj_create(VtAllocator *alloc, size_t payload_size) {
+  Object *obj = allocate(alloc, sizeof(Object) + payload_size);
+
+  obj->header = 0;
+  obj->next = live;
+
+  live = obj;
+
+  return obj;
+}
+
+Ptr obj_payload(Object *obj) {
+  uint8_t *bytes = (uint8_t *)obj;
+  return bytes + sizeof(Object);
+}
+
+#define OBJ_CREATE_T(A, T) obj_create((A), sizeof(T))
+
+void sweep(VtAllocator *alloc) {
+  while ((live != NULL) && !(HEADER_GET_MARK(live->header))) {
+    Object *next = live->next;
+
+    // TODO: recursively unref everything from live
+    deallocate(alloc, live);
+
+    live = next;
+  }
+
+  Object *newlive = live;
+
+  while (live != NULL) {
+    if (!(HEADER_GET_MARK(live->header))) {
+      Object *next = live->next;
+
+      // TODO: recursively unref everything from live
+      deallocate(alloc, live);
+
+      live = next;
+
+    } else {
+      live = live->next;
+    }
+  }
+
+  live = newlive;
+}
+
+int main() {
+  auto alloc = get_libc_allocator();
+
+  auto one = OBJ_CREATE_T(&alloc, int);
+  auto two = OBJ_CREATE_T(&alloc, int);
+
+  IGNORE one;
+  IGNORE two;
+
+  sweep(&alloc);
+
+  return 0;
+}
