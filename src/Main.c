@@ -69,7 +69,7 @@ typedef enum Tag {
   OBJ_CLOSURE = 6,   // closures
   OBJ_CFUNCTION = 7, // functions from C
   OBJ_CDATA = 8,     // data from C
-  OBJ_ENV = 9,       // environment objects
+  OBJ_R9 = 9,
   OBJ_Ra = 10,
   OBJ_Rb = 11,
   OBJ_Rc = 12,
@@ -200,7 +200,7 @@ Object *obj_create(VtAllocator *alloc, size_t payload_size) {
 static void obj__unref_(Object *obj) { IGNORE obj_unref(obj); }
 
 // NOTE: call before destroying an obj
-void obj__destroy(Object *obj) { obj_visit(obj, obj__unref_); }
+void obj__destroy(Object *obj);
 
 Ptr obj_payload(Object *obj) {
   auto bytes = (uint8_t *)obj;
@@ -440,8 +440,7 @@ bool tbl_remove(Table *table, uint64_t key) {
   return true;
 }
 
-bool qlx_table_iterate(Table *table, uint64_t *index, uint64_t *key,
-                       void **value) {
+bool tbl_iterate(Table *table, uint64_t *index, uint64_t *key, void **value) {
   uint64_t current_key = *index;
 
   while (current_key < table->capacity) {
@@ -511,6 +510,7 @@ void intr_free(Interner *intr) {
   intr_init(intr, NULL);
 }
 
+// TODO: uninterning, etc
 String *intr_intern(Interner *intr, size_t length, const char *data) {
   uint64_t hash = hash_start(length, data);
 
@@ -532,12 +532,89 @@ String *intr_intern(Interner *intr, size_t length, const char *data) {
   return str;
 }
 
-// TODO: uninterning, etc
+String *intr_find(Interner *intr, uint64_t hash) {
+  String *str = NULL;
+
+  tbl_get(&intr->interned, hash, (void **)&str);
+
+  return str;
+}
+
+typedef struct {
+  String *symbol;
+} ObjSymbol;
+
+typedef struct {
+  String *inner;
+} ObjString;
+
+typedef struct {
+  Object *prototype;
+  Table slots;
+} ObjSlots;
+
+typedef struct {
+  Object *env;
+  Array parameters;
+  Array bytecode;
+} ObjClosure;
+
+typedef void (*FnCFunction)();
+
+typedef struct {
+  FnCFunction cfunction;
+} ObjCFunction;
+
+typedef struct {
+  void *cdata;
+} ObjCData;
+
+typedef struct {
+  int64_t number;
+} ObjInteger;
+
+typedef struct {
+  double number;
+} ObjReal;
 
 // TODO: add every case
+void obj__destroy(Object *obj) {
+  obj_visit(obj, obj__unref_);
+
+  switch (HEADER_GET_TAG(obj->header)) {
+  case OBJ_SLOTS: {
+    ObjSlots *data = obj_payload(obj);
+    tbl_free(&data->slots);
+    obj_unref(data->prototype);
+  } break;
+
+    // TODO: implement uninterning afterwards
+
+  default:
+    break;
+  }
+}
+
 void obj_visit(Object *obj, FnVisitor visit) {
-  IGNORE obj;
-  IGNORE visit;
+  visit(obj);
+
+  switch (HEADER_GET_TAG(obj->header)) {
+  case OBJ_SLOTS: {
+    ObjSlots *data = obj_payload(obj);
+
+    Object *ref = NULL;
+    uint64_t index = 0;
+
+    while (tbl_iterate(&data->slots, &index, NULL, (void **)&ref)) {
+      obj_visit(ref, visit);
+    }
+
+    obj_visit(data->prototype, visit);
+  } break;
+
+  default:
+    break;
+  }
 }
 
 int main() {
