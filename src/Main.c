@@ -271,6 +271,7 @@ typedef enum {
 
 typedef struct {
   uint64_t key;
+
   void *value;
   TableEntryStatus status;
 } TableEntry;
@@ -404,7 +405,10 @@ bool tbl_get(Table *tbl, uint64_t key, void **value) {
     auto entry = &tbl->data[index];
 
     if (entry->key == key && entry->status == TES_USED) {
-      *value = entry->value;
+      if (value != NULL) {
+        *value = entry->value;
+      }
+
       return true;
     }
 
@@ -467,6 +471,68 @@ bool qlx_table_iterate(Table *table, uint64_t *index, uint64_t *key,
   *index = current_key;
   return true;
 }
+
+typedef uint64_t Symbol;
+
+typedef struct String {
+  size_t length;
+  const char *data;
+  struct String *prev, *next;
+} String;
+
+typedef struct {
+  VtAllocator *allocator;
+  Array data;      // data of every interned symbol
+  Table interned;  // table of offsets
+  String *strings; // a double list of string entries
+} Interner;
+
+void intr_init(Interner *intr, VtAllocator *alloc) {
+  memset(intr, 0, sizeof(Interner));
+  intr->allocator = alloc;
+  arr_init(&intr->data, alloc);
+  tbl_init(&intr->interned, alloc);
+}
+
+void intr_free(Interner *intr) {
+  arr_free(&intr->data);
+  tbl_free(&intr->interned);
+
+  auto str = intr->strings;
+
+  while (str != NULL) {
+    auto next = str->next;
+
+    deallocate(intr->allocator, str);
+
+    str = next;
+  }
+
+  intr_init(intr, NULL);
+}
+
+String *intr_intern(Interner *intr, size_t length, const char *data) {
+  uint64_t hash = hash_start(length, data);
+
+  String *str = NULL;
+  if (!tbl_get(&intr->interned, hash, (void **)&str)) {
+    str = (String *)allocate(intr->allocator, sizeof(String));
+
+    arr_push(&intr->data, length, data);
+
+    intr->strings->prev = str;
+    str->next = intr->strings;
+    str->prev = NULL;
+    str->data = ((const char *)&intr->data.data) + (intr->data.size - length);
+    intr->strings = str;
+
+    tbl_set(&intr->interned, hash, str);
+  }
+
+  return str;
+}
+
+// TODO: uninterning, etc
 
 // TODO: add every case
 void obj_visit(Object *obj, FnVisitor visit) {
