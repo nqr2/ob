@@ -187,7 +187,7 @@ bool arr_pop(Array *arr, size_t len, void *data) {
 Object *live = NULL;
 
 Object *obj_create(VtAllocator *alloc, size_t payload_size) {
-  Object *obj = allocate(alloc, sizeof(Object) + payload_size);
+  auto obj = (Object *)allocate(alloc, sizeof(Object) + payload_size);
 
   obj->header = 0;
   obj->next = live;
@@ -203,7 +203,7 @@ static void obj__unref_(Object *obj) { IGNORE obj_unref(obj); }
 void obj__destroy(Object *obj) { obj_visit(obj, obj__unref_); }
 
 Ptr obj_payload(Object *obj) {
-  uint8_t *bytes = (uint8_t *)obj;
+  auto bytes = (uint8_t *)obj;
   return bytes + sizeof(Object);
 }
 
@@ -211,7 +211,7 @@ Ptr obj_payload(Object *obj) {
 
 void sweep(VtAllocator *alloc) {
   while ((live != NULL) && !(HEADER_GET_MARK(live->header))) {
-    Object *next = live->next;
+    auto next = live->next;
 
     // TODO: recursively unref everything from live
     deallocate(alloc, live);
@@ -256,11 +256,216 @@ Object *obj_pop() {
 }
 
 void mark_stack() {
-  Object **data = (Object **)stack.data;
+  auto data = (Object **)stack.data;
 
   for (size_t i = 0; i < stack.size / sizeof(Object *); i++) {
     obj_mark(data[i]);
   }
+}
+
+typedef enum {
+  TES_EMPTY = 0,
+  TES_USED = 1,
+  TES_DEAD = 2,
+} TableEntryStatus;
+
+typedef struct {
+  uint64_t key;
+  void *value;
+  TableEntryStatus status;
+} TableEntry;
+
+typedef struct {
+  VtAllocator *allocator;
+  size_t length, capacity;
+  TableEntry *data;
+} Table;
+
+#define FNV_PRIME 0x00000100000001b3ull
+#define FNV_OFFSET 0xcbf29ce484222325ull
+
+uint64_t hash_continue(uint64_t state, size_t len, void const *ptr) {
+  const uint8_t *bytes = ptr;
+
+  for (size_t i = 0; i < len; i++) {
+    state ^= bytes[i];
+    state *= FNV_PRIME;
+  }
+
+  return state;
+}
+
+uint64_t hash_start(size_t len, void const *ptr) {
+  return hash_continue(FNV_OFFSET, len, ptr);
+}
+
+void tbl_init(Table *tbl, VtAllocator *alloc) {
+  tbl->allocator = alloc;
+  tbl->length = 0;
+  tbl->capacity = 0;
+  tbl->data = NULL;
+}
+
+void tbl_free(Table *tbl) {
+  deallocate(tbl->allocator, tbl->data);
+
+  tbl_init(tbl, NULL);
+}
+
+TableEntry *tbl__find(size_t capacity, TableEntry *entries, uint64_t key) {
+  auto index = key % capacity;
+
+  while (true) {
+    auto entry = &entries[index];
+
+    if (entry->key == key || entry->status != TES_USED) {
+      return entry;
+    }
+
+    index = (index + 1) % capacity;
+  }
+
+  return NULL;
+}
+
+void tbl_reserve(Table *tbl, size_t newcap) {
+  newcap = stdc_bit_ceil(newcap);
+  auto new_entries =
+      (TableEntry *)allocate(tbl->allocator, newcap * sizeof(TableEntry));
+
+  memset(new_entries, 0, newcap * sizeof(TableEntry));
+
+  tbl->length = 0;
+
+  for (size_t i = 0; i < tbl->capacity; i++) {
+    auto entry = &tbl->data[i];
+    TableEntry *dest = NULL;
+
+    // shouldnt this be != TES_USED?
+    // else it keeps all tombstones???
+    if (entry->status == TES_EMPTY) {
+      continue;
+    }
+
+    dest = tbl__find(newcap, new_entries, entry->key);
+
+    memcpy(dest, entry, sizeof(TableEntry));
+
+    tbl->length++;
+  }
+
+  deallocate(tbl->allocator, tbl->data);
+
+  tbl->data = new_entries;
+  tbl->capacity = newcap;
+}
+
+// return true if entry is new
+bool tbl_set(Table *tbl, uint64_t key, void *value) {
+  TableEntry *entry = NULL;
+  auto is_new = false;
+
+  if (2 * (tbl->length + 1) > tbl->capacity) {
+    tbl_reserve(tbl, tbl->length + 1);
+  }
+
+  entry = tbl__find(tbl->capacity, tbl->data, key);
+  is_new = entry->status != TES_USED;
+
+  if (is_new) {
+    tbl->length++;
+  }
+
+  entry->key = key;
+  entry->value = value;
+  entry->status = TES_USED;
+  return is_new;
+}
+
+void tbl_merge(Table *tbl, Table *from) {
+  for (size_t i = 0; i < from->capacity; i++) {
+    auto entry = &from->data[i];
+
+    if (entry->status != TES_USED) {
+      tbl_set(tbl, entry->key, entry->value);
+    }
+  }
+}
+
+bool tbl_get(Table *tbl, uint64_t key, void **value) {
+  if (tbl->length == 0) {
+    return false;
+  }
+
+  auto index = key % tbl->capacity;
+  const auto start = index;
+
+  while (true) {
+    auto entry = &tbl->data[index];
+
+    if (entry->key == key && entry->status == TES_USED) {
+      *value = entry->value;
+      return true;
+    }
+
+    index += 1;
+    index %= tbl->capacity;
+
+    if (index == start) {
+      return false;
+    }
+  }
+
+  return false;
+}
+
+bool tbl_remove(Table *table, uint64_t key) {
+  TableEntry *entry = NULL;
+
+  if (table->length == 0) {
+    return false;
+  }
+
+  entry = tbl__find(table->capacity, table->data, key);
+
+  if (entry->status != TES_USED) {
+    return false;
+  }
+
+  entry->status = TES_DEAD;
+  return true;
+}
+
+bool qlx_table_iterate(Table *table, uint64_t *index, uint64_t *key,
+                       void **value) {
+  uint64_t current_key = *index;
+
+  while (current_key < table->capacity) {
+    auto entry = &table->data[current_key];
+
+    if (entry->status == TES_USED) {
+      if (key != NULL) {
+        *key = entry->key;
+      }
+
+      if (key != NULL) {
+        *value = entry->value;
+      }
+
+      break;
+    }
+
+    current_key += 1;
+  }
+
+  if (current_key >= table->capacity) {
+    return false;
+  }
+
+  current_key += 1;
+
+  *index = current_key;
+  return true;
 }
 
 // TODO: add every case
