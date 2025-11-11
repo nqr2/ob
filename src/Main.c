@@ -94,7 +94,20 @@ typedef struct Object {
   struct Object *next;
 } Object;
 
-void obj_mark(Object *obj) { obj->header = HEADER_SET_MARK(obj->header, true); }
+typedef void (*FnVisitor)(Object *obj);
+
+// NOTE: this also invokes visit on the obj in question
+void obj_visit(Object *obj, FnVisitor visit);
+
+void obj_mark(Object *obj) {
+  if (HEADER_GET_MARK(obj->header)) {
+    return;
+  }
+
+  obj->header = HEADER_SET_MARK(obj->header, true);
+
+  obj_visit(obj, obj_mark);
+}
 
 void obj_unmark(Object *obj) {
   obj->header = HEADER_SET_MARK(obj->header, false);
@@ -184,6 +197,11 @@ Object *obj_create(VtAllocator *alloc, size_t payload_size) {
   return obj;
 }
 
+static void obj__unref_(Object *obj) { IGNORE obj_unref(obj); }
+
+// NOTE: call before destroying an obj
+void obj__destroy(Object *obj) { obj_visit(obj, obj__unref_); }
+
 Ptr obj_payload(Object *obj) {
   uint8_t *bytes = (uint8_t *)obj;
   return bytes + sizeof(Object);
@@ -207,12 +225,13 @@ void sweep(VtAllocator *alloc) {
     if (!(HEADER_GET_MARK(live->header))) {
       Object *next = live->next;
 
-      // TODO: recursively unref everything from live
+      obj__destroy(live);
       deallocate(alloc, live);
 
       live = next;
 
     } else {
+      obj_unmark(live);
       live = live->next;
     }
   }
@@ -220,8 +239,40 @@ void sweep(VtAllocator *alloc) {
   live = newlive;
 }
 
+Array stack;
+
+void obj_push(Object *obj) {
+  arr_push(&stack, sizeof(Object *), (const void *)&obj);
+}
+
+Object *obj_pop() {
+  Object *obj;
+
+  if (!arr_pop(&stack, sizeof(Object *), (void *)&obj)) {
+    // TODO: fail? cannot pop empty stack.
+  }
+
+  return obj;
+}
+
+void mark_stack() {
+  Object **data = (Object **)stack.data;
+
+  for (size_t i = 0; i < stack.size / sizeof(Object *); i++) {
+    obj_mark(data[i]);
+  }
+}
+
+// TODO: add every case
+void obj_visit(Object *obj, FnVisitor visit) {
+  IGNORE obj;
+  IGNORE visit;
+}
+
 int main() {
   auto alloc = get_libc_allocator();
+
+  arr_init(&stack, &alloc);
 
   auto one = OBJ_CREATE_T(&alloc, int);
   auto two = OBJ_CREATE_T(&alloc, int);
@@ -230,6 +281,8 @@ int main() {
   IGNORE two;
 
   sweep(&alloc);
+
+  arr_free(&stack);
 
   return 0;
 }
