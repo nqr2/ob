@@ -4,6 +4,7 @@ Checks:
   - clang-format-*
   - bugprone-*
   - readability-*
+  - -bugprone-easily-swappable-parameters
 WarningsAsErrors: ''
 HeaderFileExtensions:
   - ''
