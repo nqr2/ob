@@ -646,7 +646,8 @@ void obj_visit(Object *obj, FnVisitor visit) {
   }
 }
 
-Object *base_prototypes[16];
+#define MAX_PROTOTYPES 16
+Object *base_prototypes[MAX_PROTOTYPES];
 
 Object *obj_getproto(Object *obj) {
   auto tag = HEADER_GET_TAG(obj->header);
@@ -674,7 +675,7 @@ Object *obj_create_slots(VtAllocator *alloc, Object *prototype) {
 }
 
 void init_prototypes(VtAllocator *alloc) {
-  for (int i = 0; i < 16; i++) {
+  for (int i = 0; i < MAX_PROTOTYPES; i++) {
     base_prototypes[i] = obj_create_slots(alloc, NULL);
   }
 }
@@ -684,7 +685,7 @@ Object *env;
 void mark() {
   obj_mark(env);
 
-  for (int i = 0; i < 16; i++) {
+  for (int i = 0; i < MAX_PROTOTYPES; i++) {
     obj_mark(base_prototypes[i]);
   }
 
