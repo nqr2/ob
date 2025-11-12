@@ -18,6 +18,8 @@ typedef struct {
   Ptr self;
 } VtAllocator;
 
+VtAllocator *allocator;
+
 static Ptr a_malloc(Ptr _self, size_t size) {
   IGNORE _self;
   return malloc(size);
@@ -211,7 +213,11 @@ Ptr obj_payload(Object *obj) {
 
 #define OBJ_CREATE_T(A, T) obj_create((A), sizeof(T))
 
+void str_sweep();
+
 void sweep(VtAllocator *alloc) {
+  str_sweep();
+
   while ((live != NULL) && !(HEADER_GET_MARK(live->header))) {
     auto next = live->next;
 
@@ -221,21 +227,25 @@ void sweep(VtAllocator *alloc) {
     live = next;
   }
 
-  Object *newlive = live;
+  Object *newlive = NULL;
 
   while (live != NULL) {
-    if (!(HEADER_GET_MARK(live->header))) {
-      Object *next = live->next;
+    Object *next = live->next;
 
-      obj__destroy(live);
-      deallocate(alloc, live);
-
-      live = next;
-
+    if (HEADER_GET_MARK(live->header)) {
+      live->header = HEADER_SET_MARK(live->header, false);
     } else {
-      obj_unmark(live);
-      live = live->next;
+      obj__destroy(live);
+      deallocate(allocator, live);
+      live = NULL;
     }
+
+    if (live != NULL) {
+      live->next = newlive;
+      newlive = live;
+    }
+
+    live = next;
   }
 
   live = newlive;
@@ -465,10 +475,8 @@ bool tbl_iterate(Table *table, uint64_t *index, uint64_t *key, void **value) {
   return true;
 }
 
-typedef uint64_t Symbol;
-
-// NOTE: reverse mark, so 1 means "unreachable, to delete"
 #define STRING_MARK_BIT 0x8000'0000'0000'0000
+#define STRING_LENGTH_MASK 0x7fff'ffff'ffff'ffff
 
 typedef struct String {
   uint64_t length;
@@ -482,14 +490,106 @@ typedef struct {
   Table interned; // table of offsets
 } Interner;
 
+typedef struct {
+  size_t offset;
+  size_t size;
+} StrAvailable;
+
 Array string_data;
 Array string_available;
 String *strings = NULL;
 
+void arr_remove(Array *arr, size_t size, size_t offset) {
+  uint8_t *bytes = arr->data;
+  memcpy(bytes + offset, (bytes + arr->size - size), size);
+
+  arr_pop(arr, size, NULL);
+}
+
 String *str_create(size_t len, const char *data) {
-  IGNORE len;
-  IGNORE data;
-  return NULL;
+  char *target = NULL;
+
+  for (size_t i = 0; i < string_available.size / sizeof(StrAvailable); i++) {
+    StrAvailable *avail = ((StrAvailable *)string_available.data) + i;
+
+    if (len <= avail->size) {
+      target = ((char *)string_data.data) + avail->offset;
+      memcpy(target, data, len);
+
+      avail->size -= len;
+
+      if (avail->size == 0) {
+        arr_remove(&string_available, sizeof(StrAvailable),
+                   i * sizeof(StrAvailable));
+        i -= 1;
+      }
+    }
+  }
+
+  if (target == NULL) {
+    arr_push(&string_data, len, data);
+    target = ((char *)string_data.data) + string_data.size - len;
+  }
+
+  String *str = allocate(allocator, sizeof(String));
+
+  str->data = target;
+  str->length = len;
+
+  str->next = strings;
+  strings = str;
+
+  return str;
+}
+
+size_t str_len(String *str) {
+  return str->length & STRING_LENGTH_MASK;
+}
+
+void str_mark(String *str) {
+  str->length |= STRING_MARK_BIT;
+}
+
+void str_unmark(String *str) {
+  str->length &= STRING_LENGTH_MASK;
+}
+
+bool str_get_mark(String *str) {
+  return (str->length & STRING_MARK_BIT) != 0;
+}
+
+void str__delete(String *str) {
+  StrAvailable avail = {};
+
+  avail.offset = (str->data) - ((char *)string_data.data);
+  avail.size = str->length;
+
+  arr_push(&string_available, sizeof(StrAvailable), (void *)&avail);
+}
+
+void str_sweep() {
+  String *new = NULL;
+
+  while (strings != NULL) {
+    auto next = strings->next;
+
+    if (str_get_mark(strings)) {
+      str_unmark(strings);
+    } else {
+      str__delete(strings);
+      deallocate(allocator, strings);
+      strings = NULL;
+    }
+
+    if (strings != NULL) {
+      strings->next = new;
+      new = strings;
+    }
+
+    strings = next;
+  }
+
+  strings = new;
 }
 
 void intr_init(Interner *intr, VtAllocator *alloc) {
@@ -708,8 +808,6 @@ void mark() {
     obj_mark(data[i]);
   }
 }
-
-VtAllocator *allocator;
 
 typedef uint8_t Instruction;
 
