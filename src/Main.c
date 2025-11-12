@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <stdbit.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -875,23 +876,75 @@ Object *obj_get(Object *obj, String *selector) {
   return obj_get(obj_getproto(obj), selector);
 }
 
+size_t stack_len() {
+  return stack.size / sizeof(Object *);
+}
+
+bool checkstack(size_t n) {
+  return stack_len() >= n;
+}
+
+bool obj_is_invokable(Object *obj) {
+  auto tag = HEADER_GET_TAG(obj->header);
+
+  return (tag == OBJ_CLOSURE) || (tag == OBJ_CFUNCTION);
+}
+
+void run_bytecode(size_t len, uint8_t const *code);
+
 void obj_send(Object *recv, String *selector) {
+  size_t n_args = 0;
+
+  if (ispunct(selector->data[0])) {
+    n_args = 1;
+  } else {
+
+    for (size_t i = 0; i < selector->length; i++) {
+      if (selector->data[i] == ':') {
+        n_args++;
+      }
+    }
+  }
+
+  IGNORE /*TODO: assert its true*/ checkstack(n_args);
+
+  auto invoked = obj_get(recv, selector);
+
+  IGNORE /*TODO: also this assert*/ obj_is_invokable(invoked);
+
+  enter_activation(activation, invoked, recv);
+
+  auto tag = HEADER_GET_TAG(invoked->header);
+
+  if (tag == OBJ_CFUNCTION) {
+    ObjCFunction *data = obj_payload(invoked);
+    data->cfunction();
+  }
+
+  if (tag == OBJ_CLOSURE) {
+    ObjClosure *data = obj_payload(invoked);
+    run_bytecode(data->bytecode.size, data->bytecode.data);
+  }
+
+  // TODO: call closure
+
+  leave_activation();
 }
 
 ObjActivation *get_activation() {
   return obj_payload(activation);
 }
 
-void run_bytecode(size_t len, uint8_t const *bc) {
+void run_bytecode(size_t len, uint8_t const *code) {
   uint64_t index = 0;
 
   for (size_t pc = 0; pc < len; pc++) {
-    auto opcode = INSN_GET_OPCODE(bc[pc]);
-    auto data = INSN_GET_DATA(bc[pc]);
+    auto opcode = INSN_GET_OPCODE(code[pc]);
+    auto data = INSN_GET_DATA(code[pc]);
 
     auto this_index = (index << 4) | data;
 
-    auto act = get_activation();
+    ObjActivation *act = obj_payload(activation);
     ObjClosure *method = obj_payload(act->method);
 
     switch (opcode) {
