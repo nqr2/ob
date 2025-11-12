@@ -97,10 +97,18 @@ typedef struct Object {
   struct Object *next;
 } Object;
 
+void *obj_payload(Object *obj) {
+  auto bytes = (uint8_t *)obj;
+  return bytes + sizeof(Object);
+}
+
 typedef void (*FnVisitor)(Object *obj);
 
 // NOTE: this also invokes visit on the obj in question
 void obj_visit(Object *obj, FnVisitor visit);
+
+typedef struct String String;
+void str_mark(String *str);
 
 void obj_mark(Object *obj) {
   if (HEADER_GET_MARK(obj->header)) {
@@ -110,6 +118,10 @@ void obj_mark(Object *obj) {
   switch (HEADER_GET_TAG(obj->header)) {
   case OBJ_STRING:
   case OBJ_SYMBOL: {
+    struct {
+      String *inner;
+    } *str = obj_payload(obj);
+    str_mark(str->inner);
   } break;
 
   default:
@@ -213,11 +225,6 @@ static void obj__unref_(Object *obj) {
 
 // NOTE: call before destroying an obj
 void obj__destroy(Object *obj);
-
-Ptr obj_payload(Object *obj) {
-  auto bytes = (uint8_t *)obj;
-  return bytes + sizeof(Object);
-}
 
 #define OBJ_CREATE_T(A, T) obj_create((A), sizeof(T))
 
