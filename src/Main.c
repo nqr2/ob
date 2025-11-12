@@ -106,22 +106,29 @@ void obj_mark(Object *obj) {
     return;
   }
 
+  switch (HEADER_GET_TAG(obj->header)) {
+  case OBJ_STRING:
+  case OBJ_SYMBOL: {
+  } break;
+
+  default:
+    break;
+  }
+
   obj->header = HEADER_SET_MARK(obj->header, true);
 
   obj_visit(obj, obj_mark);
 }
 
-void obj_unmark(Object *obj) {
-  obj->header = HEADER_SET_MARK(obj->header, false);
-}
-
-void obj_ref(Object *obj) {
+Object *obj_ref(Object *obj) {
   auto refcount = HEADER_GET_RC(obj->header);
 
   if (refcount < RC_MAX) {
     refcount++;
     obj->header = HEADER_SET_RC(obj->header, refcount);
   }
+
+  return obj;
 }
 
 // true if rc=0
@@ -646,12 +653,8 @@ String *intr_find(Interner *intr, uint64_t hash) {
 }
 
 typedef struct {
-  String *symbol;
-} ObjSymbol;
-
-typedef struct {
   String *inner;
-} ObjString;
+} ObjSymbol, ObjString;
 
 typedef struct {
   Object *prototype;
@@ -870,6 +873,77 @@ Object *obj_get(Object *obj, String *selector) {
   }
 
   return obj_get(obj_getproto(obj), selector);
+}
+
+void obj_send(Object *recv, String *selector) {
+}
+
+ObjActivation *get_activation() {
+  return obj_payload(activation);
+}
+
+void run_bytecode(size_t len, uint8_t const *bc) {
+  uint64_t index = 0;
+
+  for (size_t pc = 0; pc < len; pc++) {
+    auto opcode = INSN_GET_OPCODE(bc[pc]);
+    auto data = INSN_GET_DATA(bc[pc]);
+
+    auto this_index = (index << 4) | data;
+
+    auto act = get_activation();
+    ObjClosure *method = obj_payload(act->method);
+
+    switch (opcode) {
+    case OP_PUSH_LITERAL: {
+      auto obj = &((Object **)method->literals.data)[this_index];
+      arr_push(&stack, sizeof(Object *), (void *)obj);
+    }; break;
+
+    case OP_SEND: {
+      Object *recv = NULL;
+      arr_pop(&stack, sizeof(Object *), (void *)&recv);
+
+      Object *sel = NULL;
+      arr_pop(&stack, sizeof(Object *), (void *)&sel);
+      ObjString *selector = obj_payload(sel);
+
+      obj_send(recv, selector->inner);
+    }; break;
+
+    case OP_IMPLICIT_SEND: {
+      Object *sel = NULL;
+      arr_pop(&stack, sizeof(Object *), (void *)&sel);
+      ObjString *selector = obj_payload(sel);
+
+      obj_send(act->env, selector->inner);
+    }; break;
+
+    case OP_SELF_SEND: {
+      Object *sel = NULL;
+      arr_pop(&stack, sizeof(Object *), (void *)&sel);
+      ObjString *selector = obj_payload(sel);
+
+      obj_send(act->receiver, selector->inner);
+    }; break;
+
+    case OP_EXTEND: {
+      index = this_index;
+      continue;
+    }; break;
+
+    case OP_SELF: {
+      arr_push(&stack, sizeof(Object *), (void *)act->receiver);
+    }; break;
+
+      // TODO: OP_RETURN
+
+    default:
+      break;
+    }
+
+    index = 0;
+  }
 }
 
 int main() {
