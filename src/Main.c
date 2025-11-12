@@ -465,18 +465,30 @@ bool tbl_iterate(Table *table, uint64_t *index, uint64_t *key, void **value) {
 
 typedef uint64_t Symbol;
 
+// NOTE: reverse mark, so 1 means "unreachable, to delete"
+#define STRING_MARK_BIT 0x8000'0000'0000'0000
+
 typedef struct String {
-  size_t length;
+  uint64_t length;
   const char *data;
-  struct String *prev, *next;
+  struct String *next;
 } String;
 
 typedef struct {
   VtAllocator *allocator;
-  Array data;      // data of every interned symbol
-  Table interned;  // table of offsets
-  String *strings; // a double list of string entries
+  Array data;     // data of every interned symbol
+  Table interned; // table of offsets
 } Interner;
+
+Array string_data;
+Array string_available;
+String *strings = NULL;
+
+String *str_create(size_t len, const char *data) {
+  IGNORE len;
+  IGNORE data;
+  return NULL;
+}
 
 void intr_init(Interner *intr, VtAllocator *alloc) {
   memset(intr, 0, sizeof(Interner));
@@ -489,7 +501,7 @@ void intr_free(Interner *intr) {
   arr_free(&intr->data);
   tbl_free(&intr->interned);
 
-  auto str = intr->strings;
+  auto str = strings;
 
   while (str != NULL) {
     auto next = str->next;
@@ -512,11 +524,10 @@ String *intr_intern(Interner *intr, size_t length, const char *data) {
 
     arr_push(&intr->data, length, data);
 
-    intr->strings->prev = str;
-    str->next = intr->strings;
-    str->prev = NULL;
+    str->next = strings;
     str->data = ((const char *)&intr->data.data) + (intr->data.size - length);
-    intr->strings = str;
+
+    strings = str;
 
     tbl_set(&intr->interned, hash, str);
   }
@@ -552,7 +563,7 @@ typedef struct {
   Array literals;
 } ObjClosure;
 
-typedef void (*FnCFunction)();
+typedef bool (*FnCFunction)();
 
 typedef struct {
   FnCFunction cfunction;
@@ -680,10 +691,10 @@ void init_prototypes(VtAllocator *alloc) {
   }
 }
 
-Object *env;
+Object *activation;
 
 void mark() {
-  obj_mark(env);
+  obj_mark(activation);
 
   for (int i = 0; i < MAX_PROTOTYPES; i++) {
     obj_mark(base_prototypes[i]);
@@ -697,17 +708,6 @@ void mark() {
 }
 
 VtAllocator *allocator;
-
-void env_enter() {
-  Object *new = obj_create_slots(allocator, env);
-  obj_ref(env);
-  env = new;
-}
-
-void env_leave() {
-  ObjSlots *data = obj_payload(env);
-  env = data->prototype;
-}
 
 typedef uint8_t Instruction;
 
@@ -753,12 +753,30 @@ void leave_activation() {
   activation = data->parent;
 }
 
+bool obj_isa(Object *obj, ObjectTag tag) {
+  return HEADER_GET_TAG(obj->header) == tag;
+}
+
+Object *obj_get(Object *obj, String *selector) {
+  if (obj_isa(obj, OBJ_SLOTS)) {
+    ObjSlots *data = obj_payload(obj);
+    IGNORE data;
+
+    auto hash = hash_start(selector->length, selector->data);
+
+    if (tbl_get(&data->slots, hash, (void **)&obj)) {
+      return obj;
+    }
+  }
+
+  return obj_get(obj_getproto(obj), selector);
+}
+
 int main() {
   auto alloc = get_libc_allocator();
   allocator = &alloc;
 
   init_prototypes(&alloc);
-  env = obj_create_slots(&alloc, NULL);
 
   arr_init(&stack, &alloc);
 
