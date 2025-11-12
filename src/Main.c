@@ -60,16 +60,16 @@ void deallocate(VtAllocator *alloc, Ptr source) {
 typedef uint16_t Header;
 
 typedef enum Tag {
-  OBJ_NIL = 0,       // the nil object
-  OBJ_SYMBOL = 1,    // #... / #a:b:...y:z: / #'...' / #+...-
-  OBJ_STRING = 2,    // '...'
-  OBJ_SLOTS = 3,     // slot objects
-  OBJ_INTEGER = 4,   // integers
-  OBJ_REAL = 5,      // floats
-  OBJ_CLOSURE = 6,   // closures
-  OBJ_CFUNCTION = 7, // functions from C
-  OBJ_CDATA = 8,     // data from C
-  OBJ_R9 = 9,
+  OBJ_NIL = 0,        // the nil object
+  OBJ_SYMBOL = 1,     // #... / #a:b:...y:z: / #'...' / #+...-
+  OBJ_STRING = 2,     // '...'
+  OBJ_SLOTS = 3,      // slot objects
+  OBJ_INTEGER = 4,    // integers
+  OBJ_REAL = 5,       // floats
+  OBJ_CLOSURE = 6,    // closures
+  OBJ_CFUNCTION = 7,  // functions from C
+  OBJ_CDATA = 8,      // data from C
+  OBJ_ACTIVATION = 9, // call stack entry
   OBJ_Ra = 10,
   OBJ_Rb = 11,
   OBJ_Rc = 12,
@@ -570,6 +570,14 @@ typedef struct {
   double number;
 } ObjReal;
 
+typedef struct {
+  Object *parent;   // the parent activation
+  Object *caller;   // the method's caller
+  Object *method;   // this method
+  Object *receiver; // this method's receiver
+  Object *env;      // this context's environment
+} ObjActivation;
+
 // TODO: add every case
 void obj__destroy(Object *obj) {
   obj_visit(obj, obj__unref_);
@@ -579,7 +587,6 @@ void obj__destroy(Object *obj) {
   case OBJ_SLOTS: {
     ObjSlots *data = obj_payload(obj);
     tbl_free(&data->slots);
-    obj_unref(data->prototype);
   } break;
 
   case OBJ_CLOSURE: {
@@ -587,7 +594,6 @@ void obj__destroy(Object *obj) {
     arr_free(&data->parameters);
     arr_free(&data->literals);
     arr_free(&data->bytecode);
-    obj_unref(data->env);
   } break;
 
     // TODO: implement uninterning afterwards
@@ -626,6 +632,15 @@ void obj_visit(Object *obj, FnVisitor visit) {
     obj_visit(data->env, visit);
   }; break;
 
+  case OBJ_ACTIVATION: {
+    ObjActivation *data = obj_payload(obj);
+    obj_visit(data->parent, visit);
+    obj_visit(data->caller, visit);
+    obj_visit(data->method, visit);
+    obj_visit(data->receiver, visit);
+    obj_visit(data->env, visit);
+  }; break;
+
   default:
     break;
   }
@@ -647,13 +662,28 @@ Object *obj_getproto(Object *obj) {
   return base_prototypes[tag];
 }
 
+Object *obj_create_slots(VtAllocator *alloc, Object *prototype) {
+  Object *obj = obj_create(alloc, sizeof(ObjSlots));
+
+  obj->header = HEADER_SET_TAG(0, OBJ_SLOTS);
+
+  ObjSlots *data = obj_payload(obj);
+  data->prototype = prototype;
+
+  return obj;
+}
+
 void init_prototypes(VtAllocator *alloc) {
   for (int i = 0; i < 16; i++) {
-    base_prototypes[i] = obj_create(alloc, sizeof(ObjSlots));
+    base_prototypes[i] = obj_create_slots(alloc, NULL);
   }
 }
 
+Object *env;
+
 void mark() {
+  obj_mark(env);
+
   for (int i = 0; i < 16; i++) {
     obj_mark(base_prototypes[i]);
   }
@@ -665,10 +695,69 @@ void mark() {
   }
 }
 
+VtAllocator *allocator;
+
+void env_enter() {
+  Object *new = obj_create_slots(allocator, env);
+  obj_ref(env);
+  env = new;
+}
+
+void env_leave() {
+  ObjSlots *data = obj_payload(env);
+  env = data->prototype;
+}
+
+typedef uint8_t Instruction;
+
+#define INSN_GET_OPCODE(I) ((I) & 0xf)
+#define INSN_GET_DATA(I) ((I) >> 4)
+
+typedef enum {
+  OP_PUSH_LITERAL = 0,  // push a literal
+  OP_SEND = 1,          // send a message to a known receiver
+  OP_IMPLICIT_SEND = 2, // send a message to the implicit receiver
+  OP_EXTEND = 3,        // extend the payload by prepending 4 bits
+  OP_RETURN = 4,        // implements ^
+  OP_SELF = 5,          // push the explicit receiver
+  OP_SELF_SEND = 6,     // send a message to the explicit receiver
+  OP_R7 = 7,
+  OP_R8 = 8,
+  OP_R9 = 9,
+  OP_Ra = 10,
+  OP_Rb = 11,
+  OP_Rc = 12,
+  OP_Rd = 13,
+  OP_Re = 14,
+  OP_Rf = 15,
+} Opcode;
+
+Object *activation = NULL;
+
+void enter_activation(Object *caller, Object *method, Object *receiver) {
+  Object *act = obj_create(allocator, sizeof(ObjActivation));
+
+  ObjActivation *data = obj_payload(act);
+  data->parent = activation;
+  data->caller = caller;
+  data->method = method;
+  data->receiver = receiver;
+  data->env = obj_create_slots(allocator, NULL);
+
+  activation = act;
+}
+
+void leave_activation() {
+  ObjActivation *data = obj_payload(activation);
+  activation = data->parent;
+}
+
 int main() {
   auto alloc = get_libc_allocator();
+  allocator = &alloc;
 
   init_prototypes(&alloc);
+  env = obj_create_slots(&alloc, NULL);
 
   arr_init(&stack, &alloc);
 
