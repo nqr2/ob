@@ -197,7 +197,9 @@ Object *obj_create(VtAllocator *alloc, size_t payload_size) {
   return obj;
 }
 
-static void obj__unref_(Object *obj) { IGNORE obj_unref(obj); }
+static void obj__unref_(Object *obj) {
+  IGNORE obj_unref(obj);
+}
 
 // NOTE: call before destroying an obj
 void obj__destroy(Object *obj);
