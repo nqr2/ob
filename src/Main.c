@@ -82,7 +82,7 @@ typedef enum Tag {
 } ObjectTag;
 
 #define HEADER_GET_TAG(H) ((Header)((H) & 0xf))
-#define HEADER_SET_TAG(H, T) ((Header)(((H) & ~0xf) | ((T) & 0xf)))
+#define HEADER_SET_TAG(H, T) ((Header)(((H) & 0xffff'fff0) | ((T) & 0xf)))
 
 #define HEADER_GET_MARK(H) (((H) & 0x10) != 0)
 #define HEADER_SET_MARK(H, M) ((Header)(((H) & ~0x10) | (((M) != 0) << 4)))
@@ -232,15 +232,6 @@ void str_sweep();
 
 void sweep(VtAllocator *alloc) {
   str_sweep();
-
-  while ((live != NULL) && !(HEADER_GET_MARK(live->header))) {
-    auto next = live->next;
-
-    // TODO: recursively unref everything from live
-    deallocate(alloc, live);
-
-    live = next;
-  }
 
   Object *newlive = NULL;
 
@@ -418,7 +409,7 @@ bool tbl_get(Table *tbl, uint64_t key, void **value) {
   }
 
   auto index = key % tbl->capacity;
-  const auto start = index;
+  auto start = index;
 
   while (true) {
     auto entry = &tbl->data[index];
@@ -728,6 +719,11 @@ void obj__destroy(Object *obj) {
 }
 
 void obj_visit(Object *obj, FnVisitor visit) {
+  // TODO: properly handle NULLs.
+  if (obj == NULL) {
+    return;
+  }
+
   visit(obj);
 
   switch (HEADER_GET_TAG(obj->header)) {
@@ -794,6 +790,8 @@ Object *obj_create_slots(VtAllocator *alloc, Object *prototype) {
 
   ObjSlots *data = obj_payload(obj);
   data->prototype = prototype;
+
+  tbl_init(&data->slots, alloc);
 
   return obj;
 }
@@ -869,6 +867,10 @@ bool obj_isa(Object *obj, ObjectTag tag) {
 }
 
 Object *obj_get(Object *obj, String *selector) {
+  if (obj == NULL) {
+    return NULL;
+  }
+
   if (obj_isa(obj, OBJ_SLOTS)) {
     ObjSlots *data = obj_payload(obj);
     IGNORE data;
@@ -954,6 +956,8 @@ void run_bytecode(size_t len, uint8_t const *code) {
     ObjActivation *act = obj_payload(activation);
     ObjClosure *method = obj_payload(act->method);
 
+    Object *literal = ((Object **)method->literals.data)[this_index];
+
     switch (opcode) {
     case OP_PUSH_LITERAL: {
       auto obj = &((Object **)method->literals.data)[this_index];
@@ -964,25 +968,19 @@ void run_bytecode(size_t len, uint8_t const *code) {
       Object *recv = NULL;
       arr_pop(&stack, sizeof(Object *), (void *)&recv);
 
-      Object *sel = NULL;
-      arr_pop(&stack, sizeof(Object *), (void *)&sel);
-      ObjString *selector = obj_payload(sel);
+      ObjString *selector = obj_payload(literal);
 
       obj_send(recv, selector->inner);
     }; break;
 
     case OP_IMPLICIT_SEND: {
-      Object *sel = NULL;
-      arr_pop(&stack, sizeof(Object *), (void *)&sel);
-      ObjString *selector = obj_payload(sel);
+      ObjString *selector = obj_payload(literal);
 
       obj_send(act->env, selector->inner);
     }; break;
 
     case OP_SELF_SEND: {
-      Object *sel = NULL;
-      arr_pop(&stack, sizeof(Object *), (void *)&sel);
-      ObjString *selector = obj_payload(sel);
+      ObjString *selector = obj_payload(literal);
 
       obj_send(act->receiver, selector->inner);
     }; break;
@@ -1006,23 +1004,52 @@ void run_bytecode(size_t len, uint8_t const *code) {
   }
 }
 
+#include <stdio.h>
+
+bool o__print() {
+  printf("activation:%p\n", (void *)activation);
+
+  return false;
+}
+
+Object *obj_create_cfunction(VtAllocator *alloc, FnCFunction fun) {
+  Object *obj = obj_create(alloc, sizeof(ObjCFunction));
+
+  obj->header = HEADER_SET_TAG(0, OBJ_CFUNCTION);
+
+  ObjCFunction *data = obj_payload(obj);
+  data->cfunction = fun;
+
+  return obj;
+}
+
 int main() {
   auto alloc = get_libc_allocator();
   allocator = &alloc;
 
   init_prototypes(&alloc);
 
+  arr_init(&string_data, &alloc);
+  arr_init(&string_available, &alloc);
   arr_init(&stack, &alloc);
 
-  auto one = OBJ_CREATE_T(&alloc, int);
-  auto two = OBJ_CREATE_T(&alloc, int);
+  auto obj = obj_create_slots(allocator, NULL);
 
-  IGNORE one;
-  IGNORE two;
+  ObjSlots *data = obj_payload(obj);
+
+  auto sel = str_create(strlen("print"), "print");
+
+  auto print = obj_create_cfunction(allocator, o__print);
+
+  tbl_set(&data->slots, hash_start(sel->length, sel->data), (void *)print);
+
+  obj_send(obj, sel);
 
   sweep(&alloc);
 
   arr_free(&stack);
+  arr_free(&string_data);
+  arr_free(&string_available);
 
   return 0;
 }
