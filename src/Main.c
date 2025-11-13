@@ -208,8 +208,8 @@ bool arr_pop(Array *arr, size_t len, void *data) {
 
 Object *live = NULL;
 
-Object *obj_create(VtAllocator *alloc, size_t payload_size) {
-  auto obj = (Object *)allocate(alloc, sizeof(Object) + payload_size);
+Object *obj_create(size_t payload_size) {
+  auto obj = (Object *)allocate(allocator, sizeof(Object) + payload_size);
 
   obj->header = 0;
   obj->next = live;
@@ -230,7 +230,7 @@ void obj__destroy(Object *obj);
 
 void str_sweep();
 
-void sweep(VtAllocator *alloc) {
+void sweep() {
   str_sweep();
 
   Object *newlive = NULL;
@@ -783,22 +783,22 @@ Object *obj_getproto(Object *obj) {
   return base_prototypes[tag];
 }
 
-Object *obj_create_slots(VtAllocator *alloc, Object *prototype) {
-  Object *obj = obj_create(alloc, sizeof(ObjSlots));
+Object *obj_create_slots(Object *prototype) {
+  Object *obj = obj_create(sizeof(ObjSlots));
 
   obj->header = HEADER_SET_TAG(0, OBJ_SLOTS);
 
   ObjSlots *data = obj_payload(obj);
   data->prototype = prototype;
 
-  tbl_init(&data->slots, alloc);
+  tbl_init(&data->slots, allocator);
 
   return obj;
 }
 
-void init_prototypes(VtAllocator *alloc) {
+void init_prototypes() {
   for (int i = 0; i < MAX_PROTOTYPES; i++) {
-    base_prototypes[i] = obj_create_slots(alloc, NULL);
+    base_prototypes[i] = obj_create_slots(NULL);
   }
 }
 
@@ -845,14 +845,14 @@ typedef enum {
 Object *activation = NULL;
 
 void enter_activation(Object *caller, Object *method, Object *receiver) {
-  Object *act = obj_create(allocator, sizeof(ObjActivation));
+  Object *act = obj_create(sizeof(ObjActivation));
 
   ObjActivation *data = obj_payload(act);
   data->parent = activation;
   data->caller = caller;
   data->method = method;
   data->receiver = receiver;
-  data->env = obj_create_slots(allocator, NULL);
+  data->env = obj_create_slots(NULL);
 
   activation = act;
 }
@@ -1012,8 +1012,8 @@ bool o__print() {
   return false;
 }
 
-Object *obj_create_cfunction(VtAllocator *alloc, FnCFunction fun) {
-  Object *obj = obj_create(alloc, sizeof(ObjCFunction));
+Object *obj_create_cfunction(FnCFunction fun) {
+  Object *obj = obj_create(sizeof(ObjCFunction));
 
   obj->header = HEADER_SET_TAG(0, OBJ_CFUNCTION);
 
@@ -1027,25 +1027,25 @@ int main() {
   auto alloc = get_libc_allocator();
   allocator = &alloc;
 
-  init_prototypes(&alloc);
+  init_prototypes();
 
   arr_init(&string_data, &alloc);
   arr_init(&string_available, &alloc);
   arr_init(&stack, &alloc);
 
-  auto obj = obj_create_slots(allocator, NULL);
+  auto obj = obj_create_slots(NULL);
 
   ObjSlots *data = obj_payload(obj);
 
   auto sel = str_create(strlen("print"), "print");
 
-  auto print = obj_create_cfunction(allocator, o__print);
+  auto print = obj_create_cfunction(o__print);
 
   tbl_set(&data->slots, hash_start(sel->length, sel->data), (void *)print);
 
   obj_send(obj, sel);
 
-  sweep(&alloc);
+  sweep();
 
   arr_free(&stack);
   arr_free(&string_data);
