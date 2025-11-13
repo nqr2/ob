@@ -4,59 +4,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define IGNORE (void)
-
-typedef void *(*FnAllocate)(void *self, size_t size);
-typedef void (*FnDeallocate)(void *self, void *source);
-typedef void *(*FnReallocate)(void *self, void *source, size_t new);
-
-typedef struct {
-  FnAllocate allocate;
-  FnDeallocate deallocate;
-  FnReallocate reallocate;
-  void *self;
-} VtAllocator;
+#include "Allocator.h"
+#include "Macros.h"
 
 [[deprecated("use Context.allocator")]]
-VtAllocator *allocator;
-
-static void *a_malloc(void *_self, size_t size) {
-  IGNORE _self;
-  return malloc(size);
-}
-
-static void a_free(void *_self, void *source) {
-  IGNORE _self;
-  free(source);
-}
-
-static void *a_realloc(void *_self, void *source, size_t new) {
-  IGNORE _self;
-  return realloc(source, new);
-}
-
-VtAllocator get_libc_allocator() {
-  VtAllocator result = {};
-
-  result.self = NULL;
-  result.allocate = a_malloc;
-  result.deallocate = a_free;
-  result.reallocate = a_realloc;
-
-  return result;
-}
-
-void *allocate(VtAllocator *alloc, size_t size) {
-  return alloc->allocate(alloc->self, size);
-}
-
-void *reallocate(VtAllocator *alloc, void *source, size_t new) {
-  return alloc->reallocate(alloc->self, source, new);
-}
-
-void deallocate(VtAllocator *alloc, void *source) {
-  alloc->deallocate(alloc->self, source);
-}
+Allocator *allocator;
 
 // 4 bit tag, 1 bit mark, 11 rc?
 typedef uint16_t Header;
@@ -156,12 +108,12 @@ bool obj_unref(Object *obj) {
 }
 
 typedef struct {
-  VtAllocator *allocator;
+  Allocator *allocator;
   size_t size, capacity;
   void *data;
 } Array;
 
-void arr_init(Array *arr, VtAllocator *alloc) {
+void arr_init(Array *arr, Allocator *alloc) {
   arr->allocator = alloc;
 
   arr->size = 0;
@@ -288,7 +240,7 @@ typedef struct {
 } TableEntry;
 
 typedef struct {
-  VtAllocator *allocator;
+  Allocator *allocator;
   size_t length, capacity;
   TableEntry *data;
 } Table;
@@ -311,7 +263,7 @@ uint64_t hash_start(size_t len, const void *ptr) {
   return hash_continue(FNV_OFFSET, len, ptr);
 }
 
-void tbl_init(Table *tbl, VtAllocator *alloc) {
+void tbl_init(Table *tbl, Allocator *alloc) {
   tbl->allocator = alloc;
   tbl->length = 0;
   tbl->capacity = 0;
@@ -492,7 +444,7 @@ typedef struct String {
 } String;
 
 typedef struct {
-  VtAllocator *allocator;
+  Allocator *allocator;
   Array data;     // data of every interned symbol
   Table interned; // table of offsets
 } Interner;
@@ -604,7 +556,7 @@ void str_sweep() {
   strings = new;
 }
 
-void intr_init(Interner *intr, VtAllocator *alloc) {
+void intr_init(Interner *intr, Allocator *alloc) {
   memset(intr, 0, sizeof(Interner));
   intr->allocator = alloc;
   arr_init(&intr->data, alloc);

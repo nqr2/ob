@@ -8,6 +8,7 @@ project(
 
 src = [
   'src/Main.c',
+  'src/Allocator.c',
 ]
 
 executable(
