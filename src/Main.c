@@ -6,32 +6,31 @@
 
 #define IGNORE (void)
 
-typedef void *Ptr;
-
-typedef Ptr (*FnAllocate)(Ptr self, size_t size);
-typedef void (*FnDeallocate)(Ptr self, Ptr source);
-typedef Ptr (*FnReallocate)(Ptr self, Ptr source, size_t new);
+typedef void *(*FnAllocate)(void *self, size_t size);
+typedef void (*FnDeallocate)(void *self, void *source);
+typedef void *(*FnReallocate)(void *self, void *source, size_t new);
 
 typedef struct {
   FnAllocate allocate;
   FnDeallocate deallocate;
   FnReallocate reallocate;
-  Ptr self;
+  void *self;
 } VtAllocator;
 
+[[deprecated("use Context.allocator")]]
 VtAllocator *allocator;
 
-static Ptr a_malloc(Ptr _self, size_t size) {
+static void *a_malloc(void *_self, size_t size) {
   IGNORE _self;
   return malloc(size);
 }
 
-static void a_free(Ptr _self, Ptr source) {
+static void a_free(void *_self, void *source) {
   IGNORE _self;
   free(source);
 }
 
-static Ptr a_realloc(Ptr _self, Ptr source, size_t new) {
+static void *a_realloc(void *_self, void *source, size_t new) {
   IGNORE _self;
   return realloc(source, new);
 }
@@ -47,15 +46,15 @@ VtAllocator get_libc_allocator() {
   return result;
 }
 
-Ptr allocate(VtAllocator *alloc, size_t size) {
+void *allocate(VtAllocator *alloc, size_t size) {
   return alloc->allocate(alloc->self, size);
 }
 
-Ptr reallocate(VtAllocator *alloc, Ptr source, size_t new) {
+void *reallocate(VtAllocator *alloc, void *source, size_t new) {
   return alloc->reallocate(alloc->self, source, new);
 }
 
-void deallocate(VtAllocator *alloc, Ptr source) {
+void deallocate(VtAllocator *alloc, void *source) {
   alloc->deallocate(alloc->self, source);
 }
 
@@ -159,7 +158,7 @@ bool obj_unref(Object *obj) {
 typedef struct {
   VtAllocator *allocator;
   size_t size, capacity;
-  Ptr data;
+  void *data;
 } Array;
 
 void arr_init(Array *arr, VtAllocator *alloc) {
@@ -206,6 +205,7 @@ bool arr_pop(Array *arr, size_t len, void *data) {
   return true;
 }
 
+[[deprecated("use Context.objects")]]
 Object *live = NULL;
 
 Object *obj_create(size_t payload_size) {
@@ -257,6 +257,7 @@ void sweep() {
   live = newlive;
 }
 
+[[deprecated("use Context.stack")]]
 Array stack;
 
 void obj_push(Object *obj) {
@@ -306,7 +307,7 @@ uint64_t hash_continue(uint64_t state, size_t len, void const *ptr) {
   return state;
 }
 
-uint64_t hash_start(size_t len, void const *ptr) {
+uint64_t hash_start(size_t len, const void *ptr) {
   return hash_continue(FNV_OFFSET, len, ptr);
 }
 
@@ -501,8 +502,13 @@ typedef struct {
   size_t size;
 } StrAvailable;
 
+[[deprecated("use Context.string_data")]]
 Array string_data;
+
+[[deprecated("use Context.string_available")]]
 Array string_available;
+
+[[deprecated("use Context.stringd")]]
 String *strings = NULL;
 
 void arr_remove(Array *arr, size_t size, size_t offset) {
@@ -767,6 +773,7 @@ void obj_visit(Object *obj, FnVisitor visit) {
 }
 
 #define MAX_PROTOTYPES 16
+[[deprecated("use Context.prototypes")]]
 Object *base_prototypes[MAX_PROTOTYPES];
 
 Object *obj_getproto(Object *obj) {
@@ -842,6 +849,7 @@ typedef enum {
   OP_Rf = 15,
 } Opcode;
 
+[[deprecated("use Context.activation")]]
 Object *activation = NULL;
 
 void enter_activation(Object *caller, Object *method, Object *receiver) {
@@ -899,7 +907,7 @@ bool obj_is_invokable(Object *obj) {
   return (tag == OBJ_CLOSURE) || (tag == OBJ_CFUNCTION);
 }
 
-void run_bytecode(size_t len, uint8_t const *code);
+void run_bytecode(size_t len, const uint8_t *code);
 
 void obj_send(Object *recv, String *selector) {
   size_t n_args = 0;
@@ -944,7 +952,7 @@ ObjActivation *get_activation() {
   return obj_payload(activation);
 }
 
-void run_bytecode(size_t len, uint8_t const *code) {
+void run_bytecode(size_t len, const uint8_t *code) {
   uint64_t index = 0;
 
   for (size_t pc = 0; pc < len; pc++) {
