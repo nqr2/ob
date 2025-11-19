@@ -1,6 +1,8 @@
 #ifndef TAP_TAP_H_INCLUDED
 #define TAP_TAP_H_INCLUDED
 
+#include <stddef.h>
+
 typedef void (*FnTest)();
 
 typedef struct {
@@ -8,6 +10,8 @@ typedef struct {
   FnTest body;
   bool should_fail;
 } Test;
+
+#define SUITE_END ((Test){.name = NULL, .body = NULL, .should_fail = false})
 
 void skip();
 void skip_with(const char *reason);
