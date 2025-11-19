@@ -13,7 +13,9 @@ typedef struct Context {
   Array stack;
 
   Obj objects;
-  // Obj *_prototype...
+
+  Obj proto_nil, proto_symbol, proto_string, proto_slots, proto_integer,
+      proto_real, proto_method, proto_cmethod, proto_cdata, proto_activation;
 
   Obj activation;
 
@@ -31,5 +33,7 @@ void ctx_sweep(Context ctx);
 
 void ctx_enter_activation(Context ctx, Obj caller, Obj method, Obj receiver);
 void ctx_leave_activation(Context ctx);
+
+bool ctx_checkstack(Context ctx, size_t narg);
 
 #endif

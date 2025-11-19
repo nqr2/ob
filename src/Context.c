@@ -15,6 +15,17 @@ Context ctx_create(Allocator *alloc) {
 
   ctx->allocator = alloc;
 
+  ctx->proto_nil = obj_create_slots(ctx, NULL);
+  ctx->proto_symbol = obj_create_slots(ctx, NULL);
+  ctx->proto_string = obj_create_slots(ctx, NULL);
+  ctx->proto_slots = obj_create_slots(ctx, NULL);
+  ctx->proto_integer = obj_create_slots(ctx, NULL);
+  ctx->proto_real = obj_create_slots(ctx, NULL);
+  ctx->proto_method = obj_create_slots(ctx, NULL);
+  ctx->proto_cmethod = obj_create_slots(ctx, NULL);
+  ctx->proto_cdata = obj_create_slots(ctx, NULL);
+  ctx->proto_activation = obj_create_slots(ctx, NULL);
+
   return ctx;
 }
 
@@ -22,6 +33,9 @@ void ctx_destroy(Context ctx) {
   auto alloc = ctx->allocator;
 
   // TODO: get rid of objects and strings here
+
+  ctx_sweep(ctx);
+  ctx_sweep(ctx);
 
   arr_free(&ctx->stack);
   arr_free(&ctx->string_data);
@@ -33,9 +47,16 @@ void ctx_destroy(Context ctx) {
 void ctx_mark(Context ctx) {
   obj_mark(ctx->activation);
 
-  /*for (int i = 0; i < MAX_PROTOTYPES; i++) {
-      obj_mark(ctx->prototypes[i]);
-  }*/
+  obj_mark(ctx->proto_nil);
+  obj_mark(ctx->proto_symbol);
+  obj_mark(ctx->proto_string);
+  obj_mark(ctx->proto_slots);
+  obj_mark(ctx->proto_integer);
+  obj_mark(ctx->proto_real);
+  obj_mark(ctx->proto_method);
+  obj_mark(ctx->proto_cmethod);
+  obj_mark(ctx->proto_cdata);
+  obj_mark(ctx->proto_activation);
 
   auto data = (Object **)ctx->stack.data;
 
@@ -86,6 +107,10 @@ void ctx_enter_activation(Context ctx, Obj caller, Obj method, Obj receiver) {
 }
 
 void ctx_leave_activation(Context ctx) {
-    ObjActivation *data = obj_payload(ctx->activation);
-    ctx->activation = data->parent;
+  ObjActivation *data = obj_payload(ctx->activation);
+  ctx->activation = data->parent;
+}
+
+bool ctx_checkstack(Context ctx, size_t narg) {
+  return (ctx->stack.size / sizeof(Object *)) >= narg;
 }

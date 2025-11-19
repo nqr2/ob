@@ -16,6 +16,7 @@ src = [
   'src/Interner.c',
   'src/Table.c',
   'src/Hash.c',
+  'src/Bytecode.c',
 ]
 
 executable(

@@ -20,8 +20,7 @@ typedef struct {
   size_t size;
 } StrAvailable;
 
-String *str_create(Context ctx,
-    size_t len, const char *data);
+String *str_create(Context ctx, size_t len, const char *data);
 
 size_t str_len(String *str);
 

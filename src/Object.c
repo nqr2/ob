@@ -1,7 +1,11 @@
 #include "Object.h"
 
+#include "Bytecode.h"
 #include "Context.h"
+#include "Hash.h"
 #include "Table.h"
+
+#include <ctype.h>
 
 void *obj_payload(Obj obj) {
   auto bytes = (uint8_t *)obj;
@@ -175,4 +179,119 @@ Object *obj_create_cmethod(Context ctx, FnCMethod method) {
   data->method = method;
 
   return obj;
+}
+
+ObjectTag obj_tag(Obj obj) {
+  if (obj == NULL) {
+    return OT_NIL;
+  }
+
+  return HEADER_GET_TAG(obj->header);
+}
+
+bool obj_isa(Obj obj, ObjectTag tag) {
+  return obj_tag(obj) == tag;
+}
+
+Obj obj_getproto(Context ctx, Obj obj) {
+  switch (obj_tag(obj)) {
+  case OT_NIL:
+    return ctx->proto_nil;
+  case OT_SYMBOL:
+    return ctx->proto_symbol;
+  case OT_STRING:
+    return ctx->proto_string;
+  case OT_SLOTS: {
+    ObjSlots *slots = obj_payload(obj);
+
+    if (slots->prototype != NULL) {
+      return slots->prototype;
+    }
+
+    return ctx->proto_slots;
+  }
+  case OT_INTEGER:
+    return ctx->proto_integer;
+  case OT_REAL:
+    return ctx->proto_real;
+  case OT_METHOD:
+    return ctx->proto_method;
+  case OT_CMETHOD:
+    return ctx->proto_cmethod;
+  case OT_CDATA:
+    return ctx->proto_cdata;
+  case OT_ACTIVATION:
+    return ctx->proto_activation;
+  case OT_Ra:
+  case OT_Rb:
+  case OT_Rc:
+  case OT_Rd:
+  case OT_Re:
+  case OT_Rf:
+    break;
+  }
+  return obj_getproto(ctx, NULL);
+}
+
+Object *obj_get(Context ctx, Object *obj, String *selector) {
+  if (obj == NULL) {
+    return NULL;
+  }
+
+  if (obj_isa(obj, OT_SLOTS)) {
+    ObjSlots *data = obj_payload(obj);
+    (void)data;
+
+    auto hash = hash_start(selector->length, selector->data);
+
+    if (tbl_get(&data->slots, hash, (void **)&obj)) {
+      return obj;
+    }
+  }
+
+  return obj_get(ctx, obj_getproto(ctx, obj), selector);
+}
+
+void obj_send(Context ctx, Object *recv, String *selector) {
+  size_t n_args = 0;
+
+  if (ispunct(selector->data[0])) {
+    n_args = 1;
+  } else {
+
+    for (size_t i = 0; i < selector->length; i++) {
+      if (selector->data[i] == ':') {
+        n_args++;
+      }
+    }
+  }
+
+  (void)/*TODO: assert its true*/ ctx_checkstack(ctx, n_args);
+
+  auto invoked = obj_get(ctx, recv, selector);
+
+  (void)/*TODO: also this assert*/ obj_is_invocable(invoked);
+
+  ctx_enter_activation(ctx, ctx->activation, invoked, recv);
+
+  auto tag = HEADER_GET_TAG(invoked->header);
+
+  if (tag == OT_CMETHOD) {
+    ObjCMethod *data = obj_payload(invoked);
+    data->method(ctx);
+  }
+
+  if (tag == OT_METHOD) {
+    ObjMethod *data = obj_payload(invoked);
+    bc_run(ctx, data->bytecode.size, data->bytecode.data);
+  }
+
+  // TODO: call closure
+
+  ctx_leave_activation(ctx);
+}
+
+bool obj_is_invocable(Object *obj) {
+  auto tag = HEADER_GET_TAG(obj->header);
+  return (tag == OT_METHOD) || (tag == OT_CMETHOD);
 }

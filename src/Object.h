@@ -88,7 +88,7 @@ typedef struct {
   Array literals;
 } ObjMethod;
 
-typedef bool (*FnCMethod)();
+typedef bool (*FnCMethod)(Context ctx);
 
 typedef struct {
   FnCMethod method;
@@ -117,5 +117,17 @@ typedef struct {
 Obj obj_create_slots(Context ctx, Obj prototype);
 
 Object *obj_create_cmethod(Context ctx, FnCMethod method);
+
+ObjectTag obj_tag(Obj obj);
+
+bool obj_isa(Obj obj, ObjectTag tag);
+
+Object *obj_getproto(Context ctx, Object *obj);
+
+Object *obj_get(Context ctx, Object *obj, String *selector);
+
+void obj_send(Context ctx, Object *recv, String *selector);
+
+bool obj_is_invocable(Object *obj);
 
 #endif
