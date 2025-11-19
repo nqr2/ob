@@ -1,5 +1,4 @@
 #include <stdbit.h>
-#include <string.h>
 
 #include "Context.h"
 #include "Hash.h"
@@ -21,7 +20,7 @@ int main() {
 
   ObjSlots *data = obj_payload(obj);
 
-  auto sel = str_create(ctx, strlen("print"), "print");
+  auto sel = str_create_literal(ctx, "print");
 
   auto print = obj_create_cmethod(ctx, o__print);
 

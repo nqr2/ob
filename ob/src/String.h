@@ -22,6 +22,9 @@ typedef struct {
 
 String *str_create(Context ctx, size_t len, const char *data);
 
+#define str_create_literal(Context, Literal)                                   \
+  str_create((Context), sizeof(Literal) - 1, "" Literal "")
+
 size_t str_len(String *str);
 
 void str_mark(String *str);

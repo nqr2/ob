@@ -38,40 +38,6 @@ typedef struct Object {
 
 typedef Object *Obj;
 
-#define HEADER_GET_TAG(H) ((Header)((H) & 0xf))
-#define HEADER_SET_TAG(H, T) ((Header)(((H) & 0xffff'fff0) | ((T) & 0xf)))
-
-#define HEADER_GET_MARK(H) (((H) & 0x10) != 0)
-#define HEADER_SET_MARK(H, M) ((Header)(((H) & ~0x10) | (((M) != 0) << 4)))
-
-#define HEADER_GET_RC(H) ((H) >> 5)
-#define HEADER_SET_RC(H, C) (((H) & 0x1f) | ((C) << 5))
-
-#define RC_MAX 32
-
-typedef void (*FnVisitor)(Obj obj);
-
-// NOTE: this also invokes visit on the obj in question
-void obj_visit(Obj obj, FnVisitor visit);
-
-void *obj_payload(Obj obj);
-
-void obj_mark(Obj obj);
-
-Obj obj_ref(Obj obj);
-
-// true if rc=0
-bool obj_unref(Obj obj);
-
-Obj obj_create(Context ctx, size_t payload_size);
-
-// NOTE: call before destroying an obj
-void obj_destroy(Obj obj);
-
-void obj_push(Context ctx, Obj obj);
-
-Obj obj_pop(Context ctx);
-
 typedef struct {
   String *inner;
 } ObjSymbol, ObjString;
@@ -113,6 +79,40 @@ typedef struct {
   Obj receiver; // this method's receiver
   Obj env;      // this context's environment
 } ObjActivation;
+
+#define HEADER_GET_TAG(H) ((Header)((H) & 0xf))
+#define HEADER_SET_TAG(H, T) ((Header)(((H) & 0xffff'fff0) | ((T) & 0xf)))
+
+#define HEADER_GET_MARK(H) (((H) & 0x10) != 0)
+#define HEADER_SET_MARK(H, M) ((Header)(((H) & ~0x10) | (((M) != 0) << 4)))
+
+#define HEADER_GET_RC(H) ((H) >> 5)
+#define HEADER_SET_RC(H, C) (((H) & 0x1f) | ((C) << 5))
+
+#define RC_MAX 32
+
+typedef void (*FnVisitor)(Obj obj);
+
+// NOTE: this also invokes visit on the obj in question
+void obj_visit(Obj obj, FnVisitor visit);
+
+void *obj_payload(Obj obj);
+
+void obj_mark(Obj obj);
+
+Obj obj_ref(Obj obj);
+
+// true if rc=0
+bool obj_unref(Obj obj);
+
+Obj obj_create(Context ctx, size_t payload_size);
+
+// NOTE: call before destroying an obj
+void obj_destroy(Obj obj);
+
+void obj_push(Context ctx, Obj obj);
+
+Obj obj_pop(Context ctx);
 
 Obj obj_create_slots(Context ctx, Obj prototype);
 
