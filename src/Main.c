@@ -12,37 +12,8 @@
 [[deprecated("use Context.allocator")]]
 Allocator *allocator;
 
-typedef struct String String;
-void str_mark(String *str);
-
-void str_sweep();
-
-void sweep() {
-  str_sweep();
-
-  Object *newlive = NULL;
-
-  while (live != NULL) {
-    Object *next = live->next;
-
-    if (HEADER_GET_MARK(live->header)) {
-      live->header = HEADER_SET_MARK(live->header, false);
-    } else {
-      obj__destroy(live);
-      deallocate(allocator, live);
-      live = NULL;
-    }
-
-    if (live != NULL) {
-      live->next = newlive;
-      newlive = live;
-    }
-
-    live = next;
-  }
-
-  live = newlive;
-}
+[[deprecated("use a parameter of type Context")]]
+Context gctx;
 
 #include "Hash.h"
 
@@ -52,120 +23,9 @@ void sweep() {
 
 #include "Interner.h"
 
-typedef struct {
-  String *inner;
-} ObjSymbol, ObjString;
-
-typedef struct {
-  Object *prototype;
-  Table slots;
-} ObjSlots;
-
-typedef struct {
-  Object *env;
-  Array parameters;
-  Array bytecode;
-  Array literals;
-} ObjMethod;
-
-typedef bool (*FnCMethod)();
-
-typedef struct {
-  FnCMethod cfunction;
-} ObjCMethod;
-
-typedef struct {
-  void *cdata;
-} ObjCData;
-
-typedef struct {
-  int64_t number;
-} ObjInteger;
-
-typedef struct {
-  double number;
-} ObjReal;
-
-typedef struct {
-  Object *parent;   // the parent activation
-  Object *caller;   // the method's caller
-  Object *method;   // this method
-  Object *receiver; // this method's receiver
-  Object *env;      // this context's environment
-} ObjActivation;
+#include "Context.h"
 
 // TODO: add every case
-void obj__destroy(Object *obj) {
-  obj_visit(obj, obj__unref_);
-
-  switch (HEADER_GET_TAG(obj->header)) {
-
-  case OT_SLOTS: {
-    ObjSlots *data = obj_payload(obj);
-    tbl_free(&data->slots);
-  } break;
-
-  case OT_METHOD: {
-    ObjMethod *data = obj_payload(obj);
-    arr_free(&data->parameters);
-    arr_free(&data->literals);
-    arr_free(&data->bytecode);
-  } break;
-
-    // TODO: implement uninterning afterwards
-
-  default:
-    break;
-  }
-}
-
-void obj_visit(Object *obj, FnVisitor visit) {
-  // TODO: properly handle NULLs.
-  if (obj == NULL) {
-    return;
-  }
-
-  visit(obj);
-
-  switch (HEADER_GET_TAG(obj->header)) {
-  case OT_SLOTS: {
-    ObjSlots *data = obj_payload(obj);
-
-    Object *ref = NULL;
-    uint64_t index = 0;
-
-    while (tbl_iterate(&data->slots, &index, NULL, (void **)&ref)) {
-      obj_visit(ref, visit);
-    }
-
-    obj_visit(data->prototype, visit);
-  } break;
-
-  case OT_METHOD: {
-    ObjMethod *data = obj_payload(obj);
-
-    for (size_t i = 0; i < data->literals.size / sizeof(Object *); i++) {
-      Object *item = ((Object **)data->literals.data)[i];
-
-      obj_visit(item, visit);
-    }
-
-    obj_visit(data->env, visit);
-  }; break;
-
-  case OT_ACTIVATION: {
-    ObjActivation *data = obj_payload(obj);
-    obj_visit(data->parent, visit);
-    obj_visit(data->caller, visit);
-    obj_visit(data->method, visit);
-    obj_visit(data->receiver, visit);
-    obj_visit(data->env, visit);
-  }; break;
-
-  default:
-    break;
-  }
-}
 
 #define MAX_PROTOTYPES 16
 [[deprecated("use Context.prototypes")]]
@@ -185,40 +45,13 @@ Object *obj_getproto(Object *obj) {
   return base_prototypes[tag];
 }
 
-Object *obj_create_slots(Object *prototype) {
-  Object *obj = obj_create(sizeof(ObjSlots));
-
-  obj->header = HEADER_SET_TAG(0, OT_SLOTS);
-
-  ObjSlots *data = obj_payload(obj);
-  data->prototype = prototype;
-
-  tbl_init(&data->slots, allocator);
-
-  return obj;
-}
-
 void init_prototypes() {
   for (int i = 0; i < MAX_PROTOTYPES; i++) {
-    base_prototypes[i] = obj_create_slots(NULL);
+    base_prototypes[i] = obj_create_slots(gctx, NULL);
   }
 }
 
 Object *activation;
-
-void mark() {
-  obj_mark(activation);
-
-  for (int i = 0; i < MAX_PROTOTYPES; i++) {
-    obj_mark(base_prototypes[i]);
-  }
-
-  auto data = (Object **)stack.data;
-
-  for (size_t i = 0; i < stack.size / sizeof(Object *); i++) {
-    obj_mark(data[i]);
-  }
-}
 
 typedef uint8_t Instruction;
 
@@ -247,24 +80,6 @@ typedef enum {
 [[deprecated("use Context.activation")]]
 Object *activation = NULL;
 
-void enter_activation(Object *caller, Object *method, Object *receiver) {
-  Object *act = obj_create(sizeof(ObjActivation));
-
-  ObjActivation *data = obj_payload(act);
-  data->parent = activation;
-  data->caller = caller;
-  data->method = method;
-  data->receiver = receiver;
-  data->env = obj_create_slots(NULL);
-
-  activation = act;
-}
-
-void leave_activation() {
-  ObjActivation *data = obj_payload(activation);
-  activation = data->parent;
-}
-
 bool obj_isa(Object *obj, ObjectTag tag) {
   return HEADER_GET_TAG(obj->header) == tag;
 }
@@ -289,7 +104,7 @@ Object *obj_get(Object *obj, String *selector) {
 }
 
 size_t stack_len() {
-  return stack.size / sizeof(Object *);
+  return gctx->stack.size / sizeof(Object *);
 }
 
 bool checkstack(size_t n) {
@@ -302,7 +117,7 @@ bool obj_is_invokable(Object *obj) {
   return (tag == OT_METHOD) || (tag == OT_CMETHOD);
 }
 
-void run_bytecode(size_t len, const uint8_t *code);
+void run_bytecode(Context ctx, size_t len, const uint8_t *code);
 
 void obj_send(Object *recv, String *selector) {
   size_t n_args = 0;
@@ -324,30 +139,30 @@ void obj_send(Object *recv, String *selector) {
 
   IGNORE /*TODO: also this assert*/ obj_is_invokable(invoked);
 
-  enter_activation(activation, invoked, recv);
+  ctx_enter_activation(gctx, gctx->activation, invoked, recv);
 
   auto tag = HEADER_GET_TAG(invoked->header);
 
   if (tag == OT_CMETHOD) {
     ObjCMethod *data = obj_payload(invoked);
-    data->cfunction();
+    data->method();
   }
 
   if (tag == OT_METHOD) {
     ObjMethod *data = obj_payload(invoked);
-    run_bytecode(data->bytecode.size, data->bytecode.data);
+    run_bytecode(gctx, data->bytecode.size, data->bytecode.data);
   }
 
   // TODO: call closure
 
-  leave_activation();
+  ctx_leave_activation(gctx);
 }
 
 ObjActivation *get_activation() {
-  return obj_payload(activation);
+  return obj_payload(gctx->activation);
 }
 
-void run_bytecode(size_t len, const uint8_t *code) {
+void run_bytecode(Context ctx, size_t len, const uint8_t *code) {
   uint64_t index = 0;
 
   for (size_t pc = 0; pc < len; pc++) {
@@ -356,7 +171,7 @@ void run_bytecode(size_t len, const uint8_t *code) {
 
     auto this_index = (index << 4) | data;
 
-    ObjActivation *act = obj_payload(activation);
+    ObjActivation *act = obj_payload(ctx->activation);
     ObjMethod *method = obj_payload(act->method);
 
     Object *literal = ((Object **)method->literals.data)[this_index];
@@ -364,12 +179,12 @@ void run_bytecode(size_t len, const uint8_t *code) {
     switch (opcode) {
     case OP_PUSH_LITERAL: {
       auto obj = &((Object **)method->literals.data)[this_index];
-      arr_push(&stack, sizeof(Object *), (void *)obj);
+      arr_push(&ctx->stack, sizeof(Object *), (void *)obj);
     }; break;
 
     case OP_SEND: {
       Object *recv = NULL;
-      arr_pop(&stack, sizeof(Object *), (void *)&recv);
+      arr_pop(&ctx->stack, sizeof(Object *), (void *)&recv);
 
       ObjString *selector = obj_payload(literal);
 
@@ -394,7 +209,7 @@ void run_bytecode(size_t len, const uint8_t *code) {
     }; break;
 
     case OP_SELF: {
-      arr_push(&stack, sizeof(Object *), (void *)act->receiver);
+      arr_push(&ctx->stack, sizeof(Object *), (void *)act->receiver);
     }; break;
 
       // TODO: OP_RETURN
@@ -410,49 +225,35 @@ void run_bytecode(size_t len, const uint8_t *code) {
 #include <stdio.h>
 
 bool o__print() {
-  printf("activation:%p\n", (void *)activation);
+  printf("activation:%p\n", (void *)gctx->activation);
 
   return false;
-}
-
-Object *obj_create_cfunction(FnCMethod fun) {
-  Object *obj = obj_create(sizeof(ObjCMethod));
-
-  obj->header = HEADER_SET_TAG(0, OT_CMETHOD);
-
-  ObjCMethod *data = obj_payload(obj);
-  data->cfunction = fun;
-
-  return obj;
 }
 
 int main() {
   auto alloc = get_libc_allocator();
   allocator = &alloc;
 
+  auto ctx = ctx_create(&alloc);
+  gctx = ctx;
+
   init_prototypes();
 
-  arr_init(&string_data, &alloc);
-  arr_init(&string_available, &alloc);
-  arr_init(&stack, &alloc);
-
-  auto obj = obj_create_slots(NULL);
+  auto obj = obj_create_slots(ctx, NULL);
 
   ObjSlots *data = obj_payload(obj);
 
-  auto sel = str_create(strlen("print"), "print");
+  auto sel = str_create(ctx, strlen("print"), "print");
 
-  auto print = obj_create_cfunction(o__print);
+  auto print = obj_create_cmethod(ctx, o__print);
 
   tbl_set(&data->slots, hash_start(sel->length, sel->data), (void *)print);
 
   obj_send(obj, sel);
 
-  sweep();
+  ctx_sweep(ctx);
 
-  arr_free(&stack);
-  arr_free(&string_data);
-  arr_free(&string_available);
+  ctx_destroy(ctx);
 
   return 0;
 }

@@ -2,7 +2,8 @@
 #define OBJECT_H_INCLUDED
 
 #include "ContextFwd.h"
-#include "Macros.h"
+#include "String.h"
+#include "Table.h"
 
 #include "Array.h"
 
@@ -55,71 +56,66 @@ void obj_visit(Obj obj, FnVisitor visit);
 
 void *obj_payload(Obj obj);
 
-void obj_mark(Obj obj) {
-  if (HEADER_GET_MARK(obj->header)) {
-    return;
-  }
+void obj_mark(Obj obj);
 
-  switch (HEADER_GET_TAG(obj->header)) {
-  case OT_STRING:
-  case OT_SYMBOL: {
-    struct {
-      String *inner;
-    } *str = obj_payload(obj);
-    str_mark(str->inner);
-  } break;
-
-  default:
-    break;
-  }
-
-  obj->header = HEADER_SET_MARK(obj->header, true);
-
-  obj_visit(obj, obj_mark);
-}
-
-Obj obj_ref(Obj obj) {
-  auto refcount = HEADER_GET_RC(obj->header);
-
-  if (refcount < RC_MAX) {
-    refcount++;
-    obj->header = HEADER_SET_RC(obj->header, refcount);
-  }
-
-  return obj;
-}
+Obj obj_ref(Obj obj);
 
 // true if rc=0
-bool obj_unref(Obj obj) {
-  auto refcount = HEADER_GET_RC(obj->header);
-
-  if (refcount < RC_MAX) {
-    refcount--;
-    obj->header = HEADER_SET_RC(obj->header, refcount);
-  }
-
-  return refcount == 0;
-}
-
-[[deprecated("use Context.objects")]]
-Obj live = NULL;
+bool obj_unref(Obj obj);
 
 Obj obj_create(Context ctx, size_t payload_size);
 
-static void obj__unref_(Obj obj) {
-  IGNORE obj_unref(obj);
-}
-
 // NOTE: call before destroying an obj
-void obj__destroy(Obj obj);
-
-#define OBJ_CREATE_T(A, T) obj_create((A), sizeof(T))
-
-[[deprecated("use Context.stack")]]
-Array stack;
+void obj_destroy(Obj obj);
 
 void obj_push(Context ctx, Obj obj);
 
 Obj obj_pop(Context ctx);
+
+typedef struct {
+  String *inner;
+} ObjSymbol, ObjString;
+
+typedef struct {
+  Object *prototype;
+  Table slots;
+} ObjSlots;
+
+typedef struct {
+  Obj env;
+  Array parameters;
+  Array bytecode;
+  Array literals;
+} ObjMethod;
+
+typedef bool (*FnCMethod)();
+
+typedef struct {
+  FnCMethod method;
+} ObjCMethod;
+
+typedef struct {
+  void *cdata;
+} ObjCData;
+
+typedef struct {
+  int64_t number;
+} ObjInteger;
+
+typedef struct {
+  double number;
+} ObjReal;
+
+typedef struct {
+  Obj parent;   // the parent activation
+  Obj caller;   // the method's caller
+  Obj method;   // this method
+  Obj receiver; // this method's receiver
+  Obj env;      // this context's environment
+} ObjActivation;
+
+Obj obj_create_slots(Context ctx, Obj prototype);
+
+Object *obj_create_cmethod(Context ctx, FnCMethod method);
 
 #endif

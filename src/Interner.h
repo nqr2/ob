@@ -1,64 +1,27 @@
 #ifndef INTERNER_H_INCLUDED
 #define INTERNER_H_INCLUDED
 
+#include "Allocator.h"
+#include "Array.h"
+#include "ContextFwd.h"
+#include "String.h"
+#include "Table.h"
+
 typedef struct {
-    Allocator *allocator;
-    Array data;     // data of every interned symbol
-    Table interned; // table of offsets
+  Context context; // where the strings are allocated
+  Allocator *allocator;
+  Array data;     // data of every interned symbol
+  Table interned; // table of offsets
 } Interner;
 
-void intr_init(Interner *intr, Allocator *alloc) {
-    memset(intr, 0, sizeof(Interner));
-    intr->allocator = alloc;
-    arr_init(&intr->data, alloc);
-    tbl_init(&intr->interned, alloc);
-}
-
-void intr_free(Interner *intr) {
-    arr_free(&intr->data);
-    tbl_free(&intr->interned);
-
-    auto str = strings;
-
-    while (str != NULL) {
-        auto next = str->next;
-
-        deallocate(intr->allocator, str);
-
-        str = next;
-    }
-
-    intr_init(intr, NULL);
-}
+void intr_init(Interner *intr, Context ctx, Allocator *alloc);
+void intr_free(Interner *intr);
 
 // TODO: uninterning, etc
-String *intr_intern(Interner *intr, size_t length, const char *data) {
-    uint64_t hash = hash_start(length, data);
+String *intr_intern(Interner *intr, size_t length, const char *data);
 
-    String *str = NULL;
-    if (!tbl_get(&intr->interned, hash, (void **)&str)) {
-        str = (String *)allocate(intr->allocator, sizeof(String));
+String *intr_find(Interner *intr, uint64_t hash);
 
-        arr_push(&intr->data, length, data);
-
-        str->next = strings;
-        str->data = ((const char *)&intr->data.data) + (intr->data.size - length);
-
-        strings = str;
-
-        tbl_set(&intr->interned, hash, str);
-    }
-
-    return str;
-}
-
-String *intr_find(Interner *intr, uint64_t hash) {
-    String *str = NULL;
-
-    tbl_get(&intr->interned, hash, (void **)&str);
-
-    return str;
-}
-
+void intr_mark(Interner *intr);
 
 #endif
