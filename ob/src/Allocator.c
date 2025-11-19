@@ -2,10 +2,11 @@
 #include "Macros.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 static void *a_malloc(void *_self, size_t size) {
   IGNORE _self;
-  return malloc(size);
+  return calloc(1, size);
 }
 
 static void a_free(void *_self, void *source) {
@@ -30,11 +31,17 @@ Allocator get_libc_allocator() {
 }
 
 void *allocate(Allocator *alloc, size_t size) {
-  return alloc->allocate(alloc->self, size);
+  void *ptr = alloc->allocate(alloc->self, size);
+
+  memset(ptr, 0, size);
+
+  return ptr;
 }
 
 void *reallocate(Allocator *alloc, void *source, size_t new) {
-  return alloc->reallocate(alloc->self, source, new);
+  void *ptr = alloc->reallocate(alloc->self, source, new);
+
+  return ptr;
 }
 
 void deallocate(Allocator *alloc, void *source) {

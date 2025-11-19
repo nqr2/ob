@@ -8,6 +8,7 @@ ob_src = [
   'src/Table.c',
   'src/Hash.c',
   'src/Bytecode.c',
+  'src/Assert.c',
 ]
 
 libOb = static_library(
@@ -20,3 +21,5 @@ ob = declare_dependency(
   link_with: libOb,
   include_directories: 'src'
 )
+
+subdir('tests')
