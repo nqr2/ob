@@ -6,52 +6,10 @@
 
 #include "Allocator.h"
 #include "Macros.h"
+#include "Object.h"
 
 [[deprecated("use Context.allocator")]]
 Allocator *allocator;
-
-// 4 bit tag, 1 bit mark, 11 rc?
-typedef uint16_t Header;
-
-typedef enum Tag {
-  OBJ_NIL = 0,        // the nil object
-  OBJ_SYMBOL = 1,     // #... / #a:b:...y:z: / #'...' / #+...-
-  OBJ_STRING = 2,     // '...'
-  OBJ_SLOTS = 3,      // slot objects
-  OBJ_INTEGER = 4,    // integers
-  OBJ_REAL = 5,       // floats
-  OBJ_CLOSURE = 6,    // closures
-  OBJ_CFUNCTION = 7,  // functions from C
-  OBJ_CDATA = 8,      // data from C
-  OBJ_ACTIVATION = 9, // call stack entry
-  OBJ_Ra = 10,
-  OBJ_Rb = 11,
-  OBJ_Rc = 12,
-  OBJ_Rd = 13,
-  OBJ_Re = 14,
-  OBJ_Rf = 15,
-} ObjectTag;
-
-#define HEADER_GET_TAG(H) ((Header)((H) & 0xf))
-#define HEADER_SET_TAG(H, T) ((Header)(((H) & 0xffff'fff0) | ((T) & 0xf)))
-
-#define HEADER_GET_MARK(H) (((H) & 0x10) != 0)
-#define HEADER_SET_MARK(H, M) ((Header)(((H) & ~0x10) | (((M) != 0) << 4)))
-
-#define HEADER_GET_RC(H) ((H) >> 5)
-#define HEADER_SET_RC(H, C) (((H) & 0x1f) | ((C) << 5))
-
-#define RC_MAX 32
-
-typedef struct Object {
-  Header header;
-  struct Object *next;
-} Object;
-
-void *obj_payload(Object *obj) {
-  auto bytes = (uint8_t *)obj;
-  return bytes + sizeof(Object);
-}
 
 typedef void (*FnVisitor)(Object *obj);
 
@@ -60,52 +18,6 @@ void obj_visit(Object *obj, FnVisitor visit);
 
 typedef struct String String;
 void str_mark(String *str);
-
-void obj_mark(Object *obj) {
-  if (HEADER_GET_MARK(obj->header)) {
-    return;
-  }
-
-  switch (HEADER_GET_TAG(obj->header)) {
-  case OBJ_STRING:
-  case OBJ_SYMBOL: {
-    struct {
-      String *inner;
-    } *str = obj_payload(obj);
-    str_mark(str->inner);
-  } break;
-
-  default:
-    break;
-  }
-
-  obj->header = HEADER_SET_MARK(obj->header, true);
-
-  obj_visit(obj, obj_mark);
-}
-
-Object *obj_ref(Object *obj) {
-  auto refcount = HEADER_GET_RC(obj->header);
-
-  if (refcount < RC_MAX) {
-    refcount++;
-    obj->header = HEADER_SET_RC(obj->header, refcount);
-  }
-
-  return obj;
-}
-
-// true if rc=0
-bool obj_unref(Object *obj) {
-  auto refcount = HEADER_GET_RC(obj->header);
-
-  if (refcount < RC_MAX) {
-    refcount--;
-    obj->header = HEADER_SET_RC(obj->header, refcount);
-  }
-
-  return refcount == 0;
-}
 
 typedef struct {
   Allocator *allocator;
@@ -157,29 +69,6 @@ bool arr_pop(Array *arr, size_t len, void *data) {
   return true;
 }
 
-[[deprecated("use Context.objects")]]
-Object *live = NULL;
-
-Object *obj_create(size_t payload_size) {
-  auto obj = (Object *)allocate(allocator, sizeof(Object) + payload_size);
-
-  obj->header = 0;
-  obj->next = live;
-
-  live = obj;
-
-  return obj;
-}
-
-static void obj__unref_(Object *obj) {
-  IGNORE obj_unref(obj);
-}
-
-// NOTE: call before destroying an obj
-void obj__destroy(Object *obj);
-
-#define OBJ_CREATE_T(A, T) obj_create((A), sizeof(T))
-
 void str_sweep();
 
 void sweep() {
@@ -207,23 +96,6 @@ void sweep() {
   }
 
   live = newlive;
-}
-
-[[deprecated("use Context.stack")]]
-Array stack;
-
-void obj_push(Object *obj) {
-  arr_push(&stack, sizeof(Object *), (const void *)&obj);
-}
-
-Object *obj_pop() {
-  Object *obj;
-
-  if (!arr_pop(&stack, sizeof(Object *), (void *)&obj)) {
-    // TODO: fail? cannot pop empty stack.
-  }
-
-  return obj;
 }
 
 typedef enum {
@@ -460,7 +332,7 @@ Array string_data;
 [[deprecated("use Context.string_available")]]
 Array string_available;
 
-[[deprecated("use Context.stringd")]]
+[[deprecated("use Context.strings")]]
 String *strings = NULL;
 
 void arr_remove(Array *arr, size_t size, size_t offset) {
@@ -657,12 +529,12 @@ void obj__destroy(Object *obj) {
 
   switch (HEADER_GET_TAG(obj->header)) {
 
-  case OBJ_SLOTS: {
+  case OT_SLOTS: {
     ObjSlots *data = obj_payload(obj);
     tbl_free(&data->slots);
   } break;
 
-  case OBJ_CLOSURE: {
+  case OT_METHOD: {
     ObjClosure *data = obj_payload(obj);
     arr_free(&data->parameters);
     arr_free(&data->literals);
@@ -685,7 +557,7 @@ void obj_visit(Object *obj, FnVisitor visit) {
   visit(obj);
 
   switch (HEADER_GET_TAG(obj->header)) {
-  case OBJ_SLOTS: {
+  case OT_SLOTS: {
     ObjSlots *data = obj_payload(obj);
 
     Object *ref = NULL;
@@ -698,7 +570,7 @@ void obj_visit(Object *obj, FnVisitor visit) {
     obj_visit(data->prototype, visit);
   } break;
 
-  case OBJ_CLOSURE: {
+  case OT_METHOD: {
     ObjClosure *data = obj_payload(obj);
 
     for (size_t i = 0; i < data->literals.size / sizeof(Object *); i++) {
@@ -710,7 +582,7 @@ void obj_visit(Object *obj, FnVisitor visit) {
     obj_visit(data->env, visit);
   }; break;
 
-  case OBJ_ACTIVATION: {
+  case OT_ACTIVATION: {
     ObjActivation *data = obj_payload(obj);
     obj_visit(data->parent, visit);
     obj_visit(data->caller, visit);
@@ -731,7 +603,7 @@ Object *base_prototypes[MAX_PROTOTYPES];
 Object *obj_getproto(Object *obj) {
   auto tag = HEADER_GET_TAG(obj->header);
 
-  if (tag == OBJ_SLOTS) {
+  if (tag == OT_SLOTS) {
     ObjSlots *data = obj_payload(obj);
 
     if (data->prototype != NULL) {
@@ -745,7 +617,7 @@ Object *obj_getproto(Object *obj) {
 Object *obj_create_slots(Object *prototype) {
   Object *obj = obj_create(sizeof(ObjSlots));
 
-  obj->header = HEADER_SET_TAG(0, OBJ_SLOTS);
+  obj->header = HEADER_SET_TAG(0, OT_SLOTS);
 
   ObjSlots *data = obj_payload(obj);
   data->prototype = prototype;
@@ -831,7 +703,7 @@ Object *obj_get(Object *obj, String *selector) {
     return NULL;
   }
 
-  if (obj_isa(obj, OBJ_SLOTS)) {
+  if (obj_isa(obj, OT_SLOTS)) {
     ObjSlots *data = obj_payload(obj);
     IGNORE data;
 
@@ -856,7 +728,7 @@ bool checkstack(size_t n) {
 bool obj_is_invokable(Object *obj) {
   auto tag = HEADER_GET_TAG(obj->header);
 
-  return (tag == OBJ_CLOSURE) || (tag == OBJ_CFUNCTION);
+  return (tag == OT_METHOD) || (tag == OT_CMETHOD);
 }
 
 void run_bytecode(size_t len, const uint8_t *code);
@@ -885,12 +757,12 @@ void obj_send(Object *recv, String *selector) {
 
   auto tag = HEADER_GET_TAG(invoked->header);
 
-  if (tag == OBJ_CFUNCTION) {
+  if (tag == OT_CMETHOD) {
     ObjCFunction *data = obj_payload(invoked);
     data->cfunction();
   }
 
-  if (tag == OBJ_CLOSURE) {
+  if (tag == OT_METHOD) {
     ObjClosure *data = obj_payload(invoked);
     run_bytecode(data->bytecode.size, data->bytecode.data);
   }
@@ -975,7 +847,7 @@ bool o__print() {
 Object *obj_create_cfunction(FnCFunction fun) {
   Object *obj = obj_create(sizeof(ObjCFunction));
 
-  obj->header = HEADER_SET_TAG(0, OBJ_CFUNCTION);
+  obj->header = HEADER_SET_TAG(0, OT_CMETHOD);
 
   ObjCFunction *data = obj_payload(obj);
   data->cfunction = fun;

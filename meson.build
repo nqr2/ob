@@ -9,6 +9,8 @@ project(
 src = [
   'src/Main.c',
   'src/Allocator.c',
+  'src/Object.c',
+  'src/Context.c',
 ]
 
 executable(
