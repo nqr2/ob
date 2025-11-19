@@ -6,5 +6,7 @@ project(
   ]
 )
 
+subdir('tap')
+
 subdir('ob')
 subdir('bin')
