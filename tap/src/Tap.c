@@ -60,7 +60,7 @@ void runtest(const Test *test, int index) {
     printf("not ");
   }
 
-  printf("ok %d - %s", index, test->name);
+  printf("ok %d - %s", index + 1, test->name);
 
   if (test->should_fail || skipped) {
     printf("# ");

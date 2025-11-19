@@ -1,5 +1,8 @@
 tests = [
   'empty_suite',
+  'passing_test',
+  'failing_test',
+  'skipped_test',
 ]
 
 foreach t : tests
