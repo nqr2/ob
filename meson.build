@@ -6,21 +6,5 @@ project(
   ]
 )
 
-src = [
-  'src/Main.c',
-  'src/Allocator.c',
-  'src/Object.c',
-  'src/Context.c',
-  'src/String.c',
-  'src/Array.c',
-  'src/Interner.c',
-  'src/Table.c',
-  'src/Hash.c',
-  'src/Bytecode.c',
-]
-
-executable(
-  'ob',
-  src,
-  include_directories: 'src'
-)
+subdir('ob')
+subdir('bin')
