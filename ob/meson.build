@@ -14,12 +14,12 @@ ob_src = [
 libOb = static_library(
   'ob',
   ob_src,
-  include_directories: 'src'
+  include_directories: 'include'
 )
 
 ob = declare_dependency(
   link_with: libOb,
-  include_directories: 'src'
+  include_directories: 'include'
 )
 
 subdir('tests')
