@@ -2,12 +2,16 @@
 #define CONTEXT_H_INCLUDED
 
 #include "Allocator.h"
-// #include "Object.h"
+#include "Object.h"
+
+#include "Array.h"
 
 typedef struct Context {
   Allocator *allocator;
 
-  // Obj objects;
+  Array stack;
+
+  Obj objects;
   // Obj *_prototype...
 } *Context;
 

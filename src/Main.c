@@ -5,69 +5,15 @@
 #include <string.h>
 
 #include "Allocator.h"
+#include "Array.h"
 #include "Macros.h"
 #include "Object.h"
 
 [[deprecated("use Context.allocator")]]
 Allocator *allocator;
 
-typedef void (*FnVisitor)(Object *obj);
-
-// NOTE: this also invokes visit on the obj in question
-void obj_visit(Object *obj, FnVisitor visit);
-
 typedef struct String String;
 void str_mark(String *str);
-
-typedef struct {
-  Allocator *allocator;
-  size_t size, capacity;
-  void *data;
-} Array;
-
-void arr_init(Array *arr, Allocator *alloc) {
-  arr->allocator = alloc;
-
-  arr->size = 0;
-  arr->capacity = 0;
-  arr->data = NULL;
-}
-
-void arr_free(Array *arr) {
-  deallocate(arr->allocator, arr->data);
-  arr_init(arr, NULL);
-}
-
-void arr_reserve(Array *arr, size_t newcap) {
-  auto capacity = stdc_bit_ceil(newcap);
-
-  if (capacity > arr->capacity) {
-    arr->capacity = capacity;
-    arr->data = reallocate(arr->allocator, arr->data, arr->capacity);
-  }
-}
-
-void arr_push(Array *arr, size_t len, const void *data) {
-  arr_reserve(arr, arr->size + len);
-
-  memcpy(((uint8_t *)arr->data) + arr->size, data, len);
-
-  arr->size += len;
-}
-
-bool arr_pop(Array *arr, size_t len, void *data) {
-  if (arr->size < len) {
-    return false;
-  }
-
-  arr->size -= len;
-
-  if (data != NULL) {
-    memcpy(data, ((uint8_t *)arr->data) + arr->size, len);
-  }
-
-  return true;
-}
 
 void str_sweep();
 
@@ -98,388 +44,13 @@ void sweep() {
   live = newlive;
 }
 
-typedef enum {
-  TES_EMPTY = 0,
-  TES_USED = 1,
-  TES_DEAD = 2,
-} TableEntryStatus;
+#include "Hash.h"
 
-typedef struct {
-  uint64_t key;
+#include "Table.h"
 
-  void *value;
-  TableEntryStatus status;
-} TableEntry;
+#include "String.h"
 
-typedef struct {
-  Allocator *allocator;
-  size_t length, capacity;
-  TableEntry *data;
-} Table;
-
-#define FNV_PRIME 0x00000100000001b3ull
-#define FNV_OFFSET 0xcbf29ce484222325ull
-
-uint64_t hash_continue(uint64_t state, size_t len, void const *ptr) {
-  const uint8_t *bytes = ptr;
-
-  for (size_t i = 0; i < len; i++) {
-    state ^= bytes[i];
-    state *= FNV_PRIME;
-  }
-
-  return state;
-}
-
-uint64_t hash_start(size_t len, const void *ptr) {
-  return hash_continue(FNV_OFFSET, len, ptr);
-}
-
-void tbl_init(Table *tbl, Allocator *alloc) {
-  tbl->allocator = alloc;
-  tbl->length = 0;
-  tbl->capacity = 0;
-  tbl->data = NULL;
-}
-
-void tbl_free(Table *tbl) {
-  deallocate(tbl->allocator, tbl->data);
-
-  tbl_init(tbl, NULL);
-}
-
-TableEntry *tbl__find(size_t capacity, TableEntry *entries, uint64_t key) {
-  auto index = key % capacity;
-
-  while (true) {
-    auto entry = &entries[index];
-
-    if (entry->key == key || entry->status != TES_USED) {
-      return entry;
-    }
-
-    index = (index + 1) % capacity;
-  }
-
-  return NULL;
-}
-
-void tbl_reserve(Table *tbl, size_t newcap) {
-  newcap = stdc_bit_ceil(newcap);
-  auto new_entries =
-      (TableEntry *)allocate(tbl->allocator, newcap * sizeof(TableEntry));
-
-  memset(new_entries, 0, newcap * sizeof(TableEntry));
-
-  tbl->length = 0;
-
-  for (size_t i = 0; i < tbl->capacity; i++) {
-    auto entry = &tbl->data[i];
-    TableEntry *dest = NULL;
-
-    // shouldnt this be != TES_USED?
-    // else it keeps all tombstones???
-    if (entry->status == TES_EMPTY) {
-      continue;
-    }
-
-    dest = tbl__find(newcap, new_entries, entry->key);
-
-    memcpy(dest, entry, sizeof(TableEntry));
-
-    tbl->length++;
-  }
-
-  deallocate(tbl->allocator, tbl->data);
-
-  tbl->data = new_entries;
-  tbl->capacity = newcap;
-}
-
-// return true if entry is new
-bool tbl_set(Table *tbl, uint64_t key, void *value) {
-  TableEntry *entry = NULL;
-  auto is_new = false;
-
-  if (2 * (tbl->length + 1) > tbl->capacity) {
-    tbl_reserve(tbl, tbl->length + 1);
-  }
-
-  entry = tbl__find(tbl->capacity, tbl->data, key);
-  is_new = entry->status != TES_USED;
-
-  if (is_new) {
-    tbl->length++;
-  }
-
-  entry->key = key;
-  entry->value = value;
-  entry->status = TES_USED;
-  return is_new;
-}
-
-void tbl_merge(Table *tbl, Table *from) {
-  for (size_t i = 0; i < from->capacity; i++) {
-    auto entry = &from->data[i];
-
-    if (entry->status != TES_USED) {
-      tbl_set(tbl, entry->key, entry->value);
-    }
-  }
-}
-
-bool tbl_get(Table *tbl, uint64_t key, void **value) {
-  if (tbl->length == 0) {
-    return false;
-  }
-
-  auto index = key % tbl->capacity;
-  auto start = index;
-
-  while (true) {
-    auto entry = &tbl->data[index];
-
-    if (entry->key == key && entry->status == TES_USED) {
-      if (value != NULL) {
-        *value = entry->value;
-      }
-
-      return true;
-    }
-
-    index += 1;
-    index %= tbl->capacity;
-
-    if (index == start) {
-      return false;
-    }
-  }
-
-  return false;
-}
-
-bool tbl_remove(Table *table, uint64_t key) {
-  TableEntry *entry = NULL;
-
-  if (table->length == 0) {
-    return false;
-  }
-
-  entry = tbl__find(table->capacity, table->data, key);
-
-  if (entry->status != TES_USED) {
-    return false;
-  }
-
-  entry->status = TES_DEAD;
-  return true;
-}
-
-bool tbl_iterate(Table *table, uint64_t *index, uint64_t *key, void **value) {
-  uint64_t current_key = *index;
-
-  while (current_key < table->capacity) {
-    auto entry = &table->data[current_key];
-
-    if (entry->status == TES_USED) {
-      if (key != NULL) {
-        *key = entry->key;
-      }
-
-      if (key != NULL) {
-        *value = entry->value;
-      }
-
-      break;
-    }
-
-    current_key += 1;
-  }
-
-  if (current_key >= table->capacity) {
-    return false;
-  }
-
-  current_key += 1;
-
-  *index = current_key;
-  return true;
-}
-
-#define STRING_MARK_BIT 0x8000'0000'0000'0000
-#define STRING_LENGTH_MASK 0x7fff'ffff'ffff'ffff
-
-typedef struct String {
-  uint64_t length;
-  const char *data;
-  struct String *next;
-} String;
-
-typedef struct {
-  Allocator *allocator;
-  Array data;     // data of every interned symbol
-  Table interned; // table of offsets
-} Interner;
-
-typedef struct {
-  size_t offset;
-  size_t size;
-} StrAvailable;
-
-[[deprecated("use Context.string_data")]]
-Array string_data;
-
-[[deprecated("use Context.string_available")]]
-Array string_available;
-
-[[deprecated("use Context.strings")]]
-String *strings = NULL;
-
-void arr_remove(Array *arr, size_t size, size_t offset) {
-  uint8_t *bytes = arr->data;
-  memcpy(bytes + offset, (bytes + arr->size - size), size);
-
-  arr_pop(arr, size, NULL);
-}
-
-String *str_create(size_t len, const char *data) {
-  char *target = NULL;
-
-  for (size_t i = 0; i < string_available.size / sizeof(StrAvailable); i++) {
-    StrAvailable *avail = ((StrAvailable *)string_available.data) + i;
-
-    if (len <= avail->size) {
-      target = ((char *)string_data.data) + avail->offset;
-      memcpy(target, data, len);
-
-      avail->size -= len;
-
-      if (avail->size == 0) {
-        arr_remove(&string_available, sizeof(StrAvailable),
-                   i * sizeof(StrAvailable));
-        i -= 1;
-      }
-    }
-  }
-
-  if (target == NULL) {
-    arr_push(&string_data, len, data);
-    target = ((char *)string_data.data) + string_data.size - len;
-  }
-
-  String *str = allocate(allocator, sizeof(String));
-
-  str->data = target;
-  str->length = len;
-
-  str->next = strings;
-  strings = str;
-
-  return str;
-}
-
-size_t str_len(String *str) {
-  return str->length & STRING_LENGTH_MASK;
-}
-
-void str_mark(String *str) {
-  str->length |= STRING_MARK_BIT;
-}
-
-void str_unmark(String *str) {
-  str->length &= STRING_LENGTH_MASK;
-}
-
-bool str_get_mark(String *str) {
-  return (str->length & STRING_MARK_BIT) != 0;
-}
-
-void str__delete(String *str) {
-  StrAvailable avail = {};
-
-  avail.offset = (str->data) - ((char *)string_data.data);
-  avail.size = str->length;
-
-  arr_push(&string_available, sizeof(StrAvailable), (void *)&avail);
-}
-
-void str_sweep() {
-  String *new = NULL;
-
-  while (strings != NULL) {
-    auto next = strings->next;
-
-    if (str_get_mark(strings)) {
-      str_unmark(strings);
-    } else {
-      str__delete(strings);
-      deallocate(allocator, strings);
-      strings = NULL;
-    }
-
-    if (strings != NULL) {
-      strings->next = new;
-      new = strings;
-    }
-
-    strings = next;
-  }
-
-  strings = new;
-}
-
-void intr_init(Interner *intr, Allocator *alloc) {
-  memset(intr, 0, sizeof(Interner));
-  intr->allocator = alloc;
-  arr_init(&intr->data, alloc);
-  tbl_init(&intr->interned, alloc);
-}
-
-void intr_free(Interner *intr) {
-  arr_free(&intr->data);
-  tbl_free(&intr->interned);
-
-  auto str = strings;
-
-  while (str != NULL) {
-    auto next = str->next;
-
-    deallocate(intr->allocator, str);
-
-    str = next;
-  }
-
-  intr_init(intr, NULL);
-}
-
-// TODO: uninterning, etc
-String *intr_intern(Interner *intr, size_t length, const char *data) {
-  uint64_t hash = hash_start(length, data);
-
-  String *str = NULL;
-  if (!tbl_get(&intr->interned, hash, (void **)&str)) {
-    str = (String *)allocate(intr->allocator, sizeof(String));
-
-    arr_push(&intr->data, length, data);
-
-    str->next = strings;
-    str->data = ((const char *)&intr->data.data) + (intr->data.size - length);
-
-    strings = str;
-
-    tbl_set(&intr->interned, hash, str);
-  }
-
-  return str;
-}
-
-String *intr_find(Interner *intr, uint64_t hash) {
-  String *str = NULL;
-
-  tbl_get(&intr->interned, hash, (void **)&str);
-
-  return str;
-}
+#include "Interner.h"
 
 typedef struct {
   String *inner;
@@ -495,13 +66,13 @@ typedef struct {
   Array parameters;
   Array bytecode;
   Array literals;
-} ObjClosure;
+} ObjMethod;
 
-typedef bool (*FnCFunction)();
+typedef bool (*FnCMethod)();
 
 typedef struct {
-  FnCFunction cfunction;
-} ObjCFunction;
+  FnCMethod cfunction;
+} ObjCMethod;
 
 typedef struct {
   void *cdata;
@@ -535,7 +106,7 @@ void obj__destroy(Object *obj) {
   } break;
 
   case OT_METHOD: {
-    ObjClosure *data = obj_payload(obj);
+    ObjMethod *data = obj_payload(obj);
     arr_free(&data->parameters);
     arr_free(&data->literals);
     arr_free(&data->bytecode);
@@ -571,7 +142,7 @@ void obj_visit(Object *obj, FnVisitor visit) {
   } break;
 
   case OT_METHOD: {
-    ObjClosure *data = obj_payload(obj);
+    ObjMethod *data = obj_payload(obj);
 
     for (size_t i = 0; i < data->literals.size / sizeof(Object *); i++) {
       Object *item = ((Object **)data->literals.data)[i];
@@ -758,12 +329,12 @@ void obj_send(Object *recv, String *selector) {
   auto tag = HEADER_GET_TAG(invoked->header);
 
   if (tag == OT_CMETHOD) {
-    ObjCFunction *data = obj_payload(invoked);
+    ObjCMethod *data = obj_payload(invoked);
     data->cfunction();
   }
 
   if (tag == OT_METHOD) {
-    ObjClosure *data = obj_payload(invoked);
+    ObjMethod *data = obj_payload(invoked);
     run_bytecode(data->bytecode.size, data->bytecode.data);
   }
 
@@ -786,7 +357,7 @@ void run_bytecode(size_t len, const uint8_t *code) {
     auto this_index = (index << 4) | data;
 
     ObjActivation *act = obj_payload(activation);
-    ObjClosure *method = obj_payload(act->method);
+    ObjMethod *method = obj_payload(act->method);
 
     Object *literal = ((Object **)method->literals.data)[this_index];
 
@@ -844,12 +415,12 @@ bool o__print() {
   return false;
 }
 
-Object *obj_create_cfunction(FnCFunction fun) {
-  Object *obj = obj_create(sizeof(ObjCFunction));
+Object *obj_create_cfunction(FnCMethod fun) {
+  Object *obj = obj_create(sizeof(ObjCMethod));
 
   obj->header = HEADER_SET_TAG(0, OT_CMETHOD);
 
-  ObjCFunction *data = obj_payload(obj);
+  ObjCMethod *data = obj_payload(obj);
   data->cfunction = fun;
 
   return obj;
