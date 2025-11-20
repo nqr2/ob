@@ -23,11 +23,11 @@ void bailout();
 
 void test(const Test *suite);
 
-#ifdef ASSERT
-#undef ASSERT
+#ifdef TAP_ASSERT
+#undef TAP_ASSERT
 #endif
 
-#define ASSERT(Condition)                                                      \
+#define TAP_ASSERT(Condition)                                                  \
   do {                                                                         \
     if (!(Condition)) {                                                        \
       fail_with(#Condition);                                                   \
