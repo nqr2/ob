@@ -10,4 +10,7 @@
 uint64_t hash_continue(uint64_t state, size_t len, const void *ptr);
 uint64_t hash_start(size_t len, const void *ptr);
 
+#define hash_literal(Literal)                                                  \
+  hash_start(sizeof("" Literal) - 1, (const void *)"" Literal "")
+
 #endif

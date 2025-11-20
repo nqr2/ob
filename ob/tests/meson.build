@@ -1,5 +1,6 @@
 tests = [
-  'assert'
+  'assert',
+  'hash',
 ]
 
 foreach t : tests
