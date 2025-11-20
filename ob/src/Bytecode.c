@@ -62,3 +62,17 @@ void bc_run(Context ctx, size_t len, const uint8_t *code) {
     index = 0;
   }
 }
+
+void bc_append_insn(Array *out, Instruction insn) {
+  arr_push(out, sizeof(Instruction), &insn);
+}
+
+uint8_t bc_append_index(Array *out, uint64_t index) {
+  while (index > 15) {
+    uint8_t lit = (index & 0xf) << 4;
+    bc_append_insn(out, OP_EXTEND | lit);
+    index >>= 4;
+  }
+
+  return index;
+}

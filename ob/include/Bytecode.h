@@ -1,6 +1,7 @@
 #ifndef BYTECODE_H_INCLUDED
 #define BYTECODE_H_INCLUDED
 
+#include "Array.h"
 #include "ContextFwd.h"
 
 #include <stddef.h>
@@ -31,5 +32,8 @@ typedef enum {
 } Opcode;
 
 void bc_run(Context ctx, size_t len, const uint8_t *code);
+
+void bc_append_insn(Array *out, Instruction insn);
+uint8_t bc_append_index(Array *out, uint64_t index);
 
 #endif
