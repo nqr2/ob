@@ -1,4 +1,5 @@
 tests = [
+  'allocator',
   'assert',
   'hash',
 ]

@@ -1,4 +1,5 @@
 #include "Allocator.h"
+#include "Assert.h"
 #include "Macros.h"
 
 #include <stdlib.h>
@@ -31,7 +32,13 @@ Allocator get_libc_allocator() {
 }
 
 void *allocate(Allocator *alloc, size_t size) {
+  if (size == 0) {
+    return NULL;
+  }
+
+  ASSERT_NONNULL(alloc->allocate);
   void *ptr = alloc->allocate(alloc->self, size);
+  ASSERT_NONNULL(ptr);
 
   memset(ptr, 0, size);
 
@@ -39,11 +46,31 @@ void *allocate(Allocator *alloc, size_t size) {
 }
 
 void *reallocate(Allocator *alloc, void *source, size_t new) {
+  ASSERT_NONNULL(alloc);
+
+  if (new == 0) {
+    deallocate(alloc, source);
+    return NULL;
+  }
+
+  if (source == 0) {
+    return allocate(alloc, new);
+  }
+
+  ASSERT_NONNULL(alloc->reallocate);
   void *ptr = alloc->reallocate(alloc->self, source, new);
+  ASSERT_NONNULL(ptr);
 
   return ptr;
 }
 
 void deallocate(Allocator *alloc, void *source) {
+  ASSERT_NONNULL(alloc);
+
+  if (source == 0) {
+    return;
+  }
+
+  ASSERT_NONNULL(alloc->deallocate);
   alloc->deallocate(alloc->self, source);
 }

@@ -10,6 +10,10 @@
     }                                                                          \
   } while (false)
 
+#define ASSERT_NONNULL(P) ASSERT(P != NULL, "unexpected NULL: %p", (P))
+
+#define ASSERT_NULL(P) ASSERT(P == NULL, "unexpected non-NULL: %p", (P))
+
 typedef void (*FnAssertFailure)();
 
 void assert__report(const char *file, int line, const char *function,
