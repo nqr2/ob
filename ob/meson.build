@@ -1,14 +1,15 @@
 ob_src = [
   'src/Allocator.c',
-  'src/Object.c',
-  'src/Context.c',
-  'src/String.c',
   'src/Array.c',
-  'src/Interner.c',
-  'src/Table.c',
-  'src/Hash.c',
-  'src/Bytecode.c',
   'src/Assert.c',
+  'src/Bytecode.c',
+  'src/Context.c',
+  'src/Exn.c',
+  'src/Hash.c',
+  'src/Interner.c',
+  'src/Object.c',
+  'src/String.c',
+  'src/Table.c',
 ]
 
 libOb = static_library(
