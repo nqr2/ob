@@ -19,4 +19,8 @@ bool arr_pop(Array *arr, size_t len, void *data);
 
 void arr_remove(Array *arr, size_t size, size_t offset);
 
+size_t arr_length(Array *arr, size_t size);
+void *arr_at(Array *arr, size_t size, size_t index);
+void *arr_last(Array *arr, size_t size);
+
 #endif

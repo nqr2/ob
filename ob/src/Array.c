@@ -53,3 +53,17 @@ void arr_remove(Array *arr, size_t size, size_t offset) {
 
   arr_pop(arr, size, NULL);
 }
+
+size_t arr_length(Array *arr, size_t size) {
+  return arr->size / size;
+}
+
+void *arr_at(Array *arr, size_t size, size_t index) {
+  uint8_t *bytes = arr->data;
+
+  return bytes + index * size;
+}
+
+void *arr_last(Array *arr, size_t size) {
+  return arr_at(arr, size, arr_length(arr, size) - 1);
+}

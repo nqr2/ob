@@ -5,6 +5,8 @@
 
 #include <setjmp.h>
 
+typedef int Exncode;
+
 typedef union {
   void *pointer;
   size_t integer;
@@ -32,7 +34,7 @@ void exn_init(Exnbuf *buf, Allocator *alloc);
 void exn_free(Exnbuf *buf);
 
 const Exndata *exn_data(Exnbuf *buf);
-void exn_throw(Exnbuf *buf, Exndata data);
+void exn_throw(Exnbuf *buf, Exncode code, Exndata data);
 void exn_rethrow(Exnbuf *buf);
 
 #endif
