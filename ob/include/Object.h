@@ -89,7 +89,7 @@ typedef struct {
 #define HEADER_GET_RC(H) ((H) >> 5)
 #define HEADER_SET_RC(H, C) (((H) & 0x1f) | ((C) << 5))
 
-#define RC_MAX 32
+#define RC_MAX 0x1f
 
 typedef void (*FnVisitor)(Obj obj);
 
