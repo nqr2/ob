@@ -8,6 +8,7 @@ ob_src = [
   'src/Hash.c',
   'src/Interner.c',
   'src/Object.c',
+  'src/Parse.c',
   'src/String.c',
   'src/Table.c',
 ]

@@ -194,6 +194,10 @@ bool obj_isa(Obj obj, ObjectTag tag) {
 }
 
 Obj obj_getproto(Context ctx, Obj obj) {
+  if (obj == ctx->proto_nil) {
+    return NULL;
+  }
+
   switch (obj_tag(obj)) {
   case OT_NIL:
     return ctx->proto_nil;
