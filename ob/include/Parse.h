@@ -4,11 +4,13 @@
 #include "ContextFwd.h"
 #include "Object.h"
 
-/* Parse some text, and return a parsed object. Returns the last character read.
- */
-const char *read(Context ctx, Obj *output, size_t length, const char *text);
-
 /* Parse some text, and return a unary closure */
-Obj parse(Context ctx, size_t length, const char *text);
+Obj load_file(Context ctx, size_t length, const char *text);
+
+/* Parse some text, and run it. */
+void run_file(Context ctx, size_t length, const char *text);
+
+#define load_literal(Ctx, Lit) load_file((Ctx), sizeof(Lit) - 1, "" Lit)
+#define run_literal(Ctx, Lit) load_file((Ctx), sizeof(Lit) - 1, "" Lit)
 
 #endif

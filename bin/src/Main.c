@@ -2,6 +2,7 @@
 
 #include "Context.h"
 #include "Hash.h"
+#include "Parse.h"
 
 #include <stdio.h>
 
@@ -15,6 +16,8 @@ int main() {
   auto alloc = get_libc_allocator();
 
   auto ctx = ctx_create(&alloc);
+
+  run_literal(ctx, "");
 
   auto obj = obj_create_slots(ctx, NULL);
 
