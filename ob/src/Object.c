@@ -297,5 +297,5 @@ void obj_send(Context ctx, Object *recv, String *selector) {
 
 bool obj_is_invocable(Object *obj) {
   auto tag = HEADER_GET_TAG(obj->header);
-  return (tag == OT_METHOD) || (tag == OT_CMETHOD);
+  return ((tag == OT_METHOD) || (tag == OT_CMETHOD)) != 0;
 }
