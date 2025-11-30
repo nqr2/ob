@@ -81,10 +81,10 @@ typedef struct {
 } ObjActivation;
 
 #define HEADER_GET_TAG(H) ((Header)((H) & 0xf))
-#define HEADER_SET_TAG(H, T) ((Header)(((H) & 0xffff'fff0) | ((T) & 0xf)))
+#define HEADER_SET_TAG(H, T) ((Header)(((H) & 0xfff0) | ((T) & 0xf)))
 
 #define HEADER_GET_MARK(H) (((H) & 0x10) != 0)
-#define HEADER_SET_MARK(H, M) ((Header)(((H) & ~0x10) | (((M) != 0) << 4)))
+#define HEADER_SET_MARK(H, M) ((Header)(((H) & 0xffef) | (((M) != 0) << 4)))
 
 #define HEADER_GET_RC(H) ((H) >> 5)
 #define HEADER_SET_RC(H, C) (((H) & 0x1f) | ((C) << 5))

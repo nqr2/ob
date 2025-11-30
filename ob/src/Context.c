@@ -114,7 +114,7 @@ Obj ctx_alloc_real(Context ctx, double number) {
 
 Obj ctx_alloc_method(Context ctx) {
   auto obj = ctx_allocate(ctx, sizeof(ObjMethod));
-  obj->header = HEADER_SET_TAG(0, OT_SLOTS);
+  obj->header = HEADER_SET_TAG(0, OT_METHOD);
 
   ObjMethod *method = obj_get_data(obj);
 
@@ -180,15 +180,11 @@ void ctx_sweep(Context ctx) {
 
     if (HEADER_GET_MARK(live->header)) {
       live->header = HEADER_SET_MARK(live->header, false);
+      live->next = newlive;
+      newlive = live;
     } else {
       obj_destroy(live);
       deallocate(ctx->allocator, live);
-      live = NULL;
-    }
-
-    if (live != NULL) {
-      live->next = newlive;
-      newlive = live;
     }
 
     live = next;

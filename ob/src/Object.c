@@ -51,6 +51,10 @@ Obj obj_ref(Obj obj) {
 
 // true if rc=0
 bool obj_unref(Obj obj) {
+  if (obj == NULL) {
+    return false;
+  }
+
   auto refcount = HEADER_GET_RC(obj->header);
 
   if (refcount < RC_MAX) {
@@ -61,15 +65,8 @@ bool obj_unref(Obj obj) {
   return refcount == 0;
 }
 
-static void obj__unref_(Obj obj) {
-  (void)obj_unref(obj);
-}
-
-void obj_destroy(Object *obj) {
-  obj_visit(obj, obj__unref_);
-
-  switch (HEADER_GET_TAG(obj->header)) {
-
+void obj_destroy(Obj obj) {
+  switch (obj_get_tag(obj)) {
   case OT_SLOTS: {
     ObjSlots *data = obj_get_data(obj);
     tbl_free(&data->slots);
