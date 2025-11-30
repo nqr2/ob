@@ -109,10 +109,6 @@ bool obj_unref(Obj obj);
 // NOTE: call before destroying an obj
 void obj_destroy(Obj obj);
 
-// bool obj_isa(Obj obj, ObjectTag tag);
-
-// bool obj_is_invocable(Object *obj);
-
 #define OBJ_ISA(Obj, Tag) (obj_get_tag((Obj)) == (Tag))
 
 #define OBJ_IS_INVOCABLE(Obj)                                                  \

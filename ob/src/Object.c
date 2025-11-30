@@ -2,6 +2,14 @@
 
 #include "Table.h"
 
+ObjectTag obj_get_tag(Obj obj) {
+  if (obj == NULL) {
+    return OT_NIL;
+  }
+
+  return HEADER_GET_TAG(obj->header);
+}
+
 void *obj_get_data(Obj obj) {
   auto bytes = (uint8_t *)obj;
   return bytes + sizeof(Object);
@@ -127,21 +135,4 @@ void obj_visit(Object *obj, FnVisitor visit) {
   default:
     break;
   }
-}
-
-ObjectTag obj_get_tag(Obj obj) {
-  if (obj == NULL) {
-    return OT_NIL;
-  }
-
-  return HEADER_GET_TAG(obj->header);
-}
-
-bool obj_isa(Obj obj, ObjectTag tag) {
-  return obj_get_tag(obj) == tag;
-}
-
-bool obj_is_invocable(Object *obj) {
-  auto tag = HEADER_GET_TAG(obj->header);
-  return ((tag == OT_METHOD) || (tag == OT_CMETHOD)) != 0;
 }
