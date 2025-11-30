@@ -29,8 +29,14 @@ Context ctx_create(Allocator *alloc);
 void ctx_destroy(Context ctx);
 
 Obj ctx_allocate(Context ctx, size_t payload_size);
+Obj ctx_alloc_symbol(Context ctx, String *symbol);
+Obj ctx_alloc_string(Context ctx, String *string);
 Obj ctx_alloc_slots(Context ctx, Obj prototype);
+Obj ctx_alloc_integer(Context ctx, int64_t number);
+Obj ctx_alloc_real(Context ctx, double number);
+Obj ctx_alloc_method(Context ctx);
 Obj ctx_alloc_cmethod(Context ctx, FnCMethod method);
+Obj ctx_alloc_cdata(Context ctx, void *cdata);
 
 void ctx_mark(Context ctx);
 void ctx_sweep(Context ctx);

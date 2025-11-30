@@ -60,8 +60,28 @@ Obj ctx_allocate(Context ctx, size_t payload_size) {
   return obj;
 }
 
+Obj ctx_alloc_symbol(Context ctx, String *symbol) {
+  auto obj = ctx_allocate(ctx, sizeof(ObjSymbol));
+  obj->header = HEADER_SET_TAG(0, OT_SYMBOL);
+
+  ObjSymbol *sym = obj_get_data(obj);
+  sym->inner = symbol;
+
+  return obj;
+}
+
+Obj ctx_alloc_string(Context ctx, String *string) {
+  auto obj = ctx_allocate(ctx, sizeof(ObjString));
+  obj->header = HEADER_SET_TAG(0, OT_STRING);
+
+  ObjString *str = obj_get_data(obj);
+  str->inner = string;
+
+  return obj;
+}
+
 Obj ctx_alloc_slots(Context ctx, Obj prototype) {
-  Obj obj = ctx_allocate(ctx, sizeof(ObjSlots));
+  auto obj = ctx_allocate(ctx, sizeof(ObjSlots));
   obj->header = HEADER_SET_TAG(0, OT_SLOTS);
 
   ObjSlots *slots = obj_get_data(obj);
@@ -72,12 +92,58 @@ Obj ctx_alloc_slots(Context ctx, Obj prototype) {
   return obj;
 }
 
-Object *ctx_alloc_cmethod(Context ctx, FnCMethod method) {
-  Object *obj = ctx_allocate(ctx, sizeof(ObjCMethod));
+Obj ctx_alloc_integer(Context ctx, int64_t number) {
+  auto obj = ctx_allocate(ctx, sizeof(ObjInteger));
+  obj->header = HEADER_SET_TAG(0, OT_INTEGER);
+
+  ObjInteger *num = obj_get_data(obj);
+  num->number = number;
+
+  return obj;
+}
+
+Obj ctx_alloc_real(Context ctx, double number) {
+  auto obj = ctx_allocate(ctx, sizeof(ObjReal));
+  obj->header = HEADER_SET_TAG(0, OT_REAL);
+
+  ObjReal *num = obj_get_data(obj);
+  num->number = number;
+
+  return obj;
+}
+
+Obj ctx_alloc_method(Context ctx) {
+  auto obj = ctx_allocate(ctx, sizeof(ObjMethod));
+  obj->header = HEADER_SET_TAG(0, OT_SLOTS);
+
+  ObjMethod *method = obj_get_data(obj);
+
+  // TODO: bind any later activation environments to this env
+  method->env = ctx->activation;
+
+  arr_init(&method->bytecode, ctx->allocator);
+  arr_init(&method->literals, ctx->allocator);
+  arr_init(&method->parameters, ctx->allocator);
+
+  return obj;
+}
+
+Obj ctx_alloc_cmethod(Context ctx, FnCMethod method) {
+  auto obj = ctx_allocate(ctx, sizeof(ObjCMethod));
   obj->header = HEADER_SET_TAG(0, OT_CMETHOD);
 
   ObjCMethod *data = obj_get_data(obj);
   data->method = method;
+
+  return obj;
+}
+
+Obj ctx_alloc_cdata(Context ctx, void *cdata) {
+  auto obj = ctx_allocate(ctx, sizeof(ObjCData));
+  obj->header = HEADER_SET_TAG(0, OT_CMETHOD);
+
+  ObjCData *data = obj_get_data(obj);
+  data->cdata = cdata;
 
   return obj;
 }
