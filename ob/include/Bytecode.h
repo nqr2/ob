@@ -12,6 +12,8 @@ typedef uint8_t Instruction;
 #define INSN_GET_OPCODE(I) ((I) & 0xf)
 #define INSN_GET_DATA(I) ((I) >> 4)
 
+#define INSN_MAKE(I, D) ((I) | ((D) << 4))
+
 typedef enum {
   OP_PUSH_LITERAL = 0,  // push a literal
   OP_SEND = 1,          // send a message to a known receiver

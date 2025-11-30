@@ -11,6 +11,6 @@ Obj load_file(Context ctx, size_t length, const char *text);
 void run_file(Context ctx, size_t length, const char *text);
 
 #define load_literal(Ctx, Lit) load_file((Ctx), sizeof(Lit) - 1, "" Lit)
-#define run_literal(Ctx, Lit) load_file((Ctx), sizeof(Lit) - 1, "" Lit)
+#define run_literal(Ctx, Lit) run_file((Ctx), sizeof(Lit) - 1, "" Lit)
 
 #endif

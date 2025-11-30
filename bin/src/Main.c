@@ -23,7 +23,7 @@ int main() {
   auto print = ctx_alloc_cmethod(ctx, o__print);
   tbl_set(&p_int->slots, hash_start(sel->length, sel->data), (void *)print);
 
-  run_literal(ctx, "  1   \"ignore this comment!\"   print  ");
+  run_literal(ctx, "  1   \"ignore this comment!\"   print  .");
 
   ctx_sweep(ctx);
 

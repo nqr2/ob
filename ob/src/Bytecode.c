@@ -3,6 +3,8 @@
 #include "Context.h"
 #include "Object.h"
 
+#include <stdio.h>
+
 void bc_run(Context ctx, size_t len, const uint8_t *code) {
   uint64_t index = 0;
 
@@ -12,20 +14,22 @@ void bc_run(Context ctx, size_t len, const uint8_t *code) {
 
     auto this_index = (index << 4) | data;
 
+    printf("run: %x %lu\n", opcode, this_index);
+
     ObjActivation *act = obj_get_data(ctx->activation);
     ObjMethod *method = obj_get_data(act->method);
 
-    Object *literal = ((Object **)method->literals.data)[this_index];
+    Obj literal = ((Obj *)method->literals.data)[this_index];
 
     switch (opcode) {
     case OP_PUSH_LITERAL: {
-      auto obj = &((Object **)method->literals.data)[this_index];
-      arr_push(&ctx->stack, sizeof(Object *), (void *)obj);
+      auto obj = ((Obj *)method->literals.data)[this_index];
+      arr_push(&ctx->stack, sizeof(Obj), (void *)&obj);
     }; break;
 
     case OP_SEND: {
-      Object *recv = NULL;
-      arr_pop(&ctx->stack, sizeof(Object *), (void *)&recv);
+      Obj recv = NULL;
+      arr_pop(&ctx->stack, sizeof(Obj), (void *)&recv);
 
       ObjString *selector = obj_get_data(literal);
 
@@ -70,8 +74,7 @@ void bc_append_insn(Array *out, Instruction insn) {
 // NOLINTBEGIN
 uint8_t bc_append_index(Array *out, uint64_t index) {
   while (index > 15) {
-    uint8_t lit = (index & 0xf) << 4;
-    bc_append_insn(out, OP_EXTEND | lit);
+    bc_append_insn(out, INSN_MAKE(OP_EXTEND, index & 0xf));
     index >>= 4;
   }
 
