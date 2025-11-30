@@ -7,6 +7,7 @@ ob_src = [
   'src/Exn.c',
   'src/Hash.c',
   'src/Interner.c',
+  'src/Number.c',
   'src/Object.c',
   'src/Parse.c',
   'src/String.c',
