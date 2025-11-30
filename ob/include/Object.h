@@ -96,7 +96,8 @@ typedef void (*FnVisitor)(Obj obj);
 // NOTE: this also invokes visit on the obj in question
 void obj_visit(Obj obj, FnVisitor visit);
 
-void *obj_payload(Obj obj);
+ObjectTag obj_get_tag(Obj obj);
+void *obj_get_data(Obj obj);
 
 void obj_mark(Obj obj);
 
@@ -105,29 +106,16 @@ Obj obj_ref(Obj obj);
 // true if rc=0
 bool obj_unref(Obj obj);
 
-Obj obj_create(Context ctx, size_t payload_size);
-
 // NOTE: call before destroying an obj
 void obj_destroy(Obj obj);
 
-void obj_push(Context ctx, Obj obj);
+// bool obj_isa(Obj obj, ObjectTag tag);
 
-Obj obj_pop(Context ctx);
+// bool obj_is_invocable(Object *obj);
 
-Obj obj_create_slots(Context ctx, Obj prototype);
+#define OBJ_ISA(Obj, Tag) (obj_get_tag((Obj)) == (Tag))
 
-Object *obj_create_cmethod(Context ctx, FnCMethod method);
-
-ObjectTag obj_tag(Obj obj);
-
-bool obj_isa(Obj obj, ObjectTag tag);
-
-Object *obj_getproto(Context ctx, Object *obj);
-
-Object *obj_get(Context ctx, Object *obj, String *selector);
-
-void obj_send(Context ctx, Object *recv, String *selector);
-
-bool obj_is_invocable(Object *obj);
+#define OBJ_IS_INVOCABLE(Obj)                                                  \
+  (OBJ_ISA((Obj), OT_METHOD) || OBJ_ISA((Obj), OT_CMETHOD))
 
 #endif

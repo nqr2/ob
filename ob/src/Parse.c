@@ -34,6 +34,6 @@ Obj load_file(Context ctx, size_t length, const char *text) {
 
 void run_file(Context ctx, size_t length, const char *text) {
   auto chunk = load_file(ctx, length, text);
-  ObjMethod *method = obj_payload(chunk);
+  ObjMethod *method = obj_get_data(chunk);
   bc_run(ctx, method->bytecode.size, method->bytecode.data);
 }

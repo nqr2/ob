@@ -28,12 +28,22 @@ typedef struct Context {
 Context ctx_create(Allocator *alloc);
 void ctx_destroy(Context ctx);
 
+Obj ctx_allocate(Context ctx, size_t payload_size);
+Obj ctx_alloc_slots(Context ctx, Obj prototype);
+Obj ctx_alloc_cmethod(Context ctx, FnCMethod method);
+
 void ctx_mark(Context ctx);
 void ctx_sweep(Context ctx);
 
 void ctx_enter_activation(Context ctx, Obj caller, Obj method, Obj receiver);
 void ctx_leave_activation(Context ctx);
 
+void ctx_push(Context ctx, Obj obj);
+Obj ctx_pop(Context ctx);
 bool ctx_checkstack(Context ctx, size_t narg);
+
+Obj ctx_get_prototype(Context ctx, Obj obj);
+Obj ctx_get_slot(Context ctx, Obj obj, String *selector);
+void ctx_send(Context ctx, Obj recv, String *selector);
 
 #endif

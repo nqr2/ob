@@ -12,8 +12,8 @@ void bc_run(Context ctx, size_t len, const uint8_t *code) {
 
     auto this_index = (index << 4) | data;
 
-    ObjActivation *act = obj_payload(ctx->activation);
-    ObjMethod *method = obj_payload(act->method);
+    ObjActivation *act = obj_get_data(ctx->activation);
+    ObjMethod *method = obj_get_data(act->method);
 
     Object *literal = ((Object **)method->literals.data)[this_index];
 
@@ -27,21 +27,21 @@ void bc_run(Context ctx, size_t len, const uint8_t *code) {
       Object *recv = NULL;
       arr_pop(&ctx->stack, sizeof(Object *), (void *)&recv);
 
-      ObjString *selector = obj_payload(literal);
+      ObjString *selector = obj_get_data(literal);
 
-      obj_send(ctx, recv, selector->inner);
+      ctx_send(ctx, recv, selector->inner);
     }; break;
 
     case OP_IMPLICIT_SEND: {
-      ObjString *selector = obj_payload(literal);
+      ObjString *selector = obj_get_data(literal);
 
-      obj_send(ctx, act->env, selector->inner);
+      ctx_send(ctx, act->env, selector->inner);
     }; break;
 
     case OP_SELF_SEND: {
-      ObjString *selector = obj_payload(literal);
+      ObjString *selector = obj_get_data(literal);
 
-      obj_send(ctx, act->receiver, selector->inner);
+      ctx_send(ctx, act->receiver, selector->inner);
     }; break;
 
     case OP_EXTEND: {
@@ -67,6 +67,7 @@ void bc_append_insn(Array *out, Instruction insn) {
   arr_push(out, sizeof(Instruction), &insn);
 }
 
+// NOLINTBEGIN
 uint8_t bc_append_index(Array *out, uint64_t index) {
   while (index > 15) {
     uint8_t lit = (index & 0xf) << 4;
@@ -76,3 +77,4 @@ uint8_t bc_append_index(Array *out, uint64_t index) {
 
   return index;
 }
+// NOLINTEND
