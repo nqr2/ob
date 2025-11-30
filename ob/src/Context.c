@@ -325,7 +325,11 @@ void ctx_send(Context ctx, Obj recv, String *selector) {
   if (tag == OT_CMETHOD) {
     ctx_enter_activation(ctx, ctx->activation, invoked, recv);
     ObjCMethod *data = obj_get_data(invoked);
-    data->method(ctx);
+
+    if (!data->method(ctx)) {
+      ctx_push(ctx, recv);
+    }
+
     ctx_leave_activation(ctx);
   }
 
