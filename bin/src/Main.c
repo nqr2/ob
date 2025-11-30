@@ -2,6 +2,7 @@
 
 #include "Context.h"
 #include "Hash.h"
+#include "Object.h"
 #include "Parse.h"
 
 #include <stdio.h>
@@ -17,19 +18,12 @@ int main() {
 
   auto ctx = ctx_create(&alloc);
 
-  run_literal(ctx, "");
-
-  auto obj = ctx_alloc_slots(ctx, NULL);
-
-  ObjSlots *data = obj_get_data(obj);
-
+  ObjSlots *p_int = obj_get_data(ctx->proto_integer);
   auto sel = str_create_literal(ctx, "print");
-
   auto print = ctx_alloc_cmethod(ctx, o__print);
+  tbl_set(&p_int->slots, hash_start(sel->length, sel->data), (void *)print);
 
-  tbl_set(&data->slots, hash_start(sel->length, sel->data), (void *)print);
-
-  ctx_send(ctx, obj, sel);
+  run_literal(ctx, "  1   \"ignore this comment!\"   print  ");
 
   ctx_sweep(ctx);
 
