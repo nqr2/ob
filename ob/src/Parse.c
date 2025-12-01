@@ -180,7 +180,7 @@ void run_file(Context ctx, size_t length, const char *text) {
   auto chunk = load_file(ctx, length, text);
   ObjMethod *method = obj_get_data(chunk);
 
-  ctx_enter_activation(ctx, NULL, chunk, NULL);
+  ctx_enter_activation(ctx, NULL, chunk, ctx->shell);
 
   bc_run(ctx, method->bytecode.size, method->bytecode.data);
 

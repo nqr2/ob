@@ -17,6 +17,8 @@ typedef struct Context {
   Obj proto_nil, proto_symbol, proto_string, proto_slots, proto_integer,
       proto_real, proto_method, proto_cmethod, proto_cdata, proto_activation;
 
+  Obj shell;
+
   Obj activation;
 
   Array string_data;
