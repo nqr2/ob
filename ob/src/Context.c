@@ -20,17 +20,18 @@ Context ctx_create(Allocator *alloc) {
 
   ctx->allocator = alloc;
 
-  ctx->proto_slots = ctx_alloc_slots(ctx, NULL);
+  ctx->proto_object = ctx_alloc_slots(ctx, NULL);
 
-  ctx->proto_nil = ctx_alloc_slots(ctx, ctx->proto_slots);
-  ctx->proto_symbol = ctx_alloc_slots(ctx, ctx->proto_slots);
-  ctx->proto_string = ctx_alloc_slots(ctx, ctx->proto_slots);
-  ctx->proto_integer = ctx_alloc_slots(ctx, ctx->proto_slots);
-  ctx->proto_real = ctx_alloc_slots(ctx, ctx->proto_slots);
-  ctx->proto_method = ctx_alloc_slots(ctx, ctx->proto_slots);
-  ctx->proto_cmethod = ctx_alloc_slots(ctx, ctx->proto_slots);
-  ctx->proto_cdata = ctx_alloc_slots(ctx, ctx->proto_slots);
-  ctx->proto_activation = ctx_alloc_slots(ctx, ctx->proto_slots);
+  ctx->proto_nil = ctx_alloc_slots(ctx, ctx->proto_object);
+  ctx->proto_symbol = ctx_alloc_slots(ctx, ctx->proto_object);
+  ctx->proto_string = ctx_alloc_slots(ctx, ctx->proto_object);
+  ctx->proto_slots = ctx_alloc_slots(ctx, ctx->proto_object);
+  ctx->proto_integer = ctx_alloc_slots(ctx, ctx->proto_object);
+  ctx->proto_real = ctx_alloc_slots(ctx, ctx->proto_object);
+  ctx->proto_method = ctx_alloc_slots(ctx, ctx->proto_object);
+  ctx->proto_cmethod = ctx_alloc_slots(ctx, ctx->proto_object);
+  ctx->proto_cdata = ctx_alloc_slots(ctx, ctx->proto_object);
+  ctx->proto_activation = ctx_alloc_slots(ctx, ctx->proto_object);
 
   ctx->shell = ctx_alloc_slots(ctx, ctx->proto_slots);
 
@@ -233,7 +234,7 @@ bool ctx_checkstack(Context ctx, size_t narg) {
 }
 
 Obj ctx_get_prototype(Context ctx, Obj obj) {
-  if (obj == ctx->proto_slots) {
+  if (obj == ctx->proto_object) {
     return NULL;
   }
 
@@ -273,6 +274,7 @@ Obj ctx_get_prototype(Context ctx, Obj obj) {
   case OT_Rf:
     break;
   }
+
   return ctx_get_prototype(ctx, NULL);
 }
 

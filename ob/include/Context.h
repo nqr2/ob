@@ -14,7 +14,8 @@ typedef struct Context {
 
   Obj objects;
 
-  Obj proto_nil, proto_symbol, proto_string, proto_slots, proto_integer,
+  Obj proto_object,
+  proto_nil, proto_symbol, proto_string, proto_slots, proto_integer,
       proto_real, proto_method, proto_cmethod, proto_cdata, proto_activation;
 
   Obj shell;
