@@ -28,13 +28,14 @@ String *intr_intern(Interner *intr, size_t length, const char *data) {
   uint64_t hash = hash_start(length, data);
 
   String *str = NULL;
+
   if (!tbl_get(&intr->interned, hash, (void **)&str)) {
     str = (String *)allocate(intr->allocator, sizeof(String));
 
     arr_push(&intr->data, length, data);
 
     str->next = intr->context->strings;
-    str->data = ((const char *)&intr->data.data) + (intr->data.size - length);
+    str->offset = intr->data.size - length;
 
     intr->context->strings = str;
 

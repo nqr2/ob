@@ -1,19 +1,20 @@
 #include "String.h"
 
 #include "Context.h"
+#include "Hash.h"
 
 #include <string.h>
 
 String *str_create(Context ctx, size_t len, const char *data) {
-  char *target = NULL;
+  size_t target = 0;
 
   for (size_t i = 0; i < ctx->string_available.size / sizeof(StrAvailable);
        i++) {
     StrAvailable *avail = ((StrAvailable *)ctx->string_available.data) + i;
 
     if (len <= avail->size) {
-      target = ((char *)ctx->string_data.data) + avail->offset;
-      memcpy(target, data, len);
+      target = avail->offset;
+      memcpy((char *)(ctx->string_available.data) + target, data, len);
 
       avail->size -= len;
 
@@ -25,14 +26,14 @@ String *str_create(Context ctx, size_t len, const char *data) {
     }
   }
 
-  if (target == NULL) {
+  if (target == 0) {
     arr_push(&ctx->string_data, len, data);
-    target = ((char *)ctx->string_data.data) + ctx->string_data.size - len;
+    target = ctx->string_data.size - len;
   }
 
   String *str = allocate(ctx->allocator, sizeof(String));
 
-  str->data = target;
+  str->offset = target;
   str->length = len;
 
   str->next = ctx->strings;
@@ -41,8 +42,16 @@ String *str_create(Context ctx, size_t len, const char *data) {
   return str;
 }
 
-size_t str_len(String *str) {
+size_t str_get_length(String *str) {
   return str->length & STRING_LENGTH_MASK;
+}
+
+const char *str_get_data(Context ctx, Str str) {
+  return ((const char *)ctx->string_data.data) + str->offset;
+}
+
+uint64_t str_get_hash(Context ctx, Str str) {
+  return hash_start(str->length, str_get_data(ctx, str));
 }
 
 void str_mark(String *str) {
@@ -60,7 +69,7 @@ bool str_get_mark(String *str) {
 static void str__delete(Context ctx, String *str) {
   StrAvailable avail = {};
 
-  avail.offset = (str->data) - ((char *)ctx->string_data.data);
+  avail.offset = str->offset;
   avail.size = str->length;
 
   arr_push(&ctx->string_available, sizeof(StrAvailable), (void *)&avail);

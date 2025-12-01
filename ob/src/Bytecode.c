@@ -3,8 +3,6 @@
 #include "Context.h"
 #include "Object.h"
 
-#include <stdio.h>
-
 void bc_run(Context ctx, size_t len, const uint8_t *code) {
   uint64_t index = 0;
 
@@ -13,8 +11,6 @@ void bc_run(Context ctx, size_t len, const uint8_t *code) {
     auto data = INSN_GET_DATA(code[pc]);
 
     auto this_index = (index << 4) | data;
-
-    printf("run: %x %lu\n", opcode, this_index);
 
     ObjActivation *act = obj_get_data(ctx->activation);
     ObjMethod *method = obj_get_data(act->method);

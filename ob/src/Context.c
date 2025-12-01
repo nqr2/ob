@@ -5,6 +5,7 @@
 #include "Bytecode.h"
 #include "Hash.h"
 #include "Object.h"
+#include "String.h"
 
 #include <ctype.h>
 #include <string.h>
@@ -286,7 +287,8 @@ Obj ctx_get_slot(Context ctx, Obj obj, String *selector) {
   if (OBJ_ISA(obj, OT_SLOTS)) {
     ObjSlots *data = obj_get_data(obj);
 
-    auto hash = hash_start(selector->length, selector->data);
+    auto str = str_get_data(ctx, selector);
+    auto hash = hash_start(selector->length, str);
 
     if (tbl_get(&data->slots, hash, (void **)&obj)) {
       return obj;
@@ -299,12 +301,14 @@ Obj ctx_get_slot(Context ctx, Obj obj, String *selector) {
 void ctx_send(Context ctx, Obj recv, String *selector) {
   size_t n_args = 0;
 
-  if (ispunct(selector->data[0])) {
+  auto sel = str_get_data(ctx, selector);
+
+  if (ispunct(sel[0])) {
     n_args = 1;
   } else {
 
     for (size_t i = 0; i < selector->length; i++) {
-      if (selector->data[i] == ':') {
+      if (sel[i] == ':') {
         n_args++;
       }
     }
@@ -332,13 +336,19 @@ void ctx_send(Context ctx, Obj recv, String *selector) {
     }
 
     ctx_leave_activation(ctx);
+
+    // TODO: check that we actually popped n args
   }
 
   else if (tag == OT_METHOD) {
     ctx_enter_activation(ctx, ctx->activation, invoked, recv);
+
+    // TODO: bind every argument to the implicit recv
+
     ObjMethod *data = obj_get_data(invoked);
     bc_run(ctx, data->bytecode.size, data->bytecode.data);
     ctx_leave_activation(ctx);
+
   } else {
     ctx_push(ctx, invoked);
   }

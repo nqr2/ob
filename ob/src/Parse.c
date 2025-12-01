@@ -9,6 +9,9 @@
 
 #include <ctype.h>
 
+static const char *p_expression(Context ctx, ObjMethod *output, size_t *length,
+                                const char *text);
+
 static void p_next(size_t *length, const char **text) {
   *text += 1;
   *length -= 1;
@@ -33,6 +36,39 @@ static const char *p_skip_blank(size_t *length, const char *text) {
     }
   }
 
+  return text;
+}
+
+static const char *p_parens(Context ctx, ObjMethod *output, size_t *length,
+                            const char *text) {
+  p_next(length, &text);
+
+  text = p_skip_blank(length, text);
+
+  if (*text == ')') {
+    // () is the nil literal
+
+    Obj nil = NULL;
+    auto index = arr_length(&output->literals, sizeof(Obj));
+    arr_push(&output->literals, sizeof(Obj), (const void *)&nil);
+
+    index = bc_append_index(&output->bytecode, index);
+    bc_append_insn(&output->bytecode, INSN_MAKE(OP_PUSH_LITERAL, index));
+  } else {
+    // expression { . expression }
+    text = p_expression(ctx, output, length, text);
+    text = p_skip_blank(length, text);
+
+    while (*text == '.') {
+      p_next(length, &text);
+      text = p_expression(ctx, output, length, text);
+      text = p_skip_blank(length, text);
+    }
+  }
+
+  ASSERT(*text == ')', "expected a closing ), got a %c", *text);
+
+  p_next(length, &text);
   return text;
 }
 
@@ -63,6 +99,9 @@ static const char *p_receiver(Context ctx, ObjMethod *output, size_t *length,
       p_next(length, &text);
     }
 
+    // TODO: arbitrary radix literals (16r, 8r, 2r, etc)
+    // TODO: float literals (NOTE: always has a decimal digit, so 1. =/= 1.0)
+
     auto obj = ctx_alloc_integer(ctx, num);
     IGNORE obj_ref(obj);
     IGNORE fnum;
@@ -72,9 +111,7 @@ static const char *p_receiver(Context ctx, ObjMethod *output, size_t *length,
 
     index = bc_append_index(&output->bytecode, index);
     bc_append_insn(&output->bytecode, INSN_MAKE(OP_PUSH_LITERAL, index));
-  }
-  // parse number
-  break;
+  } break;
   case '\'':
     // parse string
     break;
@@ -82,6 +119,7 @@ static const char *p_receiver(Context ctx, ObjMethod *output, size_t *length,
     // parse symbol
     break;
   case '(':
+    text = p_parens(ctx, output, length, text);
     // parse paren expr
     break;
   default:
@@ -102,9 +140,27 @@ static const char *p_message(Context ctx, ObjMethod *output, size_t *length,
     Array msg = {};
     arr_init(&msg, ctx->allocator);
 
+    auto begin = text;
     while (isalpha(*text)) {
+      p_next(length, &text);
+    }
+    arr_push(&msg, sizeof(char) * (text - begin), begin);
+
+    // if this is a : then
+    // keyword:   word { : word }
+    while (*text == ':') {
       arr_push(&msg, sizeof(char), text);
       p_next(length, &text);
+
+      text = p_expression(ctx, output, length, text);
+
+      text = p_skip_blank(length, text);
+
+      begin = text;
+      while (isalpha(*text)) {
+        p_next(length, &text);
+      }
+      arr_push(&msg, sizeof(char) * (text - begin), begin);
     }
 
     // TODO: actually intern this
@@ -168,7 +224,7 @@ Obj load_file(Context ctx, size_t length, const char *text) {
   while (length > 0) {
     auto next = p_toplevel(ctx, clos, &length, text);
 
-    ASSERT(next != text, "didn't read anything just now");
+    ASSERT(next != text, "didn't read anything");
 
     text = next;
   }
