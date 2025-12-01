@@ -306,7 +306,6 @@ void ctx_send(Context ctx, Obj recv, String *selector) {
   if (ispunct(sel[0])) {
     n_args = 1;
   } else {
-
     for (size_t i = 0; i < selector->length; i++) {
       if (sel[i] == ':') {
         n_args++;
@@ -319,7 +318,8 @@ void ctx_send(Context ctx, Obj recv, String *selector) {
   // TODO: doesNotUnderstand
 
   if (n_args != 0) {
-    ASSERT(OBJ_IS_INVOCABLE(invoked), "tried to invoke a non-method");
+    ASSERT(OBJ_IS_INVOCABLE(invoked), "tried to invoke a non-method object %p",
+           invoked);
 
     ASSERT(ctx_checkstack(ctx, n_args),
            "expected to have %lu arguments on stack", n_args);

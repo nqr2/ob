@@ -129,13 +129,27 @@ static const char *p_receiver(Context ctx, ObjMethod *output, size_t *length,
   return text;
 }
 
+static bool isop(char chr) {
+  if (!ispunct(chr)) {
+    return false;
+  }
+
+  switch (chr) {
+  case '(':
+  case ')':
+  case '.':
+    return false;
+  default:
+    return true;
+  }
+}
+
 static const char *p_message(Context ctx, ObjMethod *output, size_t *length,
                              const char *text, bool explicitp) {
   text = p_skip_blank(length, text);
 
   if (isalpha(*text)) {
     // if we have an alphanumeric, it may be either a unary or keyword message.
-    // TODO: keyword messages
 
     Array msg = {};
     arr_init(&msg, ctx->allocator);
@@ -144,6 +158,7 @@ static const char *p_message(Context ctx, ObjMethod *output, size_t *length,
     while (isalpha(*text)) {
       p_next(length, &text);
     }
+
     arr_push(&msg, sizeof(char) * (text - begin), begin);
 
     // if this is a : then
@@ -179,9 +194,29 @@ static const char *p_message(Context ctx, ObjMethod *output, size_t *length,
     }
 
     arr_free(&msg);
-  } else if (ispunct(*text)) {
+  } else if (isop(*text)) {
     // if ... punctuation, it is a binary message
-    // TODO: binary messages
+
+    auto begin = text;
+    while (isop(*text)) {
+      p_next(length, &text);
+    }
+
+    auto sel = str_create(ctx, text - begin, begin);
+    auto objsel = ctx_alloc_string(ctx, sel);
+
+    text = p_expression(ctx, output, length, text);
+
+    auto index = arr_length(&output->literals, sizeof(Obj));
+    arr_push(&output->literals, sizeof(Obj), (const void *)&objsel);
+
+    index = bc_append_index(&output->bytecode, index);
+
+    if (explicitp) {
+      bc_append_insn(&output->bytecode, INSN_MAKE(OP_SEND, index));
+    } else {
+      bc_append_insn(&output->bytecode, INSN_MAKE(OP_IMPLICIT_SEND, index));
+    }
   }
   // else, there was no message.
 

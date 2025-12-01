@@ -33,8 +33,10 @@ int main() {
   auto right = ctx_alloc_cmethod(ctx, o__other);
   tbl_set(&p_obj->slots, str_get_hash(ctx, sel), (void *)right);
 
-  run_literal(ctx,
-              "  (1 print . 1 right: 2)   \"ignore this comment!\"   print  .");
+  sel = str_create_literal(ctx, ">:");
+  tbl_set(&p_obj->slots, str_get_hash(ctx, sel), (void *)right);
+
+  run_literal(ctx, "  (1 >: 1 right: 2)   \"ignore this comment!\"   print  .");
 
   ctx_sweep(ctx);
 
