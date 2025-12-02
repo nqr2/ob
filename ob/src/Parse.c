@@ -10,12 +10,17 @@
 #include <ctype.h>
 
 typedef struct {
+  Context context;
+  ObjMethod *output;
   size_t remaining;
   const char *head;
 } Reader;
 
-Reader rdr_new(size_t length, const char *text) {
+Reader rdr_new(Context context, ObjMethod *output, size_t length,
+               const char *text) {
   Reader rdr = {};
+  rdr.context = context;
+  rdr.output = output;
   rdr.remaining = length;
   rdr.head = text;
   return rdr;
@@ -26,7 +31,7 @@ void rdr_next(Reader *rdr) {
   rdr->remaining--;
 }
 
-static void p_expression(Context ctx, ObjMethod *output, Reader *rdr);
+static void p_expression(Reader *rdr);
 
 static void p_skip_blank(Reader *rdr) {
   while (rdr->remaining > 0) {
@@ -48,7 +53,7 @@ static void p_skip_blank(Reader *rdr) {
   }
 }
 
-static void p_parens(Context ctx, ObjMethod *output, Reader *rdr) {
+static void p_primary_paren(Reader *rdr) {
   rdr_next(rdr);
 
   p_skip_blank(rdr);
@@ -57,19 +62,19 @@ static void p_parens(Context ctx, ObjMethod *output, Reader *rdr) {
     // () is the nil literal
 
     Obj nil = NULL;
-    auto index = arr_length(&output->literals, sizeof(Obj));
-    arr_push(&output->literals, sizeof(Obj), (const void *)&nil);
+    auto index = arr_length(&rdr->output->literals, sizeof(Obj));
+    arr_push(&rdr->output->literals, sizeof(Obj), (const void *)&nil);
 
-    index = bc_append_index(&output->bytecode, index);
-    bc_append_insn(&output->bytecode, INSN_MAKE(OP_PUSH_LITERAL, index));
+    index = bc_append_index(&rdr->output->bytecode, index);
+    bc_append_insn(&rdr->output->bytecode, INSN_MAKE(OP_PUSH_LITERAL, index));
   } else {
     // expression { . expression }
-    p_expression(ctx, output, rdr);
+    p_expression(rdr);
     p_skip_blank(rdr);
 
     while (*rdr->head == '.') {
       rdr_next(rdr);
-      p_expression(ctx, output, rdr);
+      p_expression(rdr);
       p_skip_blank(rdr);
     }
   }
@@ -79,8 +84,7 @@ static void p_parens(Context ctx, ObjMethod *output, Reader *rdr) {
   rdr_next(rdr);
 }
 
-static void p_receiver(Context ctx, ObjMethod *output, Reader *rdr,
-                       bool *explicitp) {
+static bool p_primary(Reader *rdr) {
   /*
    * We know that explicit receivers can be one of:
    * -  Number literals, which always start with a digit,
@@ -92,8 +96,6 @@ static void p_receiver(Context ctx, ObjMethod *output, Reader *rdr,
    */
 
   p_skip_blank(rdr);
-
-  *explicitp = true;
 
   switch (*rdr->head) {
   case '0' ... '9': {
@@ -109,15 +111,15 @@ static void p_receiver(Context ctx, ObjMethod *output, Reader *rdr,
     // TODO: arbitrary radix literals (16r, 8r, 2r, etc)
     // TODO: float literals (NOTE: always has a decimal digit, so 1. =/= 1.0)
 
-    auto obj = ctx_alloc_integer(ctx, num);
+    auto obj = ctx_alloc_integer(rdr->context, num);
     IGNORE obj_ref(obj);
     IGNORE fnum;
 
-    auto index = arr_length(&output->literals, sizeof(Obj));
-    arr_push(&output->literals, sizeof(Obj), (const void *)&obj);
+    auto index = arr_length(&rdr->output->literals, sizeof(Obj));
+    arr_push(&rdr->output->literals, sizeof(Obj), (const void *)&obj);
 
-    index = bc_append_index(&output->bytecode, index);
-    bc_append_insn(&output->bytecode, INSN_MAKE(OP_PUSH_LITERAL, index));
+    index = bc_append_index(&rdr->output->bytecode, index);
+    bc_append_insn(&rdr->output->bytecode, INSN_MAKE(OP_PUSH_LITERAL, index));
   } break;
   case '\'':
     // parse string
@@ -126,12 +128,14 @@ static void p_receiver(Context ctx, ObjMethod *output, Reader *rdr,
     // parse symbol
     break;
   case '(':
-    p_parens(ctx, output, rdr);
+    p_primary_paren(rdr);
     // parse paren expr
     break;
   default:
-    *explicitp = false;
+    return false;
   }
+
+  return true;
 }
 
 static bool isop(char chr) {
@@ -149,15 +153,14 @@ static bool isop(char chr) {
   }
 }
 
-static void p_message(Context ctx, ObjMethod *output, Reader *rdr,
-                      bool explicitp) {
+static int p_message(Reader *rdr) {
   p_skip_blank(rdr);
 
   if (isalpha(*rdr->head)) {
     // if we have an alphanumeric, it may be either a unary or keyword message.
 
     Array msg = {};
-    arr_init(&msg, ctx->allocator);
+    arr_init(&msg, rdr->context->allocator);
 
     auto begin = rdr->head;
     while (isalpha(*rdr->head)) {
@@ -172,7 +175,7 @@ static void p_message(Context ctx, ObjMethod *output, Reader *rdr,
       arr_push(&msg, sizeof(char), rdr->head);
       rdr_next(rdr);
 
-      p_expression(ctx, output, rdr);
+      p_expression(rdr);
 
       p_skip_blank(rdr);
 
@@ -184,22 +187,17 @@ static void p_message(Context ctx, ObjMethod *output, Reader *rdr,
     }
 
     // TODO: actually intern this
-    auto sel = str_create(ctx, msg.size, msg.data);
-    auto objsel = ctx_alloc_string(ctx, sel);
+    auto sel = str_create(rdr->context, msg.size, msg.data);
+    auto objsel = ctx_alloc_string(rdr->context, sel);
 
-    auto index = arr_length(&output->literals, sizeof(Obj));
-    arr_push(&output->literals, sizeof(Obj), (const void *)&objsel);
-
-    index = bc_append_index(&output->bytecode, index);
-
-    if (explicitp) {
-      bc_append_insn(&output->bytecode, INSN_MAKE(OP_SEND, index));
-    } else {
-      bc_append_insn(&output->bytecode, INSN_MAKE(OP_IMPLICIT_SEND, index));
-    }
+    auto index = arr_length(&rdr->output->literals, sizeof(Obj));
+    arr_push(&rdr->output->literals, sizeof(Obj), (const void *)&objsel);
 
     arr_free(&msg);
-  } else if (isop(*rdr->head)) {
+    return bc_append_index(&rdr->output->bytecode, index);
+  }
+
+  if (isop(*rdr->head)) {
     // if ... punctuation, it is a binary message
 
     auto begin = rdr->head;
@@ -207,37 +205,41 @@ static void p_message(Context ctx, ObjMethod *output, Reader *rdr,
       rdr_next(rdr);
     }
 
-    auto sel = str_create(ctx, rdr->head - begin, begin);
-    auto objsel = ctx_alloc_string(ctx, sel);
+    auto sel = str_create(rdr->context, rdr->head - begin, begin);
+    auto objsel = ctx_alloc_string(rdr->context, sel);
 
-    p_expression(ctx, output, rdr);
+    p_expression(rdr);
 
-    auto index = arr_length(&output->literals, sizeof(Obj));
-    arr_push(&output->literals, sizeof(Obj), (const void *)&objsel);
+    auto index = arr_length(&rdr->output->literals, sizeof(Obj));
+    arr_push(&rdr->output->literals, sizeof(Obj), (const void *)&objsel);
 
-    index = bc_append_index(&output->bytecode, index);
-
-    if (explicitp) {
-      bc_append_insn(&output->bytecode, INSN_MAKE(OP_SEND, index));
-    } else {
-      bc_append_insn(&output->bytecode, INSN_MAKE(OP_IMPLICIT_SEND, index));
-    }
+    return bc_append_index(&rdr->output->bytecode, index);
   }
+
   // else, there was no message.
+  return -1;
 }
 
-static void p_expression(Context ctx, ObjMethod *output, Reader *rdr) {
-  auto explicitp = false;
-  p_receiver(ctx, output, rdr, &explicitp);
+static void p_expression(Reader *rdr) {
+  auto explicit_receiver = p_primary(rdr);
+  auto msg_index = p_message(rdr);
 
-  p_message(ctx, output, rdr, explicitp);
+  if (msg_index == -1) {
+    return;
+  }
+
+  if (explicit_receiver) {
+    bc_append_insn(&rdr->output->bytecode, INSN_MAKE(OP_SEND, msg_index));
+  } else {
+    bc_append_insn(&rdr->output->bytecode,
+                   INSN_MAKE(OP_IMPLICIT_SEND, msg_index));
+  }
 }
 
-static void p_toplevel(Context ctx, ObjMethod *output, Reader *rdr) {
-  p_expression(ctx, output, rdr);
+static void p_toplevel(Reader *rdr) {
+  p_expression(rdr);
   p_skip_blank(rdr);
 
-  // assert a '.' is here
   ASSERT(*rdr->head == '.', "expected a `.`, got a `%c`", *rdr->head);
   rdr_next(rdr);
 }
@@ -246,11 +248,11 @@ Obj load_file(Context ctx, size_t length, const char *text) {
   Obj closure = ctx_alloc_method(ctx);
   ObjMethod *clos = obj_get_data(closure);
 
-  auto reader = rdr_new(length, text);
+  auto reader = rdr_new(ctx, clos, length, text);
 
   while (reader.remaining > 0) {
     auto previous = reader.head;
-    p_toplevel(ctx, clos, &reader);
+    p_toplevel(&reader);
 
     ASSERT(reader.head != previous, "didn't read anything");
   }
