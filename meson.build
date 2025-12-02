@@ -8,5 +8,6 @@ project(
 
 subdir('tap')
 
-subdir('ob')
+subdir('core')
+
 subdir('bin')

@@ -20,7 +20,7 @@ libOb = static_library(
   include_directories: 'include'
 )
 
-ob = declare_dependency(
+obCore = declare_dependency(
   link_with: libOb,
   include_directories: 'include'
 )

@@ -8,7 +8,7 @@ foreach t : tests
   exe = executable(
     'test_ob_' + t,
     t + '.c',
-    dependencies: [ob, tap]
+    dependencies: [obCore, tap]
   )
 
   test(
