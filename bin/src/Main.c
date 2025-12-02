@@ -36,7 +36,10 @@ int main() {
   sel = str_create_literal(ctx, ">:");
   tbl_set(&p_obj->slots, str_get_hash(ctx, sel), (void *)right);
 
-  run_literal(ctx, "  (1 >: 1 right: 2)   \"ignore this comment!\"   print  .");
+  run_literal(
+      ctx, "   \"this should only return 3:      "
+           "     { { 1 print } >: 2 } right: 3 \""
+           "  (1 print >: 2 right: 3)   \"ignore this comment!\"   print  .");
 
   ctx_sweep(ctx);
 
