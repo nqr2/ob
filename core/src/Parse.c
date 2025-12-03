@@ -9,6 +9,23 @@
 
 #include <ctype.h>
 
+static bool isop(char chr) {
+  if (!ispunct(chr)) {
+    return false;
+  }
+
+  switch (chr) {
+  case '(':
+  case ')':
+  case '{':
+  case '}':
+  case '.':
+    return false;
+  default:
+    return true;
+  }
+}
+
 typedef struct {
   Context context;
   ObjMethod *output;
@@ -133,6 +150,48 @@ static void p_method(Reader *rdr) {
   rdr_next(rdr);
 }
 
+static void p_symbol(Reader *rdr) {
+  rdr_next(rdr);
+
+  auto sym = (Array){};
+  arr_init(&sym, rdr->context->allocator);
+
+  auto begin = rdr->head;
+
+  if (isalpha(*rdr->head)) {
+    while (true) {
+      while (isalpha(*rdr->head)) {
+        rdr_next(rdr);
+      }
+
+      if (*rdr->head != ':') {
+        break;
+      }
+
+      rdr_next(rdr);
+    }
+  }
+
+  else {
+    while (isop(*rdr->head)) {
+      rdr_next(rdr);
+    }
+  }
+
+  arr_push(&sym, sizeof(char) * (rdr->head - begin), begin);
+
+  auto sel = str_create(rdr->context, sym.size, sym.data);
+  auto objsel = ctx_alloc_string(rdr->context, sel);
+
+  auto index = arr_length(&rdr->output->literals, sizeof(Obj));
+  arr_push(&rdr->output->literals, sizeof(Obj), (const void *)&objsel);
+
+  index = bc_append_index(&rdr->output->bytecode, index);
+  bc_append_insn(&rdr->output->bytecode, INSN_MAKE(OP_PUSH_LITERAL, index));
+
+  arr_free(&sym);
+}
+
 static bool p_primary(Reader *rdr) {
   /*
    * We know that explicit receivers can be one of:
@@ -174,36 +233,19 @@ static bool p_primary(Reader *rdr) {
     // parse string
     break;
   case '#':
-    // parse symbol
+    p_symbol(rdr);
     break;
   case '(':
     p_primary_paren(rdr);
     break;
   case '{':
-    // parse method
     p_method(rdr);
+    break;
   default:
     return false;
   }
 
   return true;
-}
-
-static bool isop(char chr) {
-  if (!ispunct(chr)) {
-    return false;
-  }
-
-  switch (chr) {
-  case '(':
-  case ')':
-  case '{':
-  case '}':
-  case '.':
-    return false;
-  default:
-    return true;
-  }
 }
 
 static void emit_send(Reader *rdr, int index, bool explicitp) {
@@ -328,6 +370,12 @@ Obj load_file(Context ctx, size_t length, const char *text) {
   auto reader = rdr_new(ctx, clos, length, text);
 
   while (reader.remaining > 0) {
+    p_skip_blank(&reader);
+
+    if (reader.remaining == 0) {
+      break;
+    }
+
     auto previous = reader.head;
     p_toplevel(&reader);
 

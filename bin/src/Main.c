@@ -40,7 +40,7 @@ int main() {
       ctx, "   \"this should only return 3:      "
            "     { { 1 print } >: 2 } right: 3 \""
            "  (1 print >: 2 right: 3)   \"ignore this comment!\"   print  .\n"
-           "  { 4 print . 5 print } print.");
+           "  { 4 print . 5 print } print . #selector print.   ");
 
   ctx_sweep(ctx);
 
