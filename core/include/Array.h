@@ -10,10 +10,11 @@ typedef struct {
 } Array;
 
 void arr_init(Array *arr, Allocator *alloc);
-
 void arr_free(Array *arr);
+
 void arr_reserve(Array *arr, size_t newcap);
 void arr_push(Array *arr, size_t len, const void *data);
+void arr_clear(Array *arr);
 
 bool arr_pop(Array *arr, size_t len, void *data);
 

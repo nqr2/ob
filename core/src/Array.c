@@ -33,6 +33,10 @@ void arr_push(Array *arr, size_t len, const void *data) {
   arr->size += len;
 }
 
+void arr_clear(Array *arr) {
+  arr->size = 0;
+}
+
 bool arr_pop(Array *arr, size_t len, void *data) {
   if (arr->size < len) {
     return false;

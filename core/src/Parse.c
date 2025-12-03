@@ -31,6 +31,20 @@ void rdr_next(Reader *rdr) {
   rdr->remaining--;
 }
 
+/*
+ * The grammar is more or less:
+ *
+ * file = { toplevel }.
+ * toplevel = expression '.'.
+ * expression = keyword-message.
+ * keyword-message = [ binary-message ] { keyword binary-message }.
+ * binary-message = [ unary-message ] { operator unary-message }.
+ * unary-message = [ primary ] { word }.
+ * primary = literal | '(' expressions ')'.
+ * literal = <integer> | <float> | <string> | '(' ')'.
+ * expressions = expression { '.' expression }.
+ */
+
 static void p_expression(Reader *rdr);
 
 static void p_skip_blank(Reader *rdr) {
@@ -129,7 +143,6 @@ static bool p_primary(Reader *rdr) {
     break;
   case '(':
     p_primary_paren(rdr);
-    // parse paren expr
     break;
   default:
     return false;
@@ -153,76 +166,100 @@ static bool isop(char chr) {
   }
 }
 
-static int p_message(Reader *rdr) {
-  p_skip_blank(rdr);
+static void emit_send(Reader *rdr, int index, bool explicitp) {
+  bc_append_insn(&rdr->output->bytecode,
+                 INSN_MAKE((explicitp ? OP_SEND : OP_IMPLICIT_SEND), index));
+}
 
-  if (isalpha(*rdr->head)) {
-    // if we have an alphanumeric, it may be either a unary or keyword message.
+static int p_message(Reader *rdr, bool explicitp) {
+  auto msg = (Array){};
+  arr_init(&msg, rdr->context->allocator);
 
-    Array msg = {};
-    arr_init(&msg, rdr->context->allocator);
+  while (true) {
+    arr_clear(&msg);
+    p_skip_blank(rdr);
 
-    auto begin = rdr->head;
-    while (isalpha(*rdr->head)) {
-      rdr_next(rdr);
-    }
+    if (isalpha(*rdr->head)) {
+      auto is_keyword = false;
+      // if we have an alphanumeric, it may be either a unary or keyword
+      // message.
 
-    arr_push(&msg, sizeof(char) * (rdr->head - begin), begin);
-
-    // if this is a : then
-    // keyword:   word { : word }
-    while (*rdr->head == ':') {
-      arr_push(&msg, sizeof(char), rdr->head);
-      rdr_next(rdr);
-
-      p_expression(rdr);
-
-      p_skip_blank(rdr);
-
-      begin = rdr->head;
+      auto begin = rdr->head;
       while (isalpha(*rdr->head)) {
         rdr_next(rdr);
       }
+
       arr_push(&msg, sizeof(char) * (rdr->head - begin), begin);
+
+      // if this is a : then
+      // keyword:   word { : word }
+      while (*rdr->head == ':') {
+        is_keyword = true;
+        arr_push(&msg, sizeof(char), rdr->head);
+        rdr_next(rdr);
+
+        p_expression(rdr);
+
+        p_skip_blank(rdr);
+
+        begin = rdr->head;
+        while (isalpha(*rdr->head)) {
+          rdr_next(rdr);
+        }
+        arr_push(&msg, sizeof(char) * (rdr->head - begin), begin);
+      }
+
+      // TODO: actually intern this
+      auto sel = str_create(rdr->context, msg.size, msg.data);
+      auto objsel = ctx_alloc_string(rdr->context, sel);
+
+      auto index = arr_length(&rdr->output->literals, sizeof(Obj));
+      arr_push(&rdr->output->literals, sizeof(Obj), (const void *)&objsel);
+
+      if (is_keyword) {
+        arr_free(&msg);
+        return bc_append_index(&rdr->output->bytecode, index);
+      }
+
+      index = bc_append_index(&rdr->output->bytecode, index);
+      emit_send(rdr, index, explicitp);
+      explicitp = false;
+      continue;
     }
 
-    // TODO: actually intern this
-    auto sel = str_create(rdr->context, msg.size, msg.data);
-    auto objsel = ctx_alloc_string(rdr->context, sel);
+    if (isop(*rdr->head)) {
+      // if ... punctuation, it is a binary message
 
-    auto index = arr_length(&rdr->output->literals, sizeof(Obj));
-    arr_push(&rdr->output->literals, sizeof(Obj), (const void *)&objsel);
+      auto begin = rdr->head;
+      while (isop(*rdr->head)) {
+        rdr_next(rdr);
+      }
 
-    arr_free(&msg);
-    return bc_append_index(&rdr->output->bytecode, index);
-  }
+      auto sel = str_create(rdr->context, rdr->head - begin, begin);
+      auto objsel = ctx_alloc_string(rdr->context, sel);
 
-  if (isop(*rdr->head)) {
-    // if ... punctuation, it is a binary message
+      p_expression(rdr);
 
-    auto begin = rdr->head;
-    while (isop(*rdr->head)) {
-      rdr_next(rdr);
+      auto index = arr_length(&rdr->output->literals, sizeof(Obj));
+      arr_push(&rdr->output->literals, sizeof(Obj), (const void *)&objsel);
+
+      index = bc_append_index(&rdr->output->bytecode, index);
+      emit_send(rdr, index, explicitp);
+      explicitp = false;
+      continue;
     }
 
-    auto sel = str_create(rdr->context, rdr->head - begin, begin);
-    auto objsel = ctx_alloc_string(rdr->context, sel);
-
-    p_expression(rdr);
-
-    auto index = arr_length(&rdr->output->literals, sizeof(Obj));
-    arr_push(&rdr->output->literals, sizeof(Obj), (const void *)&objsel);
-
-    return bc_append_index(&rdr->output->bytecode, index);
+    break;
   }
 
   // else, there was no message.
+  arr_free(&msg);
   return -1;
 }
 
 static void p_expression(Reader *rdr) {
   auto explicit_receiver = p_primary(rdr);
-  auto msg_index = p_message(rdr);
+  auto msg_index = p_message(rdr, explicit_receiver);
 
   if (msg_index == -1) {
     return;
