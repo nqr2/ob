@@ -1,8 +1,8 @@
-#include <stdbit.h>
-
+#include "Array.h"
 #include "Context.h"
 #include "Object.h"
 #include "Parse.h"
+#include "String.h"
 
 #include <stdio.h>
 
@@ -18,7 +18,36 @@ bool o__other(Context ctx) {
   return true;
 }
 
-int main() {
+void dofile(Context ctx, const char *path) {
+  auto file = fopen(path, "r");
+
+  if (file == NULL) {
+    return;
+  }
+
+  auto data = (Array){};
+  auto length = 0L;
+
+  fseek(file, 0, SEEK_END);
+
+  length = ftell(file);
+
+  rewind(file);
+
+  arr_init(&data, ctx->allocator);
+  arr_reserve(&data, length);
+  data.size = length;
+
+  fread(data.data, sizeof(char), data.size, file);
+
+  run_file(ctx, data.size, data.data);
+
+  // exit:
+  arr_free(&data);
+  fclose(file);
+}
+
+int main(int argn, char *argv[]) {
   auto alloc = get_libc_allocator();
 
   auto ctx = ctx_create(&alloc);
@@ -36,11 +65,13 @@ int main() {
   sel = str_create_literal(ctx, ">:");
   tbl_set(&p_obj->slots, str_get_hash(ctx, sel), (void *)right);
 
-  run_literal(
-      ctx, "   \"this should only return 3:      "
-           "     { { 1 print } >: 2 } right: 3 \""
-           "  (1 print >: 2 right: 3)   \"ignore this comment!\"   print  .\n"
-           "  { 4 print . 5 print } print . #selector print.   ");
+  if (argn != 1) {
+    for (int i = 1; i < argn; i++) {
+      dofile(ctx, argv[i]);
+    }
+  } else {
+    // run a repl
+  }
 
   ctx_sweep(ctx);
 
