@@ -39,7 +39,8 @@ int main() {
   run_literal(
       ctx, "   \"this should only return 3:      "
            "     { { 1 print } >: 2 } right: 3 \""
-           "  (1 print >: 2 right: 3)   \"ignore this comment!\"   print  .");
+           "  (1 print >: 2 right: 3)   \"ignore this comment!\"   print  .\n"
+           "  { 4 print . 5 print } print.");
 
   ctx_sweep(ctx);
 

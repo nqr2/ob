@@ -98,6 +98,41 @@ static void p_primary_paren(Reader *rdr) {
   rdr_next(rdr);
 }
 
+static void p_method(Reader *rdr) {
+  rdr_next(rdr);
+
+  p_skip_blank(rdr);
+
+  auto original = rdr->output;
+
+  auto new = ctx_alloc_method(rdr->context);
+  ObjMethod *method = obj_get_data(new);
+
+  rdr->output = method;
+
+  // expression { . expression }
+  p_expression(rdr);
+  p_skip_blank(rdr);
+
+  while (*rdr->head == '.') {
+    rdr_next(rdr);
+    p_expression(rdr);
+    p_skip_blank(rdr);
+  }
+
+  rdr->output = original;
+
+  auto index = arr_length(&rdr->output->literals, sizeof(Obj));
+  arr_push(&rdr->output->literals, sizeof(Obj), (const void *)&new);
+
+  index = bc_append_index(&rdr->output->bytecode, index);
+  bc_append_insn(&rdr->output->bytecode, INSN_MAKE(OP_PUSH_LITERAL, index));
+
+  ASSERT(*rdr->head == '}', "expected a closing }, got a %c", *rdr->head);
+
+  rdr_next(rdr);
+}
+
 static bool p_primary(Reader *rdr) {
   /*
    * We know that explicit receivers can be one of:
@@ -144,6 +179,9 @@ static bool p_primary(Reader *rdr) {
   case '(':
     p_primary_paren(rdr);
     break;
+  case '{':
+    // parse method
+    p_method(rdr);
   default:
     return false;
   }
@@ -159,6 +197,8 @@ static bool isop(char chr) {
   switch (chr) {
   case '(':
   case ')':
+  case '{':
+  case '}':
   case '.':
     return false;
   default:
