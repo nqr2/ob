@@ -150,9 +150,68 @@ static void p_method(Reader *rdr) {
   rdr_next(rdr);
 }
 
+static Str p_string_inner(Reader *rdr) {
+  rdr_next(rdr);
+
+  auto buf = (Array){};
+  arr_init(&buf, rdr->context->allocator);
+
+  auto begin = rdr->head;
+
+  while (*rdr->head != '\'') {
+    if (*rdr->head == '\\') {
+      arr_push(&buf, sizeof(char) * (rdr->head - begin - 1), begin - 1);
+
+      rdr_next(rdr);
+
+      auto escaped = *rdr->head;
+
+      switch (*rdr->head) {
+      case 'n':
+        escaped = '\n';
+        break;
+      case 't':
+        escaped = '\t';
+        break;
+      default:
+        break;
+      }
+
+      arr_push(&buf, sizeof(char), &escaped);
+      rdr_next(rdr);
+
+      begin = rdr->head;
+      continue;
+    }
+
+    rdr_next(rdr);
+  }
+
+  arr_push(&buf, sizeof(char) * (rdr->head - begin), begin);
+
+  rdr_next(rdr);
+
+  auto str = str_create(rdr->context, buf.size, buf.data);
+  arr_free(&buf);
+
+  return str;
+}
+
+static void p_string(Reader *rdr) {
+  auto str = p_string_inner(rdr);
+  auto obj = ctx_alloc_string(rdr->context, str);
+
+  auto index = arr_length(&rdr->output->literals, sizeof(Obj));
+  arr_push(&rdr->output->literals, sizeof(Obj), (const void *)&obj);
+
+  index = bc_append_index(&rdr->output->bytecode, index);
+  bc_append_insn(&rdr->output->bytecode, INSN_MAKE(OP_PUSH_LITERAL, index));
+}
+
 static void p_symbol(Reader *rdr) {
   rdr_next(rdr);
 
+  Str sel = NULL;
   auto sym = (Array){};
   arr_init(&sym, rdr->context->allocator);
 
@@ -172,6 +231,11 @@ static void p_symbol(Reader *rdr) {
     }
   }
 
+  else if (*rdr->head == '\'') {
+    sel = p_string_inner(rdr);
+    goto after_str;
+  }
+
   else {
     while (isop(*rdr->head)) {
       rdr_next(rdr);
@@ -180,7 +244,9 @@ static void p_symbol(Reader *rdr) {
 
   arr_push(&sym, sizeof(char) * (rdr->head - begin), begin);
 
-  auto sel = str_create(rdr->context, sym.size, sym.data);
+  sel = str_create(rdr->context, sym.size, sym.data);
+
+after_str:
   auto objsel = ctx_alloc_string(rdr->context, sel);
 
   auto index = arr_length(&rdr->output->literals, sizeof(Obj));
@@ -230,7 +296,7 @@ static bool p_primary(Reader *rdr) {
     bc_append_insn(&rdr->output->bytecode, INSN_MAKE(OP_PUSH_LITERAL, index));
   } break;
   case '\'':
-    // parse string
+    p_string(rdr);
     break;
   case '#':
     p_symbol(rdr);
