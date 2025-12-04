@@ -9,7 +9,7 @@
 
 #include <ctype.h>
 
-static bool isop(char chr) {
+static bool is_operator(char chr) {
   if (!ispunct(chr)) {
     return false;
   }
@@ -22,10 +22,20 @@ static bool isop(char chr) {
   case '[':
   case ']':
   case '.':
+  case '\'':
+  case '"':
     return false;
   default:
     return true;
   }
+}
+
+static bool is_word_start(char chr) {
+  return isalpha(chr);
+}
+
+static bool is_word_tail(char chr) {
+  return is_word_start(chr);
 }
 
 typedef struct {
@@ -48,6 +58,21 @@ Reader rdr_new(Context context, ObjMethod *output, size_t length,
 void rdr_next(Reader *rdr) {
   rdr->head++;
   rdr->remaining--;
+}
+
+// i wish C had lambdas...
+void rdr_takewhile(Reader *rdr, bool (*pred)(char)) {
+  while (pred(*rdr->head)) {
+    rdr_next(rdr);
+  }
+}
+
+static void push_literal(Reader *rdr, Obj obj) {
+  auto index = arr_length(&rdr->output->literals, sizeof(Obj));
+  arr_push(&rdr->output->literals, sizeof(Obj), (const void *)&obj);
+
+  index = bc_append_index(&rdr->output->bytecode, index);
+  bc_append_insn(&rdr->output->bytecode, INSN_MAKE(OP_PUSH_LITERAL, index));
 }
 
 /*
@@ -95,11 +120,7 @@ static void p_paren(Reader *rdr) {
     // () is the nil literal
 
     Obj nil = NULL;
-    auto index = arr_length(&rdr->output->literals, sizeof(Obj));
-    arr_push(&rdr->output->literals, sizeof(Obj), (const void *)&nil);
-
-    index = bc_append_index(&rdr->output->bytecode, index);
-    bc_append_insn(&rdr->output->bytecode, INSN_MAKE(OP_PUSH_LITERAL, index));
+    push_literal(rdr, nil);
   } else {
     // expression { . expression }
     p_expression(rdr);
@@ -117,8 +138,6 @@ static void p_paren(Reader *rdr) {
   rdr_next(rdr);
 }
 
-// TODO: maybe make everything return an Obj and add a method to push that?
-// because this will be hard to do otherwise.
 static void p_array(Reader *rdr) {
   rdr_next(rdr);
 
@@ -131,6 +150,7 @@ static void p_array(Reader *rdr) {
 
     while (*rdr->head == '.') {
       rdr_next(rdr);
+
       p_expression(rdr);
       p_skip_blank(rdr);
     }
@@ -171,10 +191,7 @@ static void p_method(Reader *rdr) {
       arr_clear(&buf);
 
       auto begin = rdr->head;
-
-      while (isalpha(*rdr->head)) {
-        rdr_next(rdr);
-      }
+      rdr_takewhile(rdr, is_word_tail);
 
       arr_push(&buf, sizeof(char) * (rdr->head - begin), begin);
 
@@ -205,11 +222,7 @@ static void p_method(Reader *rdr) {
 
   rdr->output = original;
 
-  auto index = arr_length(&rdr->output->literals, sizeof(Obj));
-  arr_push(&rdr->output->literals, sizeof(Obj), (const void *)&new);
-
-  index = bc_append_index(&rdr->output->bytecode, index);
-  bc_append_insn(&rdr->output->bytecode, INSN_MAKE(OP_PUSH_LITERAL, index));
+  push_literal(rdr, new);
 
   ASSERT(*rdr->head == '}', "expected a closing }, got a %c", *rdr->head);
 
@@ -267,11 +280,7 @@ static void p_string(Reader *rdr) {
   auto str = p_string_inner(rdr);
   auto obj = ctx_alloc_string(rdr->context, str);
 
-  auto index = arr_length(&rdr->output->literals, sizeof(Obj));
-  arr_push(&rdr->output->literals, sizeof(Obj), (const void *)&obj);
-
-  index = bc_append_index(&rdr->output->bytecode, index);
-  bc_append_insn(&rdr->output->bytecode, INSN_MAKE(OP_PUSH_LITERAL, index));
+  push_literal(rdr, obj);
 }
 
 static void p_symbol(Reader *rdr) {
@@ -285,9 +294,7 @@ static void p_symbol(Reader *rdr) {
 
   if (isalpha(*rdr->head)) {
     while (true) {
-      while (isalpha(*rdr->head)) {
-        rdr_next(rdr);
-      }
+      rdr_takewhile(rdr, is_word_tail);
 
       if (*rdr->head != ':') {
         break;
@@ -303,7 +310,7 @@ static void p_symbol(Reader *rdr) {
   }
 
   else {
-    while (isop(*rdr->head)) {
+    while (is_operator(*rdr->head)) {
       rdr_next(rdr);
     }
   }
@@ -315,12 +322,7 @@ static void p_symbol(Reader *rdr) {
 after_str:
   auto objsel = ctx_alloc_string(rdr->context, sel);
 
-  auto index = arr_length(&rdr->output->literals, sizeof(Obj));
-  arr_push(&rdr->output->literals, sizeof(Obj), (const void *)&objsel);
-
-  index = bc_append_index(&rdr->output->bytecode, index);
-  bc_append_insn(&rdr->output->bytecode, INSN_MAKE(OP_PUSH_LITERAL, index));
-
+  push_literal(rdr, objsel);
   arr_free(&sym);
 }
 
@@ -352,14 +354,9 @@ static bool p_primary(Reader *rdr) {
     // TODO: float literals (NOTE: always has a decimal digit, so 1. =/= 1.0)
 
     auto obj = ctx_alloc_integer(rdr->context, num);
-    IGNORE obj_ref(obj);
     IGNORE fnum;
 
-    auto index = arr_length(&rdr->output->literals, sizeof(Obj));
-    arr_push(&rdr->output->literals, sizeof(Obj), (const void *)&obj);
-
-    index = bc_append_index(&rdr->output->bytecode, index);
-    bc_append_insn(&rdr->output->bytecode, INSN_MAKE(OP_PUSH_LITERAL, index));
+    push_literal(rdr, obj);
   } break;
   case '\'':
     p_string(rdr);
@@ -396,15 +393,13 @@ static int p_message(Reader *rdr, bool explicitp) {
     arr_clear(&msg);
     p_skip_blank(rdr);
 
-    if (isalpha(*rdr->head)) {
+    if (is_word_start(*rdr->head)) {
       auto is_keyword = false;
       // if we have an alphanumeric, it may be either a unary or keyword
       // message.
 
       auto begin = rdr->head;
-      while (isalpha(*rdr->head)) {
-        rdr_next(rdr);
-      }
+      rdr_takewhile(rdr, is_word_tail);
 
       arr_push(&msg, sizeof(char) * (rdr->head - begin), begin);
 
@@ -420,9 +415,8 @@ static int p_message(Reader *rdr, bool explicitp) {
         p_skip_blank(rdr);
 
         begin = rdr->head;
-        while (isalpha(*rdr->head)) {
-          rdr_next(rdr);
-        }
+        rdr_takewhile(rdr, is_word_tail);
+
         arr_push(&msg, sizeof(char) * (rdr->head - begin), begin);
       }
 
@@ -444,13 +438,11 @@ static int p_message(Reader *rdr, bool explicitp) {
       continue;
     }
 
-    if (isop(*rdr->head)) {
+    if (is_operator(*rdr->head)) {
       // if ... punctuation, it is a binary message
 
       auto begin = rdr->head;
-      while (isop(*rdr->head)) {
-        rdr_next(rdr);
-      }
+      rdr_takewhile(rdr, is_operator);
 
       auto sel = str_create(rdr->context, rdr->head - begin, begin);
       auto objsel = ctx_alloc_string(rdr->context, sel);
