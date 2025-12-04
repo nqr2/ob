@@ -1,5 +1,6 @@
 #include "Array.h"
 #include "Context.h"
+#include "Number.h"
 #include "Object.h"
 #include "Parse.h"
 #include "String.h"
@@ -27,6 +28,16 @@ void obj_print(Context ctx, Obj receiver) {
     printf("#<slots:%p>", (void *)receiver);
     break;
 
+  case OT_NUMBER: {
+    ObjNumber *num = obj_get_data(receiver);
+
+    if (num_is_int(num->number)) {
+      printf("%ld", num_to_int(num->number));
+    } else {
+      printf("%f", num_to_float(num->number));
+    }
+  }; break;
+
     // NUMBER
 
   case OT_ARRAY: {
@@ -41,7 +52,7 @@ void obj_print(Context ctx, Obj receiver) {
       obj_print(ctx, items[i]);
 
       if (i != size - 1) {
-        printf(". ");
+        printf(" . ");
       }
     }
 
