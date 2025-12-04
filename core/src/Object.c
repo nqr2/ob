@@ -1,5 +1,6 @@
 #include "Object.h"
 
+#include "Array.h"
 #include "Table.h"
 
 ObjectTag obj_get_tag(Obj obj) {
@@ -23,9 +24,7 @@ void obj_mark(Obj obj) {
   switch (HEADER_GET_TAG(obj->header)) {
   case OT_STRING:
   case OT_SYMBOL: {
-    struct {
-      String *inner;
-    } *str = obj_get_data(obj);
+    ObjString *str = obj_get_data(obj);
     str_mark(str->inner);
   } break;
 
@@ -72,6 +71,11 @@ void obj_destroy(Obj obj) {
     tbl_free(&data->slots);
   } break;
 
+  case OT_ARRAY: {
+    ObjArray *data = obj_get_data(obj);
+    arr_free(&data->items);
+  } break;
+
   case OT_METHOD: {
     ObjMethod *data = obj_get_data(obj);
     arr_free(&data->parameters);
@@ -106,6 +110,15 @@ void obj_visit(Object *obj, FnVisitor visit) {
     }
 
     obj_visit(data->prototype, visit);
+  } break;
+
+  case OT_ARRAY: {
+    ObjArray *data = obj_get_data(obj);
+
+    auto length = data->items.size / sizeof(Obj);
+    for (size_t i = 0; i < length; i++) {
+      obj_visit(arr_at(&data->items, sizeof(Obj), i), visit);
+    }
   } break;
 
   case OT_METHOD: {

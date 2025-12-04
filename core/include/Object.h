@@ -2,6 +2,7 @@
 #define OBJECT_H_INCLUDED
 
 #include "ContextFwd.h"
+#include "Number.h"
 #include "String.h"
 #include "Table.h"
 
@@ -17,8 +18,8 @@ typedef enum Tag {
   OT_SYMBOL = 1,     // #... / #a:b:...y:z: / #'...' / #+...-
   OT_STRING = 2,     // '...'
   OT_SLOTS = 3,      // slot objects
-  OT_INTEGER = 4,    // integers
-  OT_REAL = 5,       // floats
+  OT_NUMBER = 4,     // numbers
+  OT_ARRAY = 5,      // [ ... ]
   OT_METHOD = 6,     // closures
   OT_CMETHOD = 7,    // functions from C
   OT_CDATA = 8,      // data from C
@@ -65,12 +66,12 @@ typedef struct {
 } ObjCData;
 
 typedef struct {
-  int64_t number;
-} ObjInteger;
+  Number number;
+} ObjNumber;
 
 typedef struct {
-  double number;
-} ObjReal;
+  Array items;
+} ObjArray;
 
 typedef struct {
   Obj parent;   // the parent activation

@@ -15,7 +15,7 @@ typedef struct Context {
   Obj objects;
 
   Obj proto_object, proto_nil, proto_symbol, proto_string, proto_slots,
-      proto_integer, proto_real, proto_method, proto_cmethod, proto_cdata,
+      proto_number, proto_array, proto_method, proto_cmethod, proto_cdata,
       proto_activation;
 
   Obj shell;
@@ -37,6 +37,7 @@ Obj ctx_alloc_string(Context ctx, String *string);
 Obj ctx_alloc_slots(Context ctx, Obj prototype);
 Obj ctx_alloc_integer(Context ctx, int64_t number);
 Obj ctx_alloc_real(Context ctx, double number);
+Obj ctx_alloc_array(Context ctx);
 Obj ctx_alloc_method(Context ctx);
 Obj ctx_alloc_cmethod(Context ctx, FnCMethod method);
 Obj ctx_alloc_cdata(Context ctx, void *cdata);

@@ -4,6 +4,7 @@
 #include "Assert.h"
 #include "Bytecode.h"
 #include "Hash.h"
+#include "Number.h"
 #include "Object.h"
 #include "String.h"
 
@@ -27,8 +28,8 @@ Context ctx_create(Allocator *alloc) {
   ctx->proto_symbol = ctx_alloc_slots(ctx, ctx->proto_object);
   ctx->proto_string = ctx_alloc_slots(ctx, ctx->proto_object);
   ctx->proto_slots = ctx_alloc_slots(ctx, ctx->proto_object);
-  ctx->proto_integer = ctx_alloc_slots(ctx, ctx->proto_object);
-  ctx->proto_real = ctx_alloc_slots(ctx, ctx->proto_object);
+  ctx->proto_number = ctx_alloc_slots(ctx, ctx->proto_object);
+  ctx->proto_array = ctx_alloc_slots(ctx, ctx->proto_object);
   ctx->proto_method = ctx_alloc_slots(ctx, ctx->proto_object);
   ctx->proto_cmethod = ctx_alloc_slots(ctx, ctx->proto_object);
   ctx->proto_cdata = ctx_alloc_slots(ctx, ctx->proto_object);
@@ -98,21 +99,31 @@ Obj ctx_alloc_slots(Context ctx, Obj prototype) {
 }
 
 Obj ctx_alloc_integer(Context ctx, int64_t number) {
-  auto obj = ctx_allocate(ctx, sizeof(ObjInteger));
-  obj->header = HEADER_SET_TAG(0, OT_INTEGER);
+  auto obj = ctx_allocate(ctx, sizeof(ObjNumber));
+  obj->header = HEADER_SET_TAG(0, OT_NUMBER);
 
-  ObjInteger *num = obj_get_data(obj);
-  num->number = number;
+  ObjNumber *num = obj_get_data(obj);
+  num->number = num_of_int(number);
 
   return obj;
 }
 
 Obj ctx_alloc_real(Context ctx, double number) {
-  auto obj = ctx_allocate(ctx, sizeof(ObjReal));
-  obj->header = HEADER_SET_TAG(0, OT_REAL);
+  auto obj = ctx_allocate(ctx, sizeof(ObjNumber));
+  obj->header = HEADER_SET_TAG(0, OT_NUMBER);
 
-  ObjReal *num = obj_get_data(obj);
-  num->number = number;
+  ObjNumber *num = obj_get_data(obj);
+  num->number = num_of_float(number);
+
+  return obj;
+}
+
+Obj ctx_alloc_array(Context ctx) {
+  auto obj = ctx_allocate(ctx, sizeof(ObjArray));
+  obj->header = HEADER_SET_TAG(0, OT_ARRAY);
+
+  ObjArray *arr = obj_get_data(obj);
+  arr_init(&arr->items, ctx->allocator);
 
   return obj;
 }
@@ -160,8 +171,8 @@ void ctx_mark(Context ctx) {
   obj_mark(ctx->proto_symbol);
   obj_mark(ctx->proto_string);
   obj_mark(ctx->proto_slots);
-  obj_mark(ctx->proto_integer);
-  obj_mark(ctx->proto_real);
+  obj_mark(ctx->proto_number);
+  obj_mark(ctx->proto_array);
   obj_mark(ctx->proto_method);
   obj_mark(ctx->proto_cmethod);
   obj_mark(ctx->proto_cdata);
@@ -255,10 +266,10 @@ Obj ctx_get_prototype(Context ctx, Obj obj) {
 
     return ctx->proto_slots;
   }
-  case OT_INTEGER:
-    return ctx->proto_integer;
-  case OT_REAL:
-    return ctx->proto_real;
+  case OT_NUMBER:
+    return ctx->proto_number;
+  case OT_ARRAY:
+    return ctx->proto_array;
   case OT_METHOD:
     return ctx->proto_method;
   case OT_CMETHOD:
