@@ -6,10 +6,8 @@
 
 #include <stdio.h>
 
-bool o__print(Context ctx) {
-  ObjActivation *activation = obj_get_data(ctx->activation);
+void obj_print(Context ctx, Obj receiver) {
 
-  auto receiver = activation->receiver;
   auto tag = obj_get_tag(receiver);
   switch (tag) {
   case OT_NIL:
@@ -29,8 +27,26 @@ bool o__print(Context ctx) {
     printf("#<slots:%p>", (void *)receiver);
     break;
 
-    // INTEGER
-    // REAL
+    // NUMBER
+
+  case OT_ARRAY: {
+    printf("[");
+
+    ObjArray *arr = obj_get_data(receiver);
+    auto size = arr->items.size / sizeof(Obj);
+
+    auto items = (Obj *)arr->items.data;
+
+    for (size_t i = 0; i < size; i++) {
+      obj_print(ctx, items[i]);
+
+      if (i != size - 1) {
+        printf(". ");
+      }
+    }
+
+    printf("]");
+  }; break;
 
   case OT_METHOD:
     printf("#<method:%p>", (void *)receiver);
@@ -54,6 +70,13 @@ bool o__print(Context ctx) {
     printf("#<r%d:%p>", tag, (void *)receiver);
     break;
   }
+}
+
+bool o__print(Context ctx) {
+  ObjActivation *activation = obj_get_data(ctx->activation);
+
+  auto receiver = activation->receiver;
+  obj_print(ctx, receiver);
 
   putchar('\n');
 

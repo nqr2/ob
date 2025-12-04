@@ -21,7 +21,7 @@ typedef enum {
   OP_EXTEND = 3,        // extend the payload by prepending 4 bits
   OP_RETURN = 4,        // implements ^
   OP_SELF = 5,          // push the explicit receiver
-  OP_SELF_SEND = 6,     // send a message to the explicit receiver
+  OP_ARRAY = 6,         // construct an Array from <index> items in the stack.
   OP_R7 = 7,
   OP_R8 = 8,
   OP_R9 = 9,

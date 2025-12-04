@@ -139,16 +139,21 @@ static void p_paren(Reader *rdr) {
 }
 
 static void p_array(Reader *rdr) {
+  size_t items = 0;
+
   rdr_next(rdr);
 
   p_skip_blank(rdr);
 
   if (*rdr->head != ']') {
+    items += 1;
+
     // expression { . expression }
     p_expression(rdr);
     p_skip_blank(rdr);
 
     while (*rdr->head == '.') {
+      items += 1;
       rdr_next(rdr);
 
       p_expression(rdr);
@@ -157,6 +162,9 @@ static void p_array(Reader *rdr) {
   }
 
   ASSERT(*rdr->head == ']', "expected a closing ], got a %c", *rdr->head);
+
+  items = bc_append_index(&rdr->output->bytecode, items);
+  bc_append_insn(&rdr->output->bytecode, INSN_MAKE(OP_ARRAY, items));
 
   rdr_next(rdr);
 }
@@ -320,7 +328,7 @@ static void p_symbol(Reader *rdr) {
   sel = str_create(rdr->context, sym.size, sym.data);
 
 after_str:
-  auto objsel = ctx_alloc_string(rdr->context, sel);
+  auto objsel = ctx_alloc_symbol(rdr->context, sel);
 
   push_literal(rdr, objsel);
   arr_free(&sym);

@@ -1,5 +1,6 @@
 #include "Bytecode.h"
 
+#include "Array.h"
 #include "Context.h"
 #include "Object.h"
 
@@ -38,22 +39,29 @@ void bc_run(Context ctx, size_t len, const uint8_t *code) {
       ctx_send(ctx, act->env, selector->inner);
     }; break;
 
-    case OP_SELF_SEND: {
-      ObjString *selector = obj_get_data(literal);
-
-      ctx_send(ctx, act->receiver, selector->inner);
-    }; break;
-
     case OP_EXTEND: {
       index = this_index;
       continue;
     }; break;
 
+      // TODO: OP_RETURN
+
     case OP_SELF: {
       arr_push(&ctx->stack, sizeof(Object *), (void *)act->receiver);
     }; break;
 
-      // TODO: OP_RETURN
+    case OP_ARRAY: {
+      auto obj = ctx_alloc_array(ctx);
+      ObjArray *oarr = obj_get_data(obj);
+
+      auto arr = &oarr->items;
+      arr_reserve(arr, this_index * sizeof(Obj));
+
+      arr_pop(&ctx->stack, this_index * sizeof(Obj), arr->data);
+      arr->size = this_index * sizeof(Obj);
+
+      ctx_push(ctx, obj);
+    }; break;
 
     default:
       break;
