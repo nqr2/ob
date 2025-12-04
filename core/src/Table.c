@@ -65,6 +65,11 @@ void tbl_reserve(Table *tbl, size_t newcap) {
   tbl->capacity = newcap;
 }
 
+void tbl_clear(Table *tbl) {
+  tbl->length = 0;
+  memset(tbl->data, 0, sizeof(TableEntry) * tbl->capacity);
+}
+
 // return true if entry is new
 bool tbl_set(Table *tbl, uint64_t key, void *value) {
   TableEntry *entry = NULL;

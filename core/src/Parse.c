@@ -5,9 +5,12 @@
 #include "Context.h"
 #include "Macros.h"
 #include "Object.h"
+#include "Serial.h"
 #include "String.h"
 
 #include <ctype.h>
+#include <stdint.h>
+#include <string.h>
 
 static bool is_operator(char chr) {
   if (!ispunct(chr)) {
@@ -513,6 +516,18 @@ static void p_toplevel(Reader *rdr) {
 }
 
 Obj load_file(Context ctx, size_t length, const char *text) {
+  if (strncmp(text, SERIAL_HEADER, sizeof(SERIAL_HEADER)) == 0) {
+    auto srl = (Serial){};
+    srl_init(&srl, ctx);
+
+    srl_load(&srl, length, (const uint8_t *)text);
+    auto obj = srl_read(&srl);
+
+    srl_free(&srl);
+
+    return obj;
+  }
+
   Obj closure = ctx_alloc_method(ctx);
   ObjMethod *clos = obj_get_data(closure);
 
