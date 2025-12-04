@@ -47,7 +47,7 @@ void bc_run(Context ctx, size_t len, const uint8_t *code) {
       // TODO: OP_RETURN
 
     case OP_SELF: {
-      arr_push(&ctx->stack, sizeof(Object *), (void *)act->receiver);
+      arr_push(&ctx->stack, sizeof(Obj), (void *)act->receiver);
     }; break;
 
     case OP_ARRAY: {

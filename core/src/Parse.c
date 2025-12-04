@@ -381,6 +381,10 @@ static bool p_primary(Reader *rdr) {
   case '[':
     p_array(rdr);
     break;
+  case '@':
+    rdr_next(rdr);
+    bc_append_insn(&rdr->output->bytecode, OP_SELF);
+    break;
   default:
     return false;
   }
