@@ -127,6 +127,46 @@ static void p_method(Reader *rdr) {
 
   rdr->output = method;
 
+  // | {word} |
+  auto buf = (Array){};
+  arr_init(&buf, rdr->context->allocator);
+
+  if (*rdr->head == '|') {
+    rdr_next(rdr);
+
+    p_skip_blank(rdr);
+
+    while (true) {
+      if (*rdr->head == '|') {
+        rdr_next(rdr);
+        break;
+      }
+
+      arr_clear(&buf);
+
+      auto begin = rdr->head;
+
+      while (isalpha(*rdr->head)) {
+        rdr_next(rdr);
+      }
+
+      arr_push(&buf, sizeof(char) * (rdr->head - begin), begin);
+
+      // TODO: also intern this
+      auto str = str_create(rdr->context, buf.size, buf.data);
+      arr_push(&rdr->output->parameters, sizeof(Str), (void *)&str);
+
+      p_skip_blank(rdr);
+
+      if (!((*rdr->head == '|') || isalpha(*rdr->head))) {
+        ASSERT(false, "unexpected character in argument list: `%c`",
+               *rdr->head);
+      }
+    }
+  }
+
+  arr_free(&buf);
+
   // expression { . expression }
   p_expression(rdr);
   p_skip_blank(rdr);

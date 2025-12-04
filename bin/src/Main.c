@@ -154,10 +154,7 @@ int main(int argn, char *argv[]) {
     }
   } else {
     repl(ctx);
-    // run a repl
   }
-
-  ctx_sweep(ctx);
 
   ctx_destroy(ctx);
 
