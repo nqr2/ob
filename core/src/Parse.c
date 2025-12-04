@@ -19,6 +19,8 @@ static bool isop(char chr) {
   case ')':
   case '{':
   case '}':
+  case '[':
+  case ']':
   case '.':
     return false;
   default:
@@ -84,7 +86,7 @@ static void p_skip_blank(Reader *rdr) {
   }
 }
 
-static void p_primary_paren(Reader *rdr) {
+static void p_paren(Reader *rdr) {
   rdr_next(rdr);
 
   p_skip_blank(rdr);
@@ -111,6 +113,30 @@ static void p_primary_paren(Reader *rdr) {
   }
 
   ASSERT(*rdr->head == ')', "expected a closing ), got a %c", *rdr->head);
+
+  rdr_next(rdr);
+}
+
+// TODO: maybe make everything return an Obj and add a method to push that?
+// because this will be hard to do otherwise.
+static void p_array(Reader *rdr) {
+  rdr_next(rdr);
+
+  p_skip_blank(rdr);
+
+  if (*rdr->head != ']') {
+    // expression { . expression }
+    p_expression(rdr);
+    p_skip_blank(rdr);
+
+    while (*rdr->head == '.') {
+      rdr_next(rdr);
+      p_expression(rdr);
+      p_skip_blank(rdr);
+    }
+  }
+
+  ASSERT(*rdr->head == ']', "expected a closing ], got a %c", *rdr->head);
 
   rdr_next(rdr);
 }
@@ -342,10 +368,13 @@ static bool p_primary(Reader *rdr) {
     p_symbol(rdr);
     break;
   case '(':
-    p_primary_paren(rdr);
+    p_paren(rdr);
     break;
   case '{':
     p_method(rdr);
+    break;
+  case '[':
+    p_array(rdr);
     break;
   default:
     return false;
