@@ -7,7 +7,55 @@
 #include <stdio.h>
 
 bool o__print(Context ctx) {
-  printf("activation:%p\n", (void *)ctx->activation);
+  ObjActivation *activation = obj_get_data(ctx->activation);
+
+  auto receiver = activation->receiver;
+  auto tag = obj_get_tag(receiver);
+  switch (tag) {
+  case OT_NIL:
+    printf("nil");
+    break;
+
+  case OT_SYMBOL:
+    putchar('#');
+
+  case OT_STRING: {
+    ObjString *str = obj_get_data(receiver);
+    printf("'%.*s'", (int)str_get_length(str->inner),
+           str_get_data(ctx, str->inner));
+  } break;
+
+  case OT_SLOTS:
+    printf("#<slots:%p>", (void *)receiver);
+    break;
+
+    // INTEGER
+    // REAL
+
+  case OT_METHOD:
+    printf("#<method:%p>", (void *)receiver);
+    break;
+
+  case OT_CMETHOD: {
+    ObjCMethod *method = obj_get_data(receiver);
+    printf("#<cmethod:%p>", (void *)method->method);
+  } break;
+
+  case OT_CDATA: {
+    ObjCData *data = obj_get_data(receiver);
+    printf("#<cdata:%p>", data->cdata);
+  } break;
+
+  case OT_ACTIVATION:
+    printf("#<activation:%p>", (void *)receiver);
+    break;
+
+  default:
+    printf("#<r%d:%p>", tag, (void *)receiver);
+    break;
+  }
+
+  putchar('\n');
 
   return false;
 }
@@ -68,7 +116,7 @@ void repl(Context ctx) {
       tmp = getchar();
 
       if (tmp == -1) {
-        putchar('\n');
+        puts("bye");
         break;
       }
 

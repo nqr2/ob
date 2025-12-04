@@ -325,7 +325,7 @@ void ctx_send(Context ctx, Obj recv, String *selector) {
            "expected to have %lu arguments on stack", n_args);
   }
 
-  auto tag = HEADER_GET_TAG(invoked->header);
+  auto tag = obj_get_tag(invoked);
 
   if (tag == OT_CMETHOD) {
     ctx_enter_activation(ctx, ctx->activation, invoked, recv);
