@@ -1,11 +1,14 @@
 #include "Array.h"
+#include "Assert.h"
 #include "Context.h"
+#include "Hash.h"
 #include "Number.h"
 #include "Object.h"
 #include "Parse.h"
 #include "String.h"
 
 #include <stdio.h>
+#include <string.h>
 
 void obj_print(Context ctx, Obj receiver) {
 
@@ -164,23 +167,43 @@ void repl(Context ctx) {
   arr_free(&line);
 }
 
+void add_method(Context ctx, Obj target, const char *name, FnCMethod method) {
+  ASSERT(obj_get_tag(target) == OT_SLOTS, "expected a slots object");
+
+  ObjSlots *slots = obj_get_data(target);
+
+  auto obj = ctx_alloc_cmethod(ctx, method);
+  auto hash = hash_start(strlen(name), name);
+
+  tbl_set(&slots->slots, hash, (void *)obj);
+}
+
+typedef struct {
+  const char *name;
+  FnCMethod method;
+} Entry;
+
+void add_methods(Context ctx, Obj target, const Entry *entries) {
+  while (entries->name != NULL) {
+    add_method(ctx, target, entries->name, entries->method);
+
+    entries++;
+  }
+}
+
 int main(int argn, char *argv[]) {
   auto alloc = get_libc_allocator();
 
   auto ctx = ctx_create(&alloc);
 
-  ObjSlots *p_obj = obj_get_data(ctx->proto_object);
+  auto lib = (Entry[]){
+      {"print", o__print},
+      {"right:", o__other},
+      {">:", o__other},
+      {NULL, NULL},
+  };
 
-  auto sel = str_create_literal(ctx, "print");
-  auto print = ctx_alloc_cmethod(ctx, o__print);
-  tbl_set(&p_obj->slots, str_get_hash(ctx, sel), (void *)print);
-
-  sel = str_create_literal(ctx, "right:");
-  auto right = ctx_alloc_cmethod(ctx, o__other);
-  tbl_set(&p_obj->slots, str_get_hash(ctx, sel), (void *)right);
-
-  sel = str_create_literal(ctx, ">:");
-  tbl_set(&p_obj->slots, str_get_hash(ctx, sel), (void *)right);
+  add_methods(ctx, ctx->proto_object, lib);
 
   if (argn != 1) {
     for (int i = 1; i < argn; i++) {
