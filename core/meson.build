@@ -10,6 +10,7 @@ ob_src = [
   'src/Number.c',
   'src/Object.c',
   'src/Parse.c',
+  'src/Serial.c',
   'src/String.c',
   'src/Table.c',
 ]
