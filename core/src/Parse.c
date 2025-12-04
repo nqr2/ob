@@ -479,6 +479,16 @@ static int p_message(Reader *rdr, bool explicitp) {
 }
 
 static void p_expression(Reader *rdr) {
+  p_skip_blank(rdr);
+
+  if (*rdr->head == '^') {
+    rdr_next(rdr);
+    p_expression(rdr);
+
+    bc_append_insn(&rdr->output->bytecode, OP_RETURN);
+    return;
+  }
+
   auto explicit_receiver = p_primary(rdr);
   auto msg_index = p_message(rdr, explicit_receiver);
 
