@@ -1,31 +1,12 @@
 #include "Serial.h"
 #include "Array.h"
+#include "Assert.h"
 #include "Context.h"
+#include "Object.h"
 #include "Table.h"
 
+#include <stdbit.h>
 #include <string.h>
-
-/*
- * So, the idea would be that this whole thing is done in "packets", where the
- * first one just describes the object to return, so the format would be:
- *
- *   <length> <header> <content...>
- *
- * where length also includes the size of the header.
- *
- * I am considering two packets to begin with:
- *   STRING, which would contain string data, and
- *   OBJECT, which would contain an object, serialized.
- *
- * STRING
- *   <id:number>
- *   <string data>
- *
- * OBJECT
- *   <varied contents>
- *
- * There could be more, of course ;)
- */
 
 void srl_init(Serial *srl, Context ctx) {
   srl->ctx = ctx;
@@ -38,12 +19,85 @@ void srl_free(Serial *srl) {
   tbl_free(&srl->identifiers);
 }
 
-void srl_write(Serial *srl, Obj object) {
-  (void)object;
+static bool write_obj(Serial *srl, uint64_t *ident, Obj object) {
+  tbl_set(&srl->identifiers, (uint64_t)object, (void *)&object);
 
+  *ident = srl->output.size;
+
+  if (tbl_get(&srl->identifiers, (uint64_t)object, (void **)ident)) {
+    return true;
+  }
+
+  // write data for object here?
+
+  return false;
+}
+
+static void write_int(Serial *srl, uint64_t n) {
+  auto len = stdc_bit_width(n);
+  ASSERT(len <= 63, "cannot encode a num > 64 bits.");
+
+  do {
+    uint8_t byte = n & 0x7f;
+    n >>= 7;
+
+    if (n > 0) {
+      byte |= 0x80;
+    }
+
+    arr_push(&srl->output, sizeof(uint8_t), &byte);
+  } while (n != 0);
+}
+
+static uint64_t read_int(Serial *srl, size_t off) {
+  uint8_t *bytes = srl->output.data;
+  bytes += off;
+
+  auto shift = 0;
+  uint64_t result = 0;
+
+  do {
+    result |= (*bytes & 0x7f) << (shift * 7);
+    shift++;
+  } while ((*bytes & 0x80) != 0);
+
+  return result;
+}
+
+void srl_write(Serial *srl, Obj object) {
   tbl_clear(&srl->identifiers);
 
   arr_push(&srl->output, sizeof(SERIAL_HEADER), SERIAL_HEADER);
+
+  switch (obj_get_tag(object)) {
+  case OT_NIL: // no need to do anything here
+    break;
+  case OT_SYMBOL: // <length> <characters>
+  case OT_STRING: // same
+    break;
+  case OT_SLOTS: // <prototype> <slots>?
+    break;
+  case OT_NUMBER: // the number
+    break;
+  case OT_ARRAY: // <length> <items>
+    break;
+  case OT_METHOD: // <arguments> <bytecode>
+    break;
+
+  case OT_ACTIVATION: // no idea if this is OK
+  case OT_CMETHOD:    // cannot serialize opaque data
+  case OT_CDATA:      // same here
+  case OT_Ra:
+  case OT_Rb:
+  case OT_Rc:
+  case OT_Rd:
+  case OT_Re:
+  case OT_Rf:
+
+  default:
+    ASSERT(false, "cannot serialize this object");
+    break;
+  }
 }
 
 Obj srl_read(Serial *srl) {
