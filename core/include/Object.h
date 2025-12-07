@@ -13,7 +13,7 @@
 // 4 bit tag, 1 bit mark, 11 rc?
 typedef uint16_t Header;
 
-typedef enum Tag {
+typedef enum Tag : uint8_t {
   OT_NIL = 0,        // the nil object
   OT_SYMBOL = 1,     // #... / #a:b:...y:z: / #'...' / #+...-
   OT_STRING = 2,     // '...'
