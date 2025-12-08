@@ -92,10 +92,10 @@ typedef struct {
 
 #define RC_MAX 0x7ff
 
-typedef void (*FnVisitor)(Obj obj);
+typedef void (*FnVisitor)(Obj obj, void *userdata);
 
 // NOTE: this also invokes visit on the obj in question
-void obj_visit(Obj obj, FnVisitor visit);
+void obj_visit(Obj obj, FnVisitor visit, void *userdata);
 
 ObjectTag obj_get_tag(Obj obj);
 void *obj_get_data(Obj obj);
