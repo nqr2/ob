@@ -11,6 +11,9 @@
 #include <stdint.h>
 #include <string.h>
 
+#define A_FULL 0x00
+#define A_REF 0x01
+
 static void write_int(Serial *srl, uint64_t n) {
   auto len = stdc_bit_width(n);
   ASSERT(len <= 63, "cannot encode a num > 64 bits.");
@@ -53,33 +56,27 @@ void srl_free(Serial *srl) {
   tbl_free(&srl->identifiers);
 }
 
-static bool write_obj(Serial *srl, uint64_t *ident, Obj object) {
+struct udata {
+  Serial *srl;
+  uint64_t *ident;
+};
+
+static void write_obj(Obj object, void *userdata) {
+  struct udata *udata = userdata;
+  auto srl = udata->srl;
+  auto ident = udata->ident;
+
+  char kind = A_FULL;
+
   if (tbl_get(&srl->identifiers, (uint64_t)object, (void **)ident)) {
-    return true;
+    kind = A_REF;
+    arr_push(&srl->output, sizeof(char), &kind);
+    write_int(srl, *ident);
+    return;
   }
 
+  arr_push(&srl->output, sizeof(char), &kind);
   auto tag = obj_get_tag(object);
-
-  // dependencies
-  // write data for object here?
-  switch (tag) {
-
-  case OT_ARRAY: // <length> <items>
-    break;
-
-    /* TODO: these */
-
-  case OT_SLOTS:  // <prototype> <slots>?
-  case OT_METHOD: // <arguments> <bytecode>
-
-  case OT_ACTIVATION: // no idea if this is OK
-  case OT_CMETHOD:    // cannot serialize opaque data
-  case OT_CDATA:      // same here
-
-  default:
-    ASSERT(false, "cannot serialize this object");
-    break;
-  }
 
   *ident = srl->output.size;
   tbl_set(&srl->identifiers, (uint64_t)object, ident);
@@ -104,10 +101,9 @@ static bool write_obj(Serial *srl, uint64_t *ident, Obj object) {
   } break;
 
   default:
+    ASSERT(false, "cannot serialize this object");
     break;
   }
-
-  return false;
 }
 
 void srl_write(Serial *srl, Obj object) {
@@ -117,7 +113,8 @@ void srl_write(Serial *srl, Obj object) {
 
   auto sink = (uint64_t)0;
 
-  (void)write_obj(srl, &sink, object);
+  auto udata = (struct udata){srl, &sink};
+  obj_visit(object, write_obj, &udata);
 
   (void)sink;
 }
