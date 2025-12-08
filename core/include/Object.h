@@ -92,10 +92,22 @@ typedef struct {
 
 #define RC_MAX 0x7ff
 
-typedef void (*FnVisitor)(Obj obj, void *userdata);
+typedef void (*FnVisit)(Obj obj, void *userdata);
+
+typedef enum : uint8_t {
+  VISIT_NONE = 0,
+  VISIT_AFTER = 1,
+  VISIT_BEFORE = 2,
+} VisitFlags;
 
 // NOTE: this also invokes visit on the obj in question
-void obj_visit(Obj obj, FnVisitor visit, void *userdata);
+void obj_visit(Obj obj, VisitFlags flags, FnVisit visit, void *userdata);
+
+#define obj_visit_before(Obj, Visit, Userdata)                                 \
+  obj_visit((Obj), VISIT_BEFORE, (Visit), (Userdata))
+
+#define obj_visit_after(Obj, Visit, Userdata)                                  \
+  obj_visit((Obj), VISIT_AFTER, (Visit), (Userdata))
 
 ObjectTag obj_get_tag(Obj obj);
 void *obj_get_data(Obj obj);

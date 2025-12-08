@@ -39,7 +39,7 @@ void obj_mark(Obj obj) {
 
   obj->header = HEADER_SET_MARK(obj->header, true);
 
-  obj_visit(obj, mark, NULL);
+  obj_visit_before(obj, mark, NULL);
 }
 
 Obj obj_ref(Obj obj) {
@@ -95,13 +95,15 @@ void obj_destroy(Obj obj) {
   }
 }
 
-void obj_visit(Object *obj, FnVisitor visit, void *userdata) {
+void obj_visit(Object *obj, VisitFlags flags, FnVisit visit, void *userdata) {
   // TODO: properly handle NULLs.
   if (obj == NULL) {
     return;
   }
 
-  visit(obj, userdata);
+  if (flags & VISIT_BEFORE) {
+    visit(obj, userdata);
+  }
 
   switch (HEADER_GET_TAG(obj->header)) {
   case OT_SLOTS: {
@@ -111,10 +113,10 @@ void obj_visit(Object *obj, FnVisitor visit, void *userdata) {
     uint64_t index = 0;
 
     while (tbl_iterate(&data->slots, &index, NULL, (void **)&ref)) {
-      obj_visit(ref, visit, userdata);
+      obj_visit(ref, flags, visit, userdata);
     }
 
-    obj_visit(data->prototype, visit, userdata);
+    obj_visit(data->prototype, flags, visit, userdata);
   } break;
 
   case OT_ARRAY: {
@@ -122,7 +124,7 @@ void obj_visit(Object *obj, FnVisitor visit, void *userdata) {
 
     auto length = data->items.size / sizeof(Obj);
     for (size_t i = 0; i < length; i++) {
-      obj_visit(arr_at(&data->items, sizeof(Obj), i), visit, userdata);
+      obj_visit(arr_at(&data->items, sizeof(Obj), i), flags, visit, userdata);
     }
   } break;
 
@@ -132,22 +134,26 @@ void obj_visit(Object *obj, FnVisitor visit, void *userdata) {
     for (size_t i = 0; i < data->literals.size / sizeof(Object *); i++) {
       Object *item = ((Object **)data->literals.data)[i];
 
-      obj_visit(item, visit, userdata);
+      obj_visit(item, flags, visit, userdata);
     }
 
-    obj_visit(data->env, visit, userdata);
+    obj_visit(data->env, flags, visit, userdata);
   }; break;
 
   case OT_ACTIVATION: {
     ObjActivation *data = obj_get_data(obj);
-    obj_visit(data->parent, visit, userdata);
-    obj_visit(data->caller, visit, userdata);
-    obj_visit(data->method, visit, userdata);
-    obj_visit(data->receiver, visit, userdata);
-    obj_visit(data->env, visit, userdata);
+    obj_visit(data->parent, flags, visit, userdata);
+    obj_visit(data->caller, flags, visit, userdata);
+    obj_visit(data->method, flags, visit, userdata);
+    obj_visit(data->receiver, flags, visit, userdata);
+    obj_visit(data->env, flags, visit, userdata);
   }; break;
 
   default:
     break;
+  }
+
+  if (flags & VISIT_AFTER) {
+    visit(obj, userdata);
   }
 }

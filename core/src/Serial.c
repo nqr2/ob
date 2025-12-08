@@ -114,7 +114,7 @@ void srl_write(Serial *srl, Obj object) {
   auto sink = (uint64_t)0;
 
   auto udata = (struct udata){srl, &sink};
-  obj_visit(object, write_obj, &udata);
+  obj_visit_after(object, write_obj, &udata);
 
   (void)sink;
 }
