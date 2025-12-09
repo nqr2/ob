@@ -9,6 +9,7 @@
 
 #include <stdbit.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 
 #define A_FULL 0x00
@@ -51,30 +52,35 @@ void srl_free(Serial *srl) {
   tbl_free(&srl->identifiers);
 }
 
-struct udata {
-  Serial *srl;
-  uint64_t *ident;
-};
+static void write_ref(Obj object, Serial *srl) {
+  uint64_t ident = 0;
 
-static void write_obj(Obj object, void *userdata) {
-  struct udata *udata = userdata;
-  auto srl = udata->srl;
-  auto ident = udata->ident;
-
-  char kind = A_FULL;
-
-  if (tbl_get(&srl->identifiers, (uint64_t)object, (void **)ident)) {
-    kind = A_REF;
-    arr_push(&srl->output, sizeof(char), &kind);
-    write_int(srl, *ident);
+  // The bc header should be @ offset 0, so this is always 1 byte
+  if (object == NULL) {
+    write_int(srl, 0);
     return;
   }
 
-  arr_push(&srl->output, sizeof(char), &kind);
+  if (tbl_get(&srl->identifiers, (uint64_t)object, (void **)&ident)) {
+    write_int(srl, ident);
+    return;
+  }
+
+  ASSERT(false, "object %p was not yet written", object);
+}
+static void write_obj(Obj object, void *userdata) {
+  Serial *srl = userdata;
+  uint64_t ident = 0;
+
+  if (tbl_get(&srl->identifiers, (uint64_t)object, (void **)&ident)) {
+    fprintf(stderr, "already: %p\n", object);
+    return;
+  }
+
   auto tag = obj_get_tag(object);
 
-  *ident = srl->output.size;
-  tbl_set(&srl->identifiers, (uint64_t)object, (void *)*ident);
+  ident = srl->output.size;
+  tbl_set(&srl->identifiers, (uint64_t)object, (void *)ident);
 
   arr_push(&srl->output, sizeof(tag), &tag);
 
@@ -101,7 +107,7 @@ static void write_obj(Obj object, void *userdata) {
   case OT_METHOD: {
     ObjMethod *data = obj_get_data(object);
 
-    write_obj(data->env, userdata);
+    write_ref(data->env, userdata);
 
     auto len = data->literals.size / sizeof(Obj);
     write_int(srl, len);
@@ -109,7 +115,7 @@ static void write_obj(Obj object, void *userdata) {
     for (size_t i = 0; i < len; i++) {
       Obj item = ((Obj *)data->literals.data)[i];
 
-      write_obj(item, userdata);
+      write_ref(item, userdata);
     }
 
     write_int(srl, data->bytecode.size);
@@ -127,12 +133,7 @@ void srl_write(Serial *srl, Obj object) {
 
   arr_push(&srl->output, sizeof(SERIAL_HEADER), SERIAL_HEADER);
 
-  auto sink = (uint64_t)0;
-
-  auto udata = (struct udata){srl, &sink};
-  obj_visit_after(object, write_obj, &udata);
-
-  (void)sink;
+  obj_visit_after(object, write_obj, srl);
 }
 
 Obj srl_read(Serial *srl) {
