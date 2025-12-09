@@ -35,7 +35,7 @@ void dofile(Context ctx, const char *path) {
   srl_init(&srl, ctx);
 
   srl_write(&srl, method);
-  fwrite(srl.output.data, sizeof(uint8_t), srl.output.size, stdout);
+  fwrite(srl.buffer.data, sizeof(uint8_t), srl.buffer.size, stdout);
 
   srl_free(&srl);
 

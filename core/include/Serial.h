@@ -7,7 +7,7 @@
 
 typedef struct {
   Context ctx;
-  Array output;
+  Array buffer;
   Table identifiers;
 } Serial;
 

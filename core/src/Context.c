@@ -98,6 +98,16 @@ Obj ctx_alloc_slots(Context ctx, Obj prototype) {
   return obj;
 }
 
+Obj ctx_alloc_number(Context ctx, Number number) {
+  auto obj = ctx_allocate(ctx, sizeof(ObjNumber));
+  obj->header = HEADER_SET_TAG(0, OT_NUMBER);
+
+  ObjNumber *num = obj_get_data(obj);
+  num->number = number;
+
+  return obj;
+}
+
 Obj ctx_alloc_integer(Context ctx, int64_t number) {
   auto obj = ctx_allocate(ctx, sizeof(ObjNumber));
   obj->header = HEADER_SET_TAG(0, OT_NUMBER);
