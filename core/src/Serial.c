@@ -30,19 +30,14 @@ static void write_int(Serial *srl, uint64_t n) {
   } while (n != 0);
 }
 
-static uint64_t read_int(Serial *srl, size_t off) {
-  uint8_t *bytes = srl->output.data;
-  bytes += off;
-
+static uint8_t *read_int(uint8_t *bytes, size_t off, uint64_t *result) {
   auto shift = 0;
-  uint64_t result = 0;
 
   do {
-    result |= (*bytes & 0x7f) << (shift * 7);
+    *result |= (*bytes & 0x7f) << (shift * 7);
     shift++;
   } while ((*bytes & 0x80) != 0);
-
-  return result;
+  return bytes;
 }
 
 void srl_init(Serial *srl, Context ctx) {
@@ -79,7 +74,7 @@ static void write_obj(Obj object, void *userdata) {
   auto tag = obj_get_tag(object);
 
   *ident = srl->output.size;
-  tbl_set(&srl->identifiers, (uint64_t)object, ident);
+  tbl_set(&srl->identifiers, (uint64_t)object, (void *)*ident);
 
   arr_push(&srl->output, sizeof(tag), &tag);
 
@@ -142,7 +137,10 @@ void srl_write(Serial *srl, Obj object) {
 
 Obj srl_read(Serial *srl) {
   tbl_clear(&srl->identifiers);
-  return NULL;
+
+  Obj result = NULL;
+
+  return result;
 }
 
 void srl_store(const Serial *srl, size_t len, uint8_t *data) {
