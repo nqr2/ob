@@ -1,5 +1,5 @@
-executable(
+ob = executable(
   'ob',
-  'src/Main.c',
+  'src/ob.c',
   dependencies: [obCore]
 )

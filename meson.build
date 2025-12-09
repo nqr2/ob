@@ -10,4 +10,6 @@ subdir('tap')
 
 subdir('core')
 
+subdir('tools')
+
 subdir('bin')

@@ -85,6 +85,9 @@ static void write_obj(Obj object, void *userdata) {
 
   // data
   switch (tag) {
+  case OT_NIL: // nothing here
+    break;
+
   case OT_SYMBOL: // <length> <characters>
   case OT_STRING: // same
   {
@@ -100,8 +103,26 @@ static void write_obj(Obj object, void *userdata) {
     arr_push(&srl->output, sizeof(Number), &num->number);
   } break;
 
+  case OT_METHOD: {
+    ObjMethod *data = obj_get_data(object);
+
+    write_obj(data->env, userdata);
+
+    auto len = data->literals.size / sizeof(Obj);
+    write_int(srl, len);
+
+    for (size_t i = 0; i < len; i++) {
+      Obj item = ((Obj *)data->literals.data)[i];
+
+      write_obj(item, userdata);
+    }
+
+    write_int(srl, data->bytecode.size);
+    arr_push(&srl->output, data->bytecode.size, data->bytecode.data);
+  }; break;
+
   default:
-    ASSERT(false, "cannot serialize this object");
+    ASSERT(false, "cannot serialize this object of tag %d", tag);
     break;
   }
 }

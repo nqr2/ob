@@ -3,3 +3,4 @@
 /compile_commands.json
 vgcore.*
 /doc
+*.obc
