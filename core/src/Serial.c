@@ -9,7 +9,6 @@
 
 #include <stdbit.h>
 #include <stdint.h>
-#include <stdio.h>
 #include <string.h>
 
 static void write_int(Serial *srl, uint64_t n) {
@@ -20,10 +19,9 @@ static void write_int(Serial *srl, uint64_t n) {
     uint8_t byte = n & 0x7f;
     n >>= 7;
 
-    if (n > 0) {
+    if (n != 0) {
       byte |= 0x80;
     }
-
     arr_push(&srl->buffer, sizeof(uint8_t), &byte);
   } while (n != 0);
 }
@@ -31,6 +29,8 @@ static void write_int(Serial *srl, uint64_t n) {
 static uint8_t *read_int(uint8_t *bytes, uint64_t *result) {
   auto shift = 0;
   auto byte = *bytes;
+
+  *result = 0;
 
   do {
     byte = *bytes;
@@ -75,12 +75,10 @@ static void write_obj(Obj object, void *userdata) {
   uint64_t ident = 0;
 
   if (tbl_get(&srl->identifiers, (uint64_t)object, (void **)&ident)) {
-    fprintf(stderr, "already: %p\n", (void *)object);
     return;
   }
 
   ident = srl->buffer.size;
-  fprintf(stderr, "add label: %p -> %ld\n", (void *)object, ident);
   tbl_set(&srl->identifiers, (uint64_t)object, (void *)ident);
 
   uint8_t tag = obj_get_tag(object);
@@ -217,15 +215,16 @@ Obj srl_read(Serial *srl) {
       head = read_int(head, &length);
       for (uint64_t i = 0; i < length; i++) {
         head = read_int(head, &ident);
+
         auto item = read_ref(srl, ident);
 
         arr_push(&method->literals, sizeof(Obj), (void *)&item);
       }
 
       // method->bytecode
-      head = read_int(head, &ident);
-      arr_push(&method->bytecode, ident, head);
-      head += ident;
+      head = read_int(head, &length);
+      arr_push(&method->bytecode, length, head);
+      head += length;
     } break;
 
     default:
@@ -233,7 +232,6 @@ Obj srl_read(Serial *srl) {
              offset);
     }
 
-    printf("add key: %ld -> %p\n", offset, (void *)result);
     tbl_set(&srl->identifiers, offset, result);
 
     remaining -= head - here;
