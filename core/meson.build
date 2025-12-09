@@ -1,5 +1,6 @@
 ob_src = [
   'src/Allocator.c',
+  'src/Argparse.c',
   'src/Array.c',
   'src/Assert.c',
   'src/Bytecode.c',
