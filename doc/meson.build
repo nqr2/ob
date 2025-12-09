@@ -8,7 +8,7 @@ if doxygen.found()
   conf.set('SOURCE_DIR', meson.project_source_root())
 
   doxyfile = configure_file(
-    input: meson.project_source_root() / '.Doxyfile',
+    input: 'Doxyfile.in',
     output: 'Doxyfile',
     configuration: conf,
     install: false
@@ -18,4 +18,6 @@ if doxygen.found()
     'docs',
      command: [doxygen, doxyfile]
   )
+else
+  warning('Cannot build documentation without Doxygen')
 endif

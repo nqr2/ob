@@ -11,7 +11,7 @@ typedef struct {
   bool should_fail;
 } Test;
 
-#define SUITE_END ((Test){.name = NULL, .body = NULL, .should_fail = false})
+#define SUITE_END {.name = NULL, .body = NULL, .should_fail = false}
 
 void skip();
 void skip_with(const char *reason);

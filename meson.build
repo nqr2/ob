@@ -6,7 +6,9 @@ project(
   ]
 )
 
-subdir('doc')
+if get_option('build-docs')
+  subdir('doc')
+endif
 
 subdir('tap')
 subdir('core')

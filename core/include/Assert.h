@@ -4,7 +4,7 @@
 #define ASSERT(Condition, Message, ...)                                        \
   do {                                                                         \
     if (!(Condition)) {                                                        \
-      assert__report(__FILE__, __LINE__, __FUNCTION__, #Condition);            \
+      assert__report(__FILE__, __LINE__, __func__, #Condition);                \
       assert__message(Message "\n" __VA_OPT__(, ) __VA_ARGS__);                \
       assert__fail();                                                          \
     }                                                                          \

@@ -28,7 +28,7 @@ void tbl_init(Table *tbl, Allocator *alloc);
 void tbl_free(Table *tbl);
 
 void tbl_reserve(Table *tbl, size_t newcap);
-void tbl_clear(Table*tbl);
+void tbl_clear(Table *tbl);
 
 // return true if entry is new
 bool tbl_set(Table *tbl, uint64_t key, void *value);
