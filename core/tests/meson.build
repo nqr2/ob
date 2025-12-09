@@ -1,5 +1,6 @@
 tests = [
   'allocator',
+  'argparse',
   'assert',
   'hash',
 ]

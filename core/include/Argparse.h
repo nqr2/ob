@@ -6,6 +6,7 @@
 typedef enum {
   FLAG_SET,
   FLAG_UNSET,
+  FLAG_INT,
 } FlagKind;
 
 typedef struct {
@@ -16,33 +17,20 @@ typedef struct {
   void *target;
 } Flag;
 
-typedef struct Parser {
-  bool is_subcommand;
+#define FLAGS_END ((Flag){})
 
+typedef struct Parser {
   const char *description;
 
-  union {
-    struct {
-      const char *name;
-      const struct Parser *parser;
-    } subcommand;
-
-    struct {
-      const char *executable;
-      size_t length;
-      const Flag *flags;
-    } command;
-  } as;
+  size_t length;
+  const Flag *flags;
 } Parser;
 
 Flag arg_create_flag(char short_name, const char *long_name, FlagKind kind,
                      void *pointer);
 
-Parser arg_create_parser(const char *executable,
-                         size_t length, const Flag *flags);
+Parser arg_create_parser(const Flag *flags);
 
-Parser arg_create_subcommand(const char *name, const Parser *parser);
-
-void arg_parse(const Parser *parser, size_t length, const char **args);
+size_t arg_parse(const Parser *parser, size_t length, const char **args);
 
 #endif
