@@ -350,8 +350,7 @@ static bool p_primary(Reader *rdr) {
 
   p_skip_blank(rdr);
 
-  switch (*rdr->head) {
-  case '0' ... '9': {
+  if (isdigit(*rdr->head)) {
     int64_t num = 0;
     double fnum = 0;
 
@@ -368,7 +367,10 @@ static bool p_primary(Reader *rdr) {
     IGNORE fnum;
 
     push_literal(rdr, obj);
-  } break;
+    return true;
+  }
+
+  switch (*rdr->head) {
   case '\'':
     p_string(rdr);
     break;

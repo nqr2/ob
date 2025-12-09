@@ -26,4 +26,6 @@ obCore = declare_dependency(
   include_directories: 'include'
 )
 
-subdir('tests')
+if get_option('build-tests')
+  subdir('tests')
+endif

@@ -67,7 +67,7 @@ static void write_ref(Obj object, Serial *srl) {
     return;
   }
 
-  ASSERT(false, "object %p was not yet written", object);
+  ASSERT(false, "object %p was not yet written", (void *)object);
 }
 
 static void write_obj(Obj object, void *userdata) {
@@ -75,12 +75,12 @@ static void write_obj(Obj object, void *userdata) {
   uint64_t ident = 0;
 
   if (tbl_get(&srl->identifiers, (uint64_t)object, (void **)&ident)) {
-    fprintf(stderr, "already: %p\n", object);
+    fprintf(stderr, "already: %p\n", (void *)object);
     return;
   }
 
   ident = srl->buffer.size;
-  fprintf(stderr, "add label: %p -> %ld\n", object, ident);
+  fprintf(stderr, "add label: %p -> %ld\n", (void *)object, ident);
   tbl_set(&srl->identifiers, (uint64_t)object, (void *)ident);
 
   uint8_t tag = obj_get_tag(object);
@@ -233,7 +233,7 @@ Obj srl_read(Serial *srl) {
              offset);
     }
 
-    printf("add key: %ld -> %p\n", offset, result);
+    printf("add key: %ld -> %p\n", offset, (void *)result);
     tbl_set(&srl->identifiers, offset, result);
 
     remaining -= head - here;

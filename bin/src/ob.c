@@ -20,6 +20,7 @@ void obj_print(Context ctx, Obj receiver) {
 
   case OT_SYMBOL:
     putchar('#');
+    [[fallthrough]];
 
   case OT_STRING: {
     ObjString *str = obj_get_data(receiver);
@@ -68,7 +69,9 @@ void obj_print(Context ctx, Obj receiver) {
 
   case OT_CMETHOD: {
     ObjCMethod *method = obj_get_data(receiver);
-    printf("#<cmethod:%p>", (void *)method->method);
+    void *ptr = NULL;
+    memcpy((void *)&ptr, (void *)&method->method, sizeof(void *));
+    printf("#<cmethod:%p>", ptr);
   } break;
 
   case OT_CDATA: {

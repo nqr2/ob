@@ -10,7 +10,10 @@ if get_option('build-docs')
   subdir('doc')
 endif
 
-subdir('tap')
+if get_option('build-tests')
+  subdir('tap')
+endif
+
 subdir('core')
 subdir('tools')
 subdir('bin')
