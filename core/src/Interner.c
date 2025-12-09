@@ -1,8 +1,7 @@
-#include "Interner.h"
-
-#include "Context.h"
-#include "Hash.h"
-#include "Table.h"
+#include <ob/Context.h>
+#include <ob/Hash.h>
+#include <ob/Interner.h>
+#include <ob/Table.h>
 
 #include <string.h>
 

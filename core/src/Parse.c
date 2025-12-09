@@ -1,12 +1,12 @@
-#include "Parse.h"
-#include "Array.h"
-#include "Assert.h"
-#include "Bytecode.h"
-#include "Context.h"
-#include "Macros.h"
-#include "Object.h"
-#include "Serial.h"
-#include "String.h"
+#include <ob/Array.h>
+#include <ob/Assert.h>
+#include <ob/Bytecode.h>
+#include <ob/Context.h>
+#include <ob/Macros.h>
+#include <ob/Object.h>
+#include <ob/Parse.h>
+#include <ob/Serial.h>
+#include <ob/String.h>
 
 #include <ctype.h>
 #include <stdint.h>

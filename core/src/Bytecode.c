@@ -1,8 +1,7 @@
-#include "Bytecode.h"
-
-#include "Array.h"
-#include "Context.h"
-#include "Object.h"
+#include <ob/Array.h>
+#include <ob/Bytecode.h>
+#include <ob/Context.h>
+#include <ob/Object.h>
 
 void bc_run(Context ctx, size_t len, const uint8_t *code) {
   uint64_t index = 0;

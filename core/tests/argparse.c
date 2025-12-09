@@ -1,6 +1,7 @@
-#include "Argparse.h"
-#include "Assert.h"
 #include "Tap.h"
+
+#include <ob/Argparse.h>
+#include <ob/Assert.h>
 
 void assert_failure() {
   fail_with("assertion failed");

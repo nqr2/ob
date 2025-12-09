@@ -1,7 +1,6 @@
-#include "Object.h"
-
-#include "Array.h"
-#include "Table.h"
+#include <ob/Array.h>
+#include <ob/Object.h>
+#include <ob/Table.h>
 
 ObjectTag obj_get_tag(Obj obj) {
   if (obj == NULL) {

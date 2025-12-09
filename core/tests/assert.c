@@ -1,5 +1,6 @@
-#include "Assert.h"
 #include "Tap.h"
+
+#include <ob/Assert.h>
 
 void assert_failure() {
   fail_with("assertion failed");
