@@ -49,10 +49,27 @@ void f_int() {
   ASSERT(flag == 11, "expected long FLAG_INT to set a value to 11");
 }
 
+static void pos_arg__pa(void *udata, const char *arg) {
+  *((const char **)udata) = arg;
+}
+
+void pos_arg() {
+  const char *known = "this is a known value!";
+  const char *arg = NULL;
+
+  auto parser = arg_create_parser((Flag[]){FLAGS_END});
+  parser.userdata = (void *)&arg;
+  parser.positional_arg = pos_arg__pa;
+
+  arg_parse(&parser, 2, (const char *[]){"arg", known});
+  ASSERT(arg == known, "expected a positional argument to be set");
+}
+
 const Test SUITE[] = {
     {"empty flag list", empty_flags, false},
     {"FLAG_SET and FLAG_UNSET", f_set_unset, false},
     {"FLAG_INT", f_int, false},
+    {"positional arguments", pos_arg, false},
     SUITE_END,
 };
 

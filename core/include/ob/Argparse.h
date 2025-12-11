@@ -19,11 +19,16 @@ typedef struct {
 
 #define FLAGS_END ((Flag){})
 
+typedef void (*FnPositionalArgument)(void *userdata, const char *argument);
+
 typedef struct Parser {
   const char *description;
 
   size_t length;
   const Flag *flags;
+
+  FnPositionalArgument positional_arg;
+  void *userdata;
 } Parser;
 
 Flag arg_create_flag(char short_name, const char *long_name, FlagKind kind,

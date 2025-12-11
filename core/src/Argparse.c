@@ -54,15 +54,20 @@ static bool parse_arg(const Parser *parser, size_t *idx, const char *arg,
       if ((flag->long_name != NULL) && (arg[1] == '-')) {
         if (strcmp(flag->long_name, arg + 2) == 0) {
           run_flag(flag, idx, args);
-        }
-      } else {
-        if ((flag->short_name != 0) && (arg[1] == flag->short_name)) {
-          run_flag(flag, idx, args);
+          return false;
         }
       }
-    } else {
-      break;
+
+      if ((flag->short_name != 0) && (arg[1] == flag->short_name)) {
+        run_flag(flag, idx, args);
+        return false;
+      }
     }
+  }
+
+  if (arg[0] != '-' && (parser->positional_arg != NULL)) {
+    parser->positional_arg(parser->userdata, arg);
+    return false;
   }
 
   return true;
