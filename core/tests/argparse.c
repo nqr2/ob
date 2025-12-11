@@ -65,11 +65,53 @@ void pos_arg() {
   ASSERT(arg == known, "expected a positional argument to be set");
 }
 
+void f_string() {
+  const char *k_short = "this is short";
+  const char *k_long = "this is long";
+
+  const char *arg = NULL;
+
+  auto parser = arg_create_parser((Flag[]){
+      arg_create_flag('s', "string", FLAG_STRING, (void *)&arg),
+      FLAGS_END,
+  });
+
+  arg_parse(&parser, 3, (const char *[]){"arg", "-s", k_short});
+  ASSERT(arg == k_short, "expected FLAG_STRING to set a value");
+
+  arg_parse(&parser, 3, (const char *[]){"arg", "--string", k_long});
+  ASSERT(arg == k_long, "expected long FLAG_STRING to set a value");
+}
+
+void f_subcommand() {
+  auto flag = false;
+
+  auto subparser = arg_create_parser((Flag[]){
+      arg_create_flag(0, "set", FLAG_SET, &flag),
+      arg_create_flag(0, "unset", FLAG_UNSET, &flag),
+      FLAGS_END,
+  });
+
+  auto parser = arg_create_parser((Flag[]){
+      arg_create_flag('S', NULL, FLAG_SUBCOMMAND, &subparser),
+      FLAGS_END,
+  });
+
+  arg_parse(&parser, 3, (const char *[]){"arg", "-S", "--set"});
+  ASSERT(flag == true, "expected a FLAG_SET in FLAG_SUBCOMMAND to set a flag");
+
+  arg_parse(&parser, 3, (const char *[]){"arg", "-S", "--unset"});
+  ASSERT(flag == false,
+         "expected a FLAG_UNSET in FLAG_SUBCOMMAND to unset a flag");
+}
+
 const Test SUITE[] = {
     {"empty flag list", empty_flags, false},
     {"FLAG_SET and FLAG_UNSET", f_set_unset, false},
     {"FLAG_INT", f_int, false},
     {"positional arguments", pos_arg, false},
+    {"FLAG_STRING", f_string, false},
+    {"FLAG_SUBCOMMAND", f_subcommand, false},
     SUITE_END,
 };
 

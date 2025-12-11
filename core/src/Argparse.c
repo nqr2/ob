@@ -29,7 +29,8 @@ Parser arg_create_parser(const Flag *flags) {
   return (Parser){.description = NULL, .length = length, .flags = flags};
 }
 
-void run_flag(const Flag *flag, size_t *idx, const char **args) {
+void run_flag(const Flag *flag, size_t *idx, const char **args,
+              const Parser **parser) {
   switch (flag->kind) {
   case FLAG_SET:
     *(bool *)(flag->target) = true;
@@ -42,44 +43,55 @@ void run_flag(const Flag *flag, size_t *idx, const char **args) {
     *idx += 1;
     *(int *)(flag->target) = atoi(args[*idx]);
     break;
+
+  case FLAG_STRING:
+    *idx += 1;
+    *(const char **)(flag->target) = args[*idx];
+    break;
+
+  case FLAG_SUBCOMMAND:
+    *parser = flag->target;
+    break;
   }
 }
 
-static bool parse_arg(const Parser *parser, size_t *idx, const char *arg,
-                      const char **args) {
+static const Flag *parse_arg(const Parser *parser, const char *arg) {
   for (size_t i = 0; i < parser->length; i++) {
     auto flag = &parser->flags[i];
 
     if (arg[0] == '-') {
       if ((flag->long_name != NULL) && (arg[1] == '-')) {
         if (strcmp(flag->long_name, arg + 2) == 0) {
-          run_flag(flag, idx, args);
-          return false;
+          return flag;
         }
       }
 
       if ((flag->short_name != 0) && (arg[1] == flag->short_name)) {
-        run_flag(flag, idx, args);
-        return false;
+        return flag;
       }
     }
   }
 
   if (arg[0] != '-' && (parser->positional_arg != NULL)) {
-    parser->positional_arg(parser->userdata, arg);
-    return false;
+    return (const Flag *)1;
   }
 
-  return true;
+  return NULL;
 }
 
 size_t arg_parse(const Parser *parser, size_t length, const char **args) {
-  (void)parser;
-  (void)length;
-  (void)args;
-
   for (size_t i = 1; i < length; i++) {
-    if (parse_arg(parser, &i, args[i], args)) {
+    if (parser == NULL) {
+      return i;
+    }
+
+    auto flag = parse_arg(parser, args[i]);
+
+    if (flag == (const Flag *)1) {
+      parser->positional_arg(parser->userdata, args[i]);
+    } else if (flag != NULL) {
+      run_flag(flag, &i, args, &parser);
+    } else {
       return i;
     }
   }

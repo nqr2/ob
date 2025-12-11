@@ -7,6 +7,8 @@ typedef enum {
   FLAG_SET,
   FLAG_UNSET,
   FLAG_INT,
+  FLAG_STRING,
+  FLAG_SUBCOMMAND,
 } FlagKind;
 
 typedef struct {
