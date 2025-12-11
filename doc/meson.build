@@ -3,7 +3,7 @@ doxygen = find_program('doxygen', required: false)
 if doxygen.found()
   conf = configuration_data()
   conf.set('PROJECT_NAME', meson.project_name())
-  conf.set('VERSION', meson.project_version())
+  conf.set('PROJECT_VERSION', meson.project_version())
   conf.set('OUTPUT_DIR', meson.project_build_root() / 'doc')
   conf.set('SOURCE_DIR', meson.project_source_root())
 
