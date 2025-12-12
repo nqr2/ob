@@ -10,47 +10,47 @@
 #include <stdio.h>
 #include <string.h>
 
-void obj_print(Context ctx, Obj receiver) {
+void obj_print(ob_Context ctx, ob_Obj receiver) {
 
-  auto tag = obj_get_tag(receiver);
+  auto tag = obobj_get_tag(receiver);
   switch (tag) {
-  case OT_NIL:
+  case OBOBJ_NIL:
     printf("nil");
     break;
 
-  case OT_SYMBOL:
+  case OBOBJ_SYMBOL:
     putchar('#');
     [[fallthrough]];
 
-  case OT_STRING: {
-    ObjString *str = obj_get_data(receiver);
-    printf("'%.*s'", (int)str_get_length(str->inner),
-           str_get_data(ctx, str->inner));
+  case OBOBJ_STRING: {
+    ob_ObjString *str = obobj_get_data(receiver);
+    printf("'%.*s'", (int)obstr_get_length(str->inner),
+           obstr_get_data(ctx, str->inner));
   } break;
 
-  case OT_SLOTS:
+  case OBOBJ_SLOTS:
     printf("#<slots:%p>", (void *)receiver);
     break;
 
-  case OT_NUMBER: {
-    ObjNumber *num = obj_get_data(receiver);
+  case OBOBJ_NUMBER: {
+    ob_ObjNumber *num = obobj_get_data(receiver);
 
-    if (num_is_int(num->number)) {
-      printf("%ld", num_to_int(num->number));
+    if (obnum_is_int(num->number)) {
+      printf("%ld", obnum_to_int(num->number));
     } else {
-      printf("%f", num_to_float(num->number));
+      printf("%f", obnum_to_float(num->number));
     }
   }; break;
 
     // NUMBER
 
-  case OT_ARRAY: {
+  case OBOBJ_ARRAY: {
     printf("[");
 
-    ObjArray *arr = obj_get_data(receiver);
-    auto size = arr->items.size / sizeof(Obj);
+    ob_ObjArray *arr = obobj_get_data(receiver);
+    auto size = arr->items.size / sizeof(ob_Obj);
 
-    auto items = (Obj *)arr->items.data;
+    auto items = (ob_Obj *)arr->items.data;
 
     for (size_t i = 0; i < size; i++) {
       obj_print(ctx, items[i]);
@@ -63,23 +63,23 @@ void obj_print(Context ctx, Obj receiver) {
     printf("]");
   }; break;
 
-  case OT_METHOD:
+  case OBOBJ_METHOD:
     printf("#<method:%p>", (void *)receiver);
     break;
 
-  case OT_CMETHOD: {
-    ObjCMethod *method = obj_get_data(receiver);
+  case OBOBJ_CMETHOD: {
+    ob_ObjCMethod *method = obobj_get_data(receiver);
     void *ptr = NULL;
     memcpy((void *)&ptr, (void *)&method->method, sizeof(void *));
     printf("#<cmethod:%p>", ptr);
   } break;
 
-  case OT_CDATA: {
-    ObjCData *data = obj_get_data(receiver);
+  case OBOBJ_CDATA: {
+    ob_ObjCData *data = obobj_get_data(receiver);
     printf("#<cdata:%p>", data->cdata);
   } break;
 
-  case OT_ACTIVATION:
+  case OBOBJ_ACTIVATION:
     printf("#<activation:%p>", (void *)receiver);
     break;
 
@@ -89,8 +89,8 @@ void obj_print(Context ctx, Obj receiver) {
   }
 }
 
-bool o__print(Context ctx) {
-  ObjActivation *activation = obj_get_data(ctx->activation);
+bool o__print(ob_Context ctx) {
+  ob_ObjActivation *activation = obobj_get_data(ctx->activation);
 
   auto receiver = activation->receiver;
   obj_print(ctx, receiver);
@@ -100,20 +100,20 @@ bool o__print(Context ctx) {
   return false;
 }
 
-bool o__other(Context ctx) {
+bool o__other(ob_Context ctx) {
   (void)ctx;
 
   return true;
 }
 
-void dofile(Context ctx, const char *path) {
+void dofile(ob_Context ctx, const char *path) {
   auto file = fopen(path, "r");
 
   if (file == NULL) {
     return;
   }
 
-  auto data = (Array){};
+  auto data = (ob_Array){};
   auto length = 0L;
 
   fseek(file, 0, SEEK_END);
@@ -122,27 +122,27 @@ void dofile(Context ctx, const char *path) {
 
   rewind(file);
 
-  arr_init(&data, ctx->allocator);
-  arr_reserve(&data, length);
+  obarr_init(&data, ctx->allocator);
+  obarr_reserve(&data, length);
   data.size = length;
 
   fread(data.data, sizeof(char), data.size, file);
 
-  run_file(ctx, data.size, data.data);
+  ob_run(ctx, data.size, data.data);
 
   // exit:
-  arr_free(&data);
+  obarr_free(&data);
   fclose(file);
 }
 
-void repl(Context ctx) {
-  auto line = (Array){};
-  arr_init(&line, ctx->allocator);
+void repl(ob_Context ctx) {
+  auto line = (ob_Array){};
+  obarr_init(&line, ctx->allocator);
 
-  arr_reserve(&line, 256);
+  obarr_reserve(&line, 256);
 
   while (true) {
-    arr_clear(&line);
+    obarr_clear(&line);
 
     if (feof(stdin)) {
       break;
@@ -161,32 +161,33 @@ void repl(Context ctx) {
       }
 
       auto tmp2 = (char)tmp;
-      arr_push(&line, sizeof(char), &tmp2);
+      obarr_push(&line, sizeof(char), &tmp2);
     }
 
-    run_file(ctx, line.size, line.data);
+    ob_run(ctx, line.size, line.data);
   }
 
-  arr_free(&line);
+  obarr_free(&line);
 }
 
-void add_method(Context ctx, Obj target, const char *name, FnCMethod method) {
-  ASSERT(obj_get_tag(target) == OT_SLOTS, "expected a slots object");
+void add_method(ob_Context ctx, ob_Obj target, const char *name,
+                ob_FnCMethod method) {
+  ASSERT(obobj_get_tag(target) == OBOBJ_SLOTS, "expected a slots object");
 
-  ObjSlots *slots = obj_get_data(target);
+  ob_ObjSlots *slots = obobj_get_data(target);
 
-  auto obj = ctx_alloc_cmethod(ctx, method);
-  auto hash = hash_start(strlen(name), name);
+  auto obj = obctx_alloc_cmethod(ctx, method);
+  auto hash = obhash_start(strlen(name), name);
 
-  tbl_set(&slots->slots, hash, (void *)obj);
+  obtbl_set(&slots->slots, hash, (void *)obj);
 }
 
 typedef struct {
   const char *name;
-  FnCMethod method;
+  ob_FnCMethod method;
 } Entry;
 
-void add_methods(Context ctx, Obj target, const Entry *entries) {
+void add_methods(ob_Context ctx, ob_Obj target, const Entry *entries) {
   while (entries->name != NULL) {
     add_method(ctx, target, entries->name, entries->method);
 
@@ -195,9 +196,9 @@ void add_methods(Context ctx, Obj target, const Entry *entries) {
 }
 
 int main(int argn, char *argv[]) {
-  auto alloc = get_libc_allocator();
+  auto alloc = oballoc_create();
 
-  auto ctx = ctx_create(&alloc);
+  auto ctx = obctx_create(&alloc);
 
   auto lib = (Entry[]){
       {"print", o__print},
@@ -216,7 +217,7 @@ int main(int argn, char *argv[]) {
     repl(ctx);
   }
 
-  ctx_destroy(ctx);
+  obctx_destroy(ctx);
 
   return 0;
 }

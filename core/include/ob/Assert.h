@@ -1,12 +1,12 @@
-#ifndef ASSERT_H_INCLUDED
-#define ASSERT_H_INCLUDED
+#ifndef OB_CORE_ASSERT_H_INCLUDED
+#define OB_CORE_ASSERT_H_INCLUDED
 
 #define ASSERT(Condition, Message, ...)                                        \
   do {                                                                         \
     if (!(Condition)) {                                                        \
-      assert__report(__FILE__, __LINE__, __func__, #Condition);                \
-      assert__message(Message "\n" __VA_OPT__(, ) __VA_ARGS__);                \
-      assert__fail();                                                          \
+      obassert__report(__FILE__, __LINE__, __func__, #Condition);              \
+      obassert__message(Message "\n" __VA_OPT__(, ) __VA_ARGS__);              \
+      obassert__fail();                                                        \
     }                                                                          \
   } while (false)
 
@@ -16,13 +16,13 @@
 
 typedef void (*FnAssertFailure)();
 
-void assert__report(const char *file, int line, const char *function,
-                    const char *condition);
+void obassert__report(const char *file, int line, const char *function,
+                      const char *condition);
 
-void assert__message(const char *message, ...);
+void obassert__message(const char *message, ...);
 
-void assert__fail();
+void obassert__fail();
 
-void assert_add_handler(FnAssertFailure fail);
+void obassert_add_handler(FnAssertFailure fail);
 
 #endif

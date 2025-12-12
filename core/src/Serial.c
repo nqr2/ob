@@ -11,7 +11,7 @@
 #include <stdint.h>
 #include <string.h>
 
-static void write_int(Serial *srl, uint64_t n) {
+static void write_int(ob_Serial *srl, uint64_t n) {
   auto len = stdc_bit_width(n);
   ASSERT(len <= 63, "cannot encode a num > 64 bits.");
 
@@ -22,7 +22,7 @@ static void write_int(Serial *srl, uint64_t n) {
     if (n != 0) {
       byte |= 0x80;
     }
-    arr_push(&srl->buffer, sizeof(uint8_t), &byte);
+    obarr_push(&srl->buffer, sizeof(uint8_t), &byte);
   } while (n != 0);
 }
 
@@ -42,18 +42,18 @@ static uint8_t *read_int(uint8_t *bytes, uint64_t *result) {
   return bytes;
 }
 
-void srl_init(Serial *srl, Context ctx) {
+void obsrl_init(ob_Serial *srl, ob_Context ctx) {
   srl->ctx = ctx;
-  arr_init(&srl->buffer, ctx->allocator);
-  tbl_init(&srl->identifiers, ctx->allocator);
+  obarr_init(&srl->buffer, ctx->allocator);
+  obtbl_init(&srl->identifiers, ctx->allocator);
 }
 
-void srl_free(Serial *srl) {
-  arr_free(&srl->buffer);
-  tbl_free(&srl->identifiers);
+void obsrl_free(ob_Serial *srl) {
+  obarr_free(&srl->buffer);
+  obtbl_free(&srl->identifiers);
 }
 
-static void write_ref(Obj object, Serial *srl) {
+static void write_ref(ob_Obj object, ob_Serial *srl) {
   uint64_t ident = 0;
 
   // The bc header should be @ offset 0, so this is always 1 byte
@@ -62,7 +62,7 @@ static void write_ref(Obj object, Serial *srl) {
     return;
   }
 
-  if (tbl_get(&srl->identifiers, (uint64_t)object, (void **)&ident)) {
+  if (obtbl_get(&srl->identifiers, (uint64_t)object, (void **)&ident)) {
     write_int(srl, ident);
     return;
   }
@@ -70,58 +70,58 @@ static void write_ref(Obj object, Serial *srl) {
   ASSERT(false, "object %p was not yet written", (void *)object);
 }
 
-static void write_obj(Obj object, void *userdata) {
-  Serial *srl = userdata;
+static void write_obj(ob_Obj object, void *userdata) {
+  ob_Serial *srl = userdata;
   uint64_t ident = 0;
 
-  if (tbl_get(&srl->identifiers, (uint64_t)object, (void **)&ident)) {
+  if (obtbl_get(&srl->identifiers, (uint64_t)object, (void **)&ident)) {
     return;
   }
 
   ident = srl->buffer.size;
-  tbl_set(&srl->identifiers, (uint64_t)object, (void *)ident);
+  obtbl_set(&srl->identifiers, (uint64_t)object, (void *)ident);
 
-  uint8_t tag = obj_get_tag(object);
-  arr_push(&srl->buffer, sizeof(tag), &tag);
+  uint8_t tag = obobj_get_tag(object);
+  obarr_push(&srl->buffer, sizeof(tag), &tag);
 
   // data
   switch (tag) {
-  case OT_NIL: // nothing here
+  case OBOBJ_NIL: // nothing here
     break;
 
-  case OT_SYMBOL: // <length> <characters>
-  case OT_STRING: // same
+  case OBOBJ_SYMBOL: // <length> <characters>
+  case OBOBJ_STRING: // same
   {
-    ObjString *str = obj_get_data(object);
-    auto length = str_get_length(str->inner);
-    auto data = str_get_data(srl->ctx, str->inner);
+    ob_ObjString *str = obobj_get_data(object);
+    auto length = obstr_get_length(str->inner);
+    auto data = obstr_get_data(srl->ctx, str->inner);
 
     write_int(srl, length);
-    arr_push(&srl->buffer, length, data);
+    obarr_push(&srl->buffer, length, data);
   } break;
-  case OT_NUMBER: // the number
+  case OBOBJ_NUMBER: // the number
   {
-    ObjNumber *num = obj_get_data(object);
+    ob_ObjNumber *num = obobj_get_data(object);
     // TODO: something actually portable
-    arr_push(&srl->buffer, sizeof(Number), &num->number);
+    obarr_push(&srl->buffer, sizeof(ob_Number), &num->number);
   } break;
 
-  case OT_METHOD: {
-    ObjMethod *data = obj_get_data(object);
+  case OBOBJ_METHOD: {
+    ob_ObjMethod *data = obobj_get_data(object);
 
     write_ref(data->env, srl);
 
-    auto len = data->literals.size / sizeof(Obj);
+    auto len = data->literals.size / sizeof(ob_Obj);
     write_int(srl, len);
 
     for (size_t i = 0; i < len; i++) {
-      Obj item = ((Obj *)data->literals.data)[i];
+      ob_Obj item = ((ob_Obj *)data->literals.data)[i];
 
       write_ref(item, srl);
     }
 
     write_int(srl, data->bytecode.size);
-    arr_push(&srl->buffer, data->bytecode.size, data->bytecode.data);
+    obarr_push(&srl->buffer, data->bytecode.size, data->bytecode.data);
   }; break;
 
   default:
@@ -130,26 +130,26 @@ static void write_obj(Obj object, void *userdata) {
   }
 }
 
-void srl_write(Serial *srl, Obj object) {
-  tbl_clear(&srl->identifiers);
+void obsrl_write(ob_Serial *srl, ob_Obj object) {
+  obtbl_clear(&srl->identifiers);
 
-  arr_push(&srl->buffer, sizeof(SERIAL_HEADER), SERIAL_HEADER);
+  obarr_push(&srl->buffer, sizeof(OB_SERIAL_HEADER), OB_SERIAL_HEADER);
 
-  obj_visit_after(object, write_obj, srl);
+  obobj_visit_after(object, write_obj, srl);
 }
 
 static bool string_equal(size_t n, void *left, void *right) {
   return strncmp(left, right, n) == 0;
 }
 
-Obj read_ref(Serial *srl, uint64_t ident) {
-  Obj res = NULL;
+ob_Obj read_ref(ob_Serial *srl, uint64_t ident) {
+  ob_Obj res = NULL;
 
   if (ident == 0) {
     return NULL;
   }
 
-  if (tbl_get(&srl->identifiers, ident, (void **)&res)) {
+  if (obtbl_get(&srl->identifiers, ident, (void **)&res)) {
     return res;
   }
 
@@ -157,17 +157,17 @@ Obj read_ref(Serial *srl, uint64_t ident) {
   return NULL;
 }
 
-Obj srl_read(Serial *srl) {
-  tbl_clear(&srl->identifiers);
+ob_Obj obsrl_read(ob_Serial *srl) {
+  obtbl_clear(&srl->identifiers);
 
-  Obj result = NULL;
+  ob_Obj result = NULL;
   uint8_t *head = srl->buffer.data;
-  auto remaining = srl->buffer.size - sizeof(SERIAL_HEADER);
+  auto remaining = srl->buffer.size - sizeof(OB_SERIAL_HEADER);
 
-  ASSERT(string_equal(sizeof(SERIAL_HEADER), head, SERIAL_HEADER),
+  ASSERT(string_equal(sizeof(OB_SERIAL_HEADER), head, OB_SERIAL_HEADER),
          "invalid header");
 
-  head += sizeof(SERIAL_HEADER);
+  head += sizeof(OB_SERIAL_HEADER);
 
   while (remaining > 0) {
     auto offset = head - (uint8_t *)srl->buffer.data;
@@ -177,35 +177,35 @@ Obj srl_read(Serial *srl) {
     head++;
 
     switch (tag) {
-    case OT_NIL:
+    case OBOBJ_NIL:
       result = NULL;
       break;
 
-    case OT_SYMBOL:
-    case OT_STRING: {
+    case OBOBJ_SYMBOL:
+    case OBOBJ_STRING: {
       uint64_t length = 0;
       head = read_int(head, &length);
 
-      auto str = str_create(srl->ctx, length, (const char *)head);
+      auto str = obstr_create(srl->ctx, length, (const char *)head);
       head += length;
 
-      result = ctx_alloc_string(srl->ctx, str);
+      result = obctx_alloc_string(srl->ctx, str);
     } break;
 
-    case OT_NUMBER: {
-      auto num = (Number){};
-      memcpy(&num, head, sizeof(Number));
-      head += sizeof(Number);
+    case OBOBJ_NUMBER: {
+      auto num = (ob_Number){};
+      memcpy(&num, head, sizeof(ob_Number));
+      head += sizeof(ob_Number);
 
-      result = ctx_alloc_number(srl->ctx, num);
+      result = obctx_alloc_number(srl->ctx, num);
     } break;
 
-    case OT_METHOD: {
+    case OBOBJ_METHOD: {
       uint64_t ident = 0;
       uint64_t length = 0;
 
-      result = ctx_alloc_method(srl->ctx);
-      ObjMethod *method = obj_get_data(result);
+      result = obctx_alloc_method(srl->ctx);
+      ob_ObjMethod *method = obobj_get_data(result);
 
       // method->env
       head = read_int(head, &ident);
@@ -218,12 +218,12 @@ Obj srl_read(Serial *srl) {
 
         auto item = read_ref(srl, ident);
 
-        arr_push(&method->literals, sizeof(Obj), (void *)&item);
+        obarr_push(&method->literals, sizeof(ob_Obj), (void *)&item);
       }
 
       // method->bytecode
       head = read_int(head, &length);
-      arr_push(&method->bytecode, length, head);
+      obarr_push(&method->bytecode, length, head);
       head += length;
     } break;
 
@@ -232,7 +232,7 @@ Obj srl_read(Serial *srl) {
              offset);
     }
 
-    tbl_set(&srl->identifiers, offset, result);
+    obtbl_set(&srl->identifiers, offset, result);
 
     remaining -= head - here;
   }
@@ -240,12 +240,12 @@ Obj srl_read(Serial *srl) {
   return result;
 }
 
-void srl_store(const Serial *srl, size_t len, uint8_t *data) {
+void obsrl_store(const ob_Serial *srl, size_t len, uint8_t *data) {
   memcpy(data, srl->buffer.data, len);
 }
 
-void srl_load(Serial *srl, size_t len, const uint8_t *data) {
-  arr_reserve(&srl->buffer, len);
+void obsrl_load(ob_Serial *srl, size_t len, const uint8_t *data) {
+  obarr_reserve(&srl->buffer, len);
   memcpy(srl->buffer.data, data, len);
   srl->buffer.size = len;
 }

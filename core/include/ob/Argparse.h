@@ -1,43 +1,43 @@
-#ifndef ARGPARSE_H_INCLUDED
-#define ARGPARSE_H_INCLUDED
+#ifndef OB_CORE_ARGPARSE_H_INCLUDED
+#define OB_CORE_ARGPARSE_H_INCLUDED
 
 #include <stddef.h>
 
 typedef enum {
-  FLAG_SET,
-  FLAG_UNSET,
-  FLAG_INT,
-  FLAG_STRING,
-  FLAG_SUBCOMMAND,
-} FlagKind;
+  OBARG_FLAG_SET,
+  OBARG_FLAG_UNSET,
+  OBARG_FLAG_INT,
+  OBARG_FLAG_STRING,
+  OBARG_FLAG_SUBCOMMAND,
+} ob_FlagKind;
 
 typedef struct {
   char short_name;
   const char *long_name;
   const char *description;
-  FlagKind kind;
+  ob_FlagKind kind;
   void *target;
-} Flag;
+} ob_Flag;
 
-#define FLAGS_END ((Flag){})
+#define OB_FLAGS_END ((ob_Flag){})
 
-typedef void (*FnPositionalArgument)(void *userdata, const char *argument);
+typedef void (*ob_FnPositionalArgument)(void *userdata, const char *argument);
 
 typedef struct Parser {
   const char *description;
 
   size_t length;
-  const Flag *flags;
+  const ob_Flag *flags;
 
-  FnPositionalArgument positional_arg;
+  ob_FnPositionalArgument positional_arg;
   void *userdata;
-} Parser;
+} ob_Parser;
 
-Flag arg_create_flag(char short_name, const char *long_name, FlagKind kind,
-                     void *pointer);
+ob_Flag obarg_create_flag(char short_name, const char *long_name,
+                          ob_FlagKind kind, void *pointer);
 
-Parser arg_create_parser(const Flag *flags);
+ob_Parser obarg_create_parser(const ob_Flag *flags);
 
-size_t arg_parse(const Parser *parser, size_t length, const char **args);
+size_t obarg_parse(const ob_Parser *parser, size_t length, const char **args);
 
 #endif

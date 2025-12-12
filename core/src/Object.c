@@ -2,34 +2,54 @@
 #include <ob/Object.h>
 #include <ob/Table.h>
 
-ObjectTag obj_get_tag(Obj obj) {
+#define HEADER_GET_TAG(H) ((ob_ObjectHeader)((H) & 0xf))
+#define HEADER_SET_TAG(H, T) ((ob_ObjectHeader)(((H) & 0xfff0) | ((T) & 0xf)))
+
+#define HEADER_GET_MARK(H) (((H) & 0x10) != 0)
+#define HEADER_SET_MARK(H, M)                                                  \
+  ((ob_ObjectHeader)(((H) & 0xffef) | (((M) != 0) << 4)))
+
+#define HEADER_GET_RC(H) ((H) >> 5)
+#define HEADER_SET_RC(H, C) (((H) & 0x1f) | ((C) << 5))
+
+#define RC_MAX 0x7ff
+
+ob_ObjectTag obobj_get_tag(ob_Obj obj) {
   if (obj == NULL) {
-    return OT_NIL;
+    return OBOBJ_NIL;
   }
 
   return HEADER_GET_TAG(obj->header);
 }
 
-void *obj_get_data(Obj obj) {
+void *obobj_get_data(ob_Obj obj) {
   auto bytes = (uint8_t *)obj;
-  return bytes + sizeof(Object);
+  return bytes + sizeof(ob_Object);
 }
 
-static void mark(Obj obj, void *unused) {
+bool obobj_get_mark(ob_Obj obj) {
+  if (obj == NULL) {
+    return true;
+  }
+
+  return HEADER_GET_MARK(obj->header);
+}
+
+static void mark(ob_Obj obj, void *unused) {
   (void)unused;
-  obj_mark(obj);
+  obobj_mark(obj);
 }
 
-void obj_mark(Obj obj) {
+void obobj_mark(ob_Obj obj) {
   if (HEADER_GET_MARK(obj->header)) {
     return;
   }
 
   switch (HEADER_GET_TAG(obj->header)) {
-  case OT_STRING:
-  case OT_SYMBOL: {
-    ObjString *str = obj_get_data(obj);
-    str_mark(str->inner);
+  case OBOBJ_STRING:
+  case OBOBJ_SYMBOL: {
+    ob_ObjString *str = obobj_get_data(obj);
+    obstr_mark(str->inner);
   } break;
 
   default:
@@ -38,10 +58,10 @@ void obj_mark(Obj obj) {
 
   obj->header = HEADER_SET_MARK(obj->header, true);
 
-  obj_visit_before(obj, mark, NULL);
+  obobj_visit_before(obj, mark, NULL);
 }
 
-Obj obj_ref(Obj obj) {
+ob_Obj obobj_ref(ob_Obj obj) {
   auto refcount = HEADER_GET_RC(obj->header);
 
   if (refcount < RC_MAX) {
@@ -53,7 +73,7 @@ Obj obj_ref(Obj obj) {
 }
 
 // true if rc=0
-bool obj_unref(Obj obj) {
+bool obobj_unref(ob_Obj obj) {
   if (obj == NULL) {
     return false;
   }
@@ -68,23 +88,23 @@ bool obj_unref(Obj obj) {
   return refcount == 0;
 }
 
-void obj_destroy(Obj obj) {
-  switch (obj_get_tag(obj)) {
-  case OT_SLOTS: {
-    ObjSlots *data = obj_get_data(obj);
-    tbl_free(&data->slots);
+void obobj_destroy(ob_Obj obj) {
+  switch (obobj_get_tag(obj)) {
+  case OBOBJ_SLOTS: {
+    ob_ObjSlots *data = obobj_get_data(obj);
+    obtbl_free(&data->slots);
   } break;
 
-  case OT_ARRAY: {
-    ObjArray *data = obj_get_data(obj);
-    arr_free(&data->items);
+  case OBOBJ_ARRAY: {
+    ob_ObjArray *data = obobj_get_data(obj);
+    obarr_free(&data->items);
   } break;
 
-  case OT_METHOD: {
-    ObjMethod *data = obj_get_data(obj);
-    arr_free(&data->parameters);
-    arr_free(&data->literals);
-    arr_free(&data->bytecode);
+  case OBOBJ_METHOD: {
+    ob_ObjMethod *data = obobj_get_data(obj);
+    obarr_free(&data->parameters);
+    obarr_free(&data->literals);
+    obarr_free(&data->bytecode);
   } break;
 
     // TODO: implement uninterning afterwards
@@ -94,7 +114,8 @@ void obj_destroy(Obj obj) {
   }
 }
 
-void obj_visit(Object *obj, VisitFlags flags, FnVisit visit, void *userdata) {
+void obobj_visit(ob_Object *obj, ob_VisitFlags flags, ob_FnVisit visit,
+                 void *userdata) {
   // TODO: properly handle NULLs.
   if (obj == NULL) {
     return;
@@ -105,47 +126,48 @@ void obj_visit(Object *obj, VisitFlags flags, FnVisit visit, void *userdata) {
   }
 
   switch (HEADER_GET_TAG(obj->header)) {
-  case OT_SLOTS: {
-    ObjSlots *data = obj_get_data(obj);
+  case OBOBJ_SLOTS: {
+    ob_ObjSlots *data = obobj_get_data(obj);
 
-    Object *ref = NULL;
+    ob_Object *ref = NULL;
     uint64_t index = 0;
 
-    while (tbl_iterate(&data->slots, &index, NULL, (void **)&ref)) {
-      obj_visit(ref, flags, visit, userdata);
+    while (obtbl_iterate(&data->slots, &index, NULL, (void **)&ref)) {
+      obobj_visit(ref, flags, visit, userdata);
     }
 
-    obj_visit(data->prototype, flags, visit, userdata);
+    obobj_visit(data->prototype, flags, visit, userdata);
   } break;
 
-  case OT_ARRAY: {
-    ObjArray *data = obj_get_data(obj);
+  case OBOBJ_ARRAY: {
+    ob_ObjArray *data = obobj_get_data(obj);
 
-    auto length = data->items.size / sizeof(Obj);
+    auto length = data->items.size / sizeof(ob_Obj);
     for (size_t i = 0; i < length; i++) {
-      obj_visit(arr_at(&data->items, sizeof(Obj), i), flags, visit, userdata);
+      obobj_visit(obarr_at(&data->items, sizeof(ob_Obj), i), flags, visit,
+                  userdata);
     }
   } break;
 
-  case OT_METHOD: {
-    ObjMethod *data = obj_get_data(obj);
+  case OBOBJ_METHOD: {
+    ob_ObjMethod *data = obobj_get_data(obj);
 
-    for (size_t i = 0; i < data->literals.size / sizeof(Object *); i++) {
-      Object *item = ((Object **)data->literals.data)[i];
+    for (size_t i = 0; i < data->literals.size / sizeof(ob_Object *); i++) {
+      ob_Object *item = ((ob_Object **)data->literals.data)[i];
 
-      obj_visit(item, flags, visit, userdata);
+      obobj_visit(item, flags, visit, userdata);
     }
 
-    obj_visit(data->env, flags, visit, userdata);
+    obobj_visit(data->env, flags, visit, userdata);
   }; break;
 
-  case OT_ACTIVATION: {
-    ObjActivation *data = obj_get_data(obj);
-    obj_visit(data->parent, flags, visit, userdata);
-    obj_visit(data->caller, flags, visit, userdata);
-    obj_visit(data->method, flags, visit, userdata);
-    obj_visit(data->receiver, flags, visit, userdata);
-    obj_visit(data->env, flags, visit, userdata);
+  case OBOBJ_ACTIVATION: {
+    ob_ObjActivation *data = obobj_get_data(obj);
+    obobj_visit(data->parent, flags, visit, userdata);
+    obobj_visit(data->caller, flags, visit, userdata);
+    obobj_visit(data->method, flags, visit, userdata);
+    obobj_visit(data->receiver, flags, visit, userdata);
+    obobj_visit(data->env, flags, visit, userdata);
   }; break;
 
   default:

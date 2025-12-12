@@ -1,60 +1,60 @@
-#ifndef CONTEXT_H_INCLUDED
-#define CONTEXT_H_INCLUDED
+#ifndef OB_CORE_CONTEXT_H_INCLUDED
+#define OB_CORE_CONTEXT_H_INCLUDED
 
 #include "Allocator.h"
+#include "Array.h"
 #include "Object.h"
 #include "String.h"
 
-#include "Array.h"
-
 typedef struct Context {
-  Allocator *allocator;
+  ob_Allocator *allocator;
 
-  Array stack;
+  ob_Array stack;
 
-  Obj objects;
+  ob_Obj objects;
 
-  Obj proto_object, proto_nil, proto_symbol, proto_string, proto_slots,
+  ob_Obj proto_object, proto_nil, proto_symbol, proto_string, proto_slots,
       proto_number, proto_array, proto_method, proto_cmethod, proto_cdata,
       proto_activation;
 
-  Obj shell;
+  ob_Obj shell;
 
-  Obj activation;
+  ob_Obj activation;
 
-  Array string_data;
-  Array string_available;
+  ob_Array string_data;
+  ob_Array string_available;
 
-  String *strings;
-} *Context;
+  ob_String *strings;
+} *ob_Context;
 
-Context ctx_create(Allocator *alloc);
-void ctx_destroy(Context ctx);
+ob_Context obctx_create(ob_Allocator *alloc);
+void obctx_destroy(ob_Context ctx);
 
-Obj ctx_allocate(Context ctx, size_t payload_size);
-Obj ctx_alloc_symbol(Context ctx, String *symbol);
-Obj ctx_alloc_string(Context ctx, String *string);
-Obj ctx_alloc_slots(Context ctx, Obj prototype);
-Obj ctx_alloc_number(Context ctx, Number number);
-Obj ctx_alloc_integer(Context ctx, int64_t number);
-Obj ctx_alloc_real(Context ctx, double number);
-Obj ctx_alloc_array(Context ctx);
-Obj ctx_alloc_method(Context ctx);
-Obj ctx_alloc_cmethod(Context ctx, FnCMethod method);
-Obj ctx_alloc_cdata(Context ctx, void *cdata);
+ob_Obj obctx_allocate(ob_Context ctx, size_t payload_size);
+ob_Obj obctx_alloc_symbol(ob_Context ctx, ob_String *symbol);
+ob_Obj obctx_alloc_string(ob_Context ctx, ob_String *string);
+ob_Obj obctx_alloc_slots(ob_Context ctx, ob_Obj prototype);
+ob_Obj obctx_alloc_number(ob_Context ctx, ob_Number number);
+ob_Obj obctx_alloc_integer(ob_Context ctx, int64_t number);
+ob_Obj obctx_alloc_real(ob_Context ctx, double number);
+ob_Obj obctx_alloc_array(ob_Context ctx);
+ob_Obj obctx_alloc_method(ob_Context ctx);
+ob_Obj obctx_alloc_cmethod(ob_Context ctx, ob_FnCMethod method);
+ob_Obj obctx_alloc_cdata(ob_Context ctx, void *cdata);
 
-void ctx_mark(Context ctx);
-void ctx_sweep(Context ctx);
+void obctx_mark(ob_Context ctx);
+void obctx_sweep(ob_Context ctx);
 
-void ctx_enter_activation(Context ctx, Obj caller, Obj method, Obj receiver);
-void ctx_leave_activation(Context ctx);
+void obctx_enter_activation(ob_Context ctx, ob_Obj caller, ob_Obj method,
+                            ob_Obj receiver);
+void obctx_leave_activation(ob_Context ctx);
 
-void ctx_push(Context ctx, Obj obj);
-Obj ctx_pop(Context ctx);
-bool ctx_checkstack(Context ctx, size_t narg);
+void obctx_push(ob_Context ctx, ob_Obj obj);
+ob_Obj obctx_pop(ob_Context ctx);
+bool obctx_checkstack(ob_Context ctx, size_t narg);
 
-Obj ctx_get_prototype(Context ctx, Obj obj);
-Obj ctx_get_slot(Context ctx, Obj obj, String *selector);
-void ctx_send(Context ctx, Obj recv, String *selector);
+ob_Obj obctx_get_prototype(ob_Context ctx, ob_Obj obj);
+ob_Obj obctx_get_slot(ob_Context ctx, ob_Obj obj, ob_String *selector);
+void obctx_send(ob_Context ctx, ob_Obj recv, ob_String *selector);
 
 #endif

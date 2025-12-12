@@ -1,23 +1,23 @@
-#ifndef ALLOCATOR_H_INCLUDED
-#define ALLOCATOR_H_INCLUDED
+#ifndef OB_CORE_ALLOCATOR_H_INCLUDED
+#define OB_CORE_ALLOCATOR_H_INCLUDED
 
 #include <stddef.h>
 
-typedef void *(*FnAllocate)(void *self, size_t size);
-typedef void (*FnDeallocate)(void *self, void *source);
-typedef void *(*FnReallocate)(void *self, void *source, size_t new);
+typedef void *(*ob_FnAllocate)(void *self, size_t size);
+typedef void (*ob_FnDeallocate)(void *self, void *source);
+typedef void *(*ob_FnReallocate)(void *self, void *source, size_t new);
 
 typedef struct {
-  FnAllocate allocate;
-  FnDeallocate deallocate;
-  FnReallocate reallocate;
+  ob_FnAllocate allocate;
+  ob_FnDeallocate deallocate;
+  ob_FnReallocate reallocate;
   void *self;
-} Allocator;
+} ob_Allocator;
 
-Allocator get_libc_allocator();
+ob_Allocator oballoc_create();
 
-void *allocate(Allocator *alloc, size_t size);
-void *reallocate(Allocator *alloc, void *source, size_t new);
-void deallocate(Allocator *alloc, void *source);
+void *ob_allocate(ob_Allocator *alloc, size_t size);
+void *ob_reallocate(ob_Allocator *alloc, void *source, size_t new);
+void ob_deallocate(ob_Allocator *alloc, void *source);
 
 #endif

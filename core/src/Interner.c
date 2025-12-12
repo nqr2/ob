@@ -5,58 +5,58 @@
 
 #include <string.h>
 
-void intr_init(Interner *intr, Context ctx, Allocator *alloc) {
-  memset(intr, 0, sizeof(Interner));
+void obintr_init(ob_Interner *intr, ob_Context ctx, ob_Allocator *alloc) {
+  memset(intr, 0, sizeof(ob_Interner));
 
-  arr_init(&intr->data, alloc);
-  tbl_init(&intr->interned, alloc);
+  obarr_init(&intr->data, alloc);
+  obtbl_init(&intr->interned, alloc);
 
   intr->context = ctx;
   intr->allocator = alloc;
 }
 
-void intr_free(Interner *intr) {
-  arr_free(&intr->data);
-  tbl_free(&intr->interned);
+void obintr_free(ob_Interner *intr) {
+  obarr_free(&intr->data);
+  obtbl_free(&intr->interned);
 
-  intr_init(intr, NULL, NULL);
+  obintr_init(intr, NULL, NULL);
 }
 
 // TODO: uninterning, etc
-String *intr_intern(Interner *intr, size_t length, const char *data) {
-  uint64_t hash = hash_start(length, data);
+ob_String *obintr_intern(ob_Interner *intr, size_t length, const char *data) {
+  uint64_t hash = obhash_start(length, data);
 
-  String *str = NULL;
+  ob_String *str = NULL;
 
-  if (!tbl_get(&intr->interned, hash, (void **)&str)) {
-    str = (String *)allocate(intr->allocator, sizeof(String));
+  if (!obtbl_get(&intr->interned, hash, (void **)&str)) {
+    str = (ob_String *)ob_allocate(intr->allocator, sizeof(ob_String));
 
-    arr_push(&intr->data, length, data);
+    obarr_push(&intr->data, length, data);
 
     str->next = intr->context->strings;
     str->offset = intr->data.size - length;
 
     intr->context->strings = str;
 
-    tbl_set(&intr->interned, hash, str);
+    obtbl_set(&intr->interned, hash, str);
   }
 
   return str;
 }
 
-String *intr_find(Interner *intr, uint64_t hash) {
-  String *str = NULL;
+ob_String *obintr_find(ob_Interner *intr, uint64_t hash) {
+  ob_String *str = NULL;
 
-  tbl_get(&intr->interned, hash, (void **)&str);
+  obtbl_get(&intr->interned, hash, (void **)&str);
 
   return str;
 }
 
-void intr_mark(Interner *intr) {
-  String *str = NULL;
+void obintr_mark(ob_Interner *intr) {
+  ob_String *str = NULL;
   uint64_t index = 0;
 
-  while (tbl_iterate(&intr->interned, &index, NULL, (void **)&str)) {
-    str_mark(str);
+  while (obtbl_iterate(&intr->interned, &index, NULL, (void **)&str)) {
+    obstr_mark(str);
   }
 }

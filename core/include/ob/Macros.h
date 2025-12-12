@@ -1,5 +1,5 @@
-#ifndef MACROS_H_INCLUDED
-#define MACROS_H_INCLUDED
+#ifndef OB_CORE_MACROS_H_INCLUDED
+#define OB_CORE_MACROS_H_INCLUDED
 
 #define IGNORE (void)
 

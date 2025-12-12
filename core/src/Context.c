@@ -11,52 +11,53 @@
 #include <ctype.h>
 #include <string.h>
 
-Context ctx_create(Allocator *alloc) {
-  Context ctx = allocate(alloc, sizeof(struct Context));
+ob_Context obctx_create(ob_Allocator *alloc) {
+  ob_Context ctx = ob_allocate(alloc, sizeof(struct Context));
 
   memset(ctx, 0, sizeof(struct Context));
 
-  arr_init(&ctx->stack, alloc);
-  arr_init(&ctx->string_data, alloc);
-  arr_init(&ctx->string_available, alloc);
+  obarr_init(&ctx->stack, alloc);
+  obarr_init(&ctx->string_data, alloc);
+  obarr_init(&ctx->string_available, alloc);
 
   ctx->allocator = alloc;
 
-  ctx->proto_object = ctx_alloc_slots(ctx, NULL);
+  ctx->proto_object = obctx_alloc_slots(ctx, NULL);
 
-  ctx->proto_nil = ctx_alloc_slots(ctx, ctx->proto_object);
-  ctx->proto_symbol = ctx_alloc_slots(ctx, ctx->proto_object);
-  ctx->proto_string = ctx_alloc_slots(ctx, ctx->proto_object);
-  ctx->proto_slots = ctx_alloc_slots(ctx, ctx->proto_object);
-  ctx->proto_number = ctx_alloc_slots(ctx, ctx->proto_object);
-  ctx->proto_array = ctx_alloc_slots(ctx, ctx->proto_object);
-  ctx->proto_method = ctx_alloc_slots(ctx, ctx->proto_object);
-  ctx->proto_cmethod = ctx_alloc_slots(ctx, ctx->proto_object);
-  ctx->proto_cdata = ctx_alloc_slots(ctx, ctx->proto_object);
-  ctx->proto_activation = ctx_alloc_slots(ctx, ctx->proto_object);
+  ctx->proto_nil = obctx_alloc_slots(ctx, ctx->proto_object);
+  ctx->proto_symbol = obctx_alloc_slots(ctx, ctx->proto_object);
+  ctx->proto_string = obctx_alloc_slots(ctx, ctx->proto_object);
+  ctx->proto_slots = obctx_alloc_slots(ctx, ctx->proto_object);
+  ctx->proto_number = obctx_alloc_slots(ctx, ctx->proto_object);
+  ctx->proto_array = obctx_alloc_slots(ctx, ctx->proto_object);
+  ctx->proto_method = obctx_alloc_slots(ctx, ctx->proto_object);
+  ctx->proto_cmethod = obctx_alloc_slots(ctx, ctx->proto_object);
+  ctx->proto_cdata = obctx_alloc_slots(ctx, ctx->proto_object);
+  ctx->proto_activation = obctx_alloc_slots(ctx, ctx->proto_object);
 
-  ctx->shell = ctx_alloc_slots(ctx, ctx->proto_slots);
+  ctx->shell = obctx_alloc_slots(ctx, ctx->proto_slots);
 
   return ctx;
 }
 
-void ctx_destroy(Context ctx) {
+void obctx_destroy(ob_Context ctx) {
   auto alloc = ctx->allocator;
 
   // TODO: get rid of objects and strings here
 
-  ctx_sweep(ctx);
-  ctx_sweep(ctx);
+  obctx_sweep(ctx);
+  obctx_sweep(ctx);
 
-  arr_free(&ctx->stack);
-  arr_free(&ctx->string_data);
-  arr_free(&ctx->string_available);
+  obarr_free(&ctx->stack);
+  obarr_free(&ctx->string_data);
+  obarr_free(&ctx->string_available);
 
-  deallocate(alloc, ctx);
+  ob_deallocate(alloc, ctx);
 }
 
-Obj ctx_allocate(Context ctx, size_t payload_size) {
-  auto obj = (Obj)allocate(ctx->allocator, sizeof(Object) + payload_size);
+ob_Obj obctx_allocate(ob_Context ctx, size_t payload_size) {
+  auto obj =
+      (ob_Obj)ob_allocate(ctx->allocator, sizeof(ob_Object) + payload_size);
 
   obj->header = 0;
   obj->next = ctx->objects;
@@ -66,151 +67,139 @@ Obj ctx_allocate(Context ctx, size_t payload_size) {
   return obj;
 }
 
-Obj ctx_alloc_symbol(Context ctx, String *symbol) {
-  auto obj = ctx_allocate(ctx, sizeof(ObjSymbol));
-  obj->header = HEADER_SET_TAG(0, OT_SYMBOL);
+ob_Obj obctx_alloc_symbol(ob_Context ctx, ob_String *symbol) {
+  auto obj = obctx_allocate(ctx, sizeof(ob_ObjSymbol));
+  obj->header = OBOBJ_SYMBOL;
 
-  ObjSymbol *sym = obj_get_data(obj);
+  ob_ObjSymbol *sym = obobj_get_data(obj);
   sym->inner = symbol;
 
   return obj;
 }
 
-Obj ctx_alloc_string(Context ctx, String *string) {
-  auto obj = ctx_allocate(ctx, sizeof(ObjString));
-  obj->header = HEADER_SET_TAG(0, OT_STRING);
+ob_Obj obctx_alloc_string(ob_Context ctx, ob_String *string) {
+  auto obj = obctx_allocate(ctx, sizeof(ob_ObjString));
+  obj->header = OBOBJ_STRING;
 
-  ObjString *str = obj_get_data(obj);
+  ob_ObjString *str = obobj_get_data(obj);
   str->inner = string;
 
   return obj;
 }
 
-Obj ctx_alloc_slots(Context ctx, Obj prototype) {
-  auto obj = ctx_allocate(ctx, sizeof(ObjSlots));
-  obj->header = HEADER_SET_TAG(0, OT_SLOTS);
+ob_Obj obctx_alloc_slots(ob_Context ctx, ob_Obj prototype) {
+  auto obj = obctx_allocate(ctx, sizeof(ob_ObjSlots));
+  obj->header = OBOBJ_SLOTS;
 
-  ObjSlots *slots = obj_get_data(obj);
+  ob_ObjSlots *slots = obobj_get_data(obj);
 
-  tbl_init(&slots->slots, ctx->allocator);
+  obtbl_init(&slots->slots, ctx->allocator);
   slots->prototype = prototype;
 
   return obj;
 }
 
-Obj ctx_alloc_number(Context ctx, Number number) {
-  auto obj = ctx_allocate(ctx, sizeof(ObjNumber));
-  obj->header = HEADER_SET_TAG(0, OT_NUMBER);
+ob_Obj obctx_alloc_number(ob_Context ctx, ob_Number number) {
+  auto obj = obctx_allocate(ctx, sizeof(ob_ObjNumber));
+  obj->header = OBOBJ_NUMBER;
 
-  ObjNumber *num = obj_get_data(obj);
+  ob_ObjNumber *num = obobj_get_data(obj);
   num->number = number;
 
   return obj;
 }
 
-Obj ctx_alloc_integer(Context ctx, int64_t number) {
-  auto obj = ctx_allocate(ctx, sizeof(ObjNumber));
-  obj->header = HEADER_SET_TAG(0, OT_NUMBER);
+ob_Obj obctx_alloc_integer(ob_Context ctx, int64_t number) {
+  return obctx_alloc_number(ctx, obnum_of_int(number));
+}
 
-  ObjNumber *num = obj_get_data(obj);
-  num->number = num_of_int(number);
+ob_Obj obctx_alloc_real(ob_Context ctx, double number) {
+  return obctx_alloc_number(ctx, obnum_of_float(number));
+}
+
+ob_Obj obctx_alloc_array(ob_Context ctx) {
+  auto obj = obctx_allocate(ctx, sizeof(ob_ObjArray));
+  obj->header = OBOBJ_ARRAY;
+
+  ob_ObjArray *arr = obobj_get_data(obj);
+  obarr_init(&arr->items, ctx->allocator);
 
   return obj;
 }
 
-Obj ctx_alloc_real(Context ctx, double number) {
-  auto obj = ctx_allocate(ctx, sizeof(ObjNumber));
-  obj->header = HEADER_SET_TAG(0, OT_NUMBER);
+ob_Obj obctx_alloc_method(ob_Context ctx) {
+  auto obj = obctx_allocate(ctx, sizeof(ob_ObjMethod));
+  obj->header = OBOBJ_METHOD;
 
-  ObjNumber *num = obj_get_data(obj);
-  num->number = num_of_float(number);
-
-  return obj;
-}
-
-Obj ctx_alloc_array(Context ctx) {
-  auto obj = ctx_allocate(ctx, sizeof(ObjArray));
-  obj->header = HEADER_SET_TAG(0, OT_ARRAY);
-
-  ObjArray *arr = obj_get_data(obj);
-  arr_init(&arr->items, ctx->allocator);
-
-  return obj;
-}
-
-Obj ctx_alloc_method(Context ctx) {
-  auto obj = ctx_allocate(ctx, sizeof(ObjMethod));
-  obj->header = HEADER_SET_TAG(0, OT_METHOD);
-
-  ObjMethod *method = obj_get_data(obj);
+  ob_ObjMethod *method = obobj_get_data(obj);
 
   // TODO: bind any later activation environments to this env
   method->env = ctx->activation;
 
-  arr_init(&method->bytecode, ctx->allocator);
-  arr_init(&method->literals, ctx->allocator);
-  arr_init(&method->parameters, ctx->allocator);
+  obarr_init(&method->bytecode, ctx->allocator);
+  obarr_init(&method->literals, ctx->allocator);
+  obarr_init(&method->parameters, ctx->allocator);
 
   return obj;
 }
 
-Obj ctx_alloc_cmethod(Context ctx, FnCMethod method) {
-  auto obj = ctx_allocate(ctx, sizeof(ObjCMethod));
-  obj->header = HEADER_SET_TAG(0, OT_CMETHOD);
+ob_Obj obctx_alloc_cmethod(ob_Context ctx, ob_FnCMethod method) {
+  auto obj = obctx_allocate(ctx, sizeof(ob_ObjCMethod));
+  obj->header = OBOBJ_CMETHOD;
 
-  ObjCMethod *data = obj_get_data(obj);
+  ob_ObjCMethod *data = obobj_get_data(obj);
   data->method = method;
 
   return obj;
 }
 
-Obj ctx_alloc_cdata(Context ctx, void *cdata) {
-  auto obj = ctx_allocate(ctx, sizeof(ObjCData));
-  obj->header = HEADER_SET_TAG(0, OT_CMETHOD);
+ob_Obj obctx_alloc_cdata(ob_Context ctx, void *cdata) {
+  auto obj = obctx_allocate(ctx, sizeof(ob_ObjCData));
+  obj->header = OBOBJ_CMETHOD;
 
-  ObjCData *data = obj_get_data(obj);
+  ob_ObjCData *data = obobj_get_data(obj);
   data->cdata = cdata;
 
   return obj;
 }
 
-void ctx_mark(Context ctx) {
-  obj_mark(ctx->activation);
+void obctx_mark(ob_Context ctx) {
+  obobj_mark(ctx->activation);
 
-  obj_mark(ctx->proto_nil);
-  obj_mark(ctx->proto_symbol);
-  obj_mark(ctx->proto_string);
-  obj_mark(ctx->proto_slots);
-  obj_mark(ctx->proto_number);
-  obj_mark(ctx->proto_array);
-  obj_mark(ctx->proto_method);
-  obj_mark(ctx->proto_cmethod);
-  obj_mark(ctx->proto_cdata);
-  obj_mark(ctx->proto_activation);
+  obobj_mark(ctx->proto_nil);
+  obobj_mark(ctx->proto_symbol);
+  obobj_mark(ctx->proto_string);
+  obobj_mark(ctx->proto_slots);
+  obobj_mark(ctx->proto_number);
+  obobj_mark(ctx->proto_array);
+  obobj_mark(ctx->proto_method);
+  obobj_mark(ctx->proto_cmethod);
+  obobj_mark(ctx->proto_cdata);
+  obobj_mark(ctx->proto_activation);
 
-  auto data = (Object **)ctx->stack.data;
+  auto data = (ob_Object **)ctx->stack.data;
 
-  for (size_t i = 0; i < ctx->stack.size / sizeof(Object *); i++) {
-    obj_mark(data[i]);
+  for (size_t i = 0; i < ctx->stack.size / sizeof(ob_Object *); i++) {
+    obobj_mark(data[i]);
   }
 }
 
-void ctx_sweep(Context ctx) {
-  str_sweep(ctx);
+void obctx_sweep(ob_Context ctx) {
+  obstr_sweep(ctx);
 
-  Object *newlive = NULL;
+  ob_Object *newlive = NULL;
   auto live = ctx->objects;
 
   while (live != NULL) {
-    Object *next = live->next;
+    ob_Object *next = live->next;
 
-    if (HEADER_GET_MARK(live->header)) {
-      live->header = HEADER_SET_MARK(live->header, false);
+    if (obobj_get_mark(live)) {
+      live->header &= 0xffff'ffef;
       live->next = newlive;
       newlive = live;
     } else {
-      obj_destroy(live);
-      deallocate(ctx->allocator, live);
+      obobj_destroy(live);
+      ob_deallocate(ctx->allocator, live);
     }
 
     live = next;
@@ -219,56 +208,57 @@ void ctx_sweep(Context ctx) {
   ctx->objects = newlive;
 }
 
-void ctx_enter_activation(Context ctx, Obj caller, Obj method, Obj receiver) {
-  Object *act = ctx_allocate(ctx, sizeof(ObjActivation));
+void obctx_enter_activation(ob_Context ctx, ob_Obj caller, ob_Obj method,
+                            ob_Obj receiver) {
+  ob_Object *act = obctx_allocate(ctx, sizeof(ob_ObjActivation));
 
-  ObjActivation *data = obj_get_data(act);
+  ob_ObjActivation *data = obobj_get_data(act);
   data->parent = ctx->activation;
   data->caller = caller;
   data->method = method;
   data->receiver = receiver;
-  data->env = ctx_alloc_slots(ctx, NULL);
+  data->env = obctx_alloc_slots(ctx, NULL);
 
   ctx->activation = act;
 }
 
-void ctx_leave_activation(Context ctx) {
-  ObjActivation *data = obj_get_data(ctx->activation);
+void obctx_leave_activation(ob_Context ctx) {
+  ob_ObjActivation *data = obobj_get_data(ctx->activation);
   ctx->activation = data->parent;
 }
 
-void ctx_push(Context ctx, Obj obj) {
-  arr_push(&ctx->stack, sizeof(Obj), (const void *)&obj);
+void obctx_push(ob_Context ctx, ob_Obj obj) {
+  obarr_push(&ctx->stack, sizeof(ob_Obj), (const void *)&obj);
 }
 
-Obj ctx_pop(Context ctx) {
-  Obj obj;
+ob_Obj obctx_pop(ob_Context ctx) {
+  ob_Obj obj;
 
-  if (!arr_pop(&ctx->stack, sizeof(Obj), (void *)&obj)) {
+  if (!obarr_pop(&ctx->stack, sizeof(ob_Obj), (void *)&obj)) {
     // TODO: fail? cannot pop empty stack.
   }
 
   return obj;
 }
 
-bool ctx_checkstack(Context ctx, size_t narg) {
-  return (ctx->stack.size / sizeof(Object *)) >= narg;
+bool obctx_checkstack(ob_Context ctx, size_t narg) {
+  return (ctx->stack.size / sizeof(ob_Object *)) >= narg;
 }
 
-Obj ctx_get_prototype(Context ctx, Obj obj) {
+ob_Obj obctx_get_prototype(ob_Context ctx, ob_Obj obj) {
   if (obj == ctx->proto_object) {
     return NULL;
   }
 
-  switch (obj_get_tag(obj)) {
-  case OT_NIL:
+  switch (obobj_get_tag(obj)) {
+  case OBOBJ_NIL:
     return ctx->proto_nil;
-  case OT_SYMBOL:
+  case OBOBJ_SYMBOL:
     return ctx->proto_symbol;
-  case OT_STRING:
+  case OBOBJ_STRING:
     return ctx->proto_string;
-  case OT_SLOTS: {
-    ObjSlots *slots = obj_get_data(obj);
+  case OBOBJ_SLOTS: {
+    ob_ObjSlots *slots = obobj_get_data(obj);
 
     if (slots->prototype != NULL) {
       return slots->prototype;
@@ -276,17 +266,17 @@ Obj ctx_get_prototype(Context ctx, Obj obj) {
 
     return ctx->proto_slots;
   }
-  case OT_NUMBER:
+  case OBOBJ_NUMBER:
     return ctx->proto_number;
-  case OT_ARRAY:
+  case OBOBJ_ARRAY:
     return ctx->proto_array;
-  case OT_METHOD:
+  case OBOBJ_METHOD:
     return ctx->proto_method;
-  case OT_CMETHOD:
+  case OBOBJ_CMETHOD:
     return ctx->proto_cmethod;
-  case OT_CDATA:
+  case OBOBJ_CDATA:
     return ctx->proto_cdata;
-  case OT_ACTIVATION:
+  case OBOBJ_ACTIVATION:
     return ctx->proto_activation;
   case OT_Ra:
   case OT_Rb:
@@ -297,32 +287,32 @@ Obj ctx_get_prototype(Context ctx, Obj obj) {
     break;
   }
 
-  return ctx_get_prototype(ctx, NULL);
+  return obctx_get_prototype(ctx, NULL);
 }
 
-Obj ctx_get_slot(Context ctx, Obj obj, String *selector) {
+ob_Obj obctx_get_slot(ob_Context ctx, ob_Obj obj, ob_String *selector) {
   if (obj == NULL) {
     return NULL;
   }
 
-  if (OBJ_ISA(obj, OT_SLOTS)) {
-    ObjSlots *data = obj_get_data(obj);
+  if (OBOBJ_ISA(obj, OBOBJ_SLOTS)) {
+    ob_ObjSlots *data = obobj_get_data(obj);
 
-    auto str = str_get_data(ctx, selector);
-    auto hash = hash_start(selector->length, str);
+    auto str = obstr_get_data(ctx, selector);
+    auto hash = obhash_start(selector->length, str);
 
-    if (tbl_get(&data->slots, hash, (void **)&obj)) {
+    if (obtbl_get(&data->slots, hash, (void **)&obj)) {
       return obj;
     }
   }
 
-  return ctx_get_slot(ctx, ctx_get_prototype(ctx, obj), selector);
+  return obctx_get_slot(ctx, obctx_get_prototype(ctx, obj), selector);
 }
 
-void ctx_send(Context ctx, Obj recv, String *selector) {
+void obctx_send(ob_Context ctx, ob_Obj recv, ob_String *selector) {
   size_t n_args = 0;
 
-  auto sel = str_get_data(ctx, selector);
+  auto sel = obstr_get_data(ctx, selector);
 
   if (ispunct(sel[0])) {
     n_args = 1;
@@ -334,43 +324,43 @@ void ctx_send(Context ctx, Obj recv, String *selector) {
     }
   }
 
-  auto invoked = ctx_get_slot(ctx, recv, selector);
+  auto invoked = obctx_get_slot(ctx, recv, selector);
 
   // TODO: doesNotUnderstand
 
   if (n_args != 0) {
-    ASSERT(OBJ_IS_INVOCABLE(invoked), "tried to invoke a non-method object %p",
-           invoked);
+    ASSERT(OBOBJ_IS_INVOCABLE(invoked),
+           "tried to invoke a non-method object %p", invoked);
 
-    ASSERT(ctx_checkstack(ctx, n_args),
+    ASSERT(obctx_checkstack(ctx, n_args),
            "expected to have %lu arguments on stack", n_args);
   }
 
-  auto tag = obj_get_tag(invoked);
+  auto tag = obobj_get_tag(invoked);
 
-  if (tag == OT_CMETHOD) {
-    ctx_enter_activation(ctx, ctx->activation, invoked, recv);
-    ObjCMethod *data = obj_get_data(invoked);
+  if (tag == OBOBJ_CMETHOD) {
+    obctx_enter_activation(ctx, ctx->activation, invoked, recv);
+    ob_ObjCMethod *data = obobj_get_data(invoked);
 
     if (!data->method(ctx)) {
-      ctx_push(ctx, recv);
+      obctx_push(ctx, recv);
     }
 
-    ctx_leave_activation(ctx);
+    obctx_leave_activation(ctx);
 
     // TODO: check that we actually popped n args
   }
 
-  else if (tag == OT_METHOD) {
-    ctx_enter_activation(ctx, ctx->activation, invoked, recv);
+  else if (tag == OBOBJ_METHOD) {
+    obctx_enter_activation(ctx, ctx->activation, invoked, recv);
 
     // TODO: bind every argument to the implicit recv
 
-    ObjMethod *data = obj_get_data(invoked);
-    bc_run(ctx, data->bytecode.size, data->bytecode.data);
-    ctx_leave_activation(ctx);
+    ob_ObjMethod *data = obobj_get_data(invoked);
+    obbc_run(ctx, data->bytecode.size, data->bytecode.data);
+    obctx_leave_activation(ctx);
 
   } else {
-    ctx_push(ctx, invoked);
+    obctx_push(ctx, invoked);
   }
 }

@@ -7,10 +7,10 @@ void assert_failure() {
   fail_with("assertion failed");
 }
 
-Allocator libc;
+ob_Allocator libc;
 
 void alloc_0_returns_null() {
-  auto null = allocate(&libc, 0);
+  auto null = ob_allocate(&libc, 0);
   ASSERT_NULL(null);
 }
 
@@ -21,9 +21,9 @@ const Test SUITE[] = {
 };
 
 int main() {
-  libc = get_libc_allocator();
+  libc = oballoc_create();
 
-  assert_add_handler(assert_failure);
+  obassert_add_handler(assert_failure);
 
   test(SUITE);
 

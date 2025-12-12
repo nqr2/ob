@@ -4,7 +4,15 @@
 
 #include <string.h>
 
-String *str_create(Context ctx, size_t len, const char *data) {
+#define STRING_MARK_BIT 0x8000'0000'0000'0000
+#define STRING_LENGTH_MASK 0x7fff'ffff'ffff'ffff
+
+typedef struct {
+  size_t offset;
+  size_t size;
+} StrAvailable;
+
+ob_String *obstr_create(ob_Context ctx, size_t len, const char *data) {
   size_t target = 0;
 
   for (size_t i = 0; i < ctx->string_available.size / sizeof(StrAvailable);
@@ -18,19 +26,19 @@ String *str_create(Context ctx, size_t len, const char *data) {
       avail->size -= len;
 
       if (avail->size == 0) {
-        arr_remove(&ctx->string_available, sizeof(StrAvailable),
-                   i * sizeof(StrAvailable));
+        obarr_remove(&ctx->string_available, sizeof(StrAvailable),
+                     i * sizeof(StrAvailable));
         i -= 1;
       }
     }
   }
 
   if (target == 0) {
-    arr_push(&ctx->string_data, len, data);
+    obarr_push(&ctx->string_data, len, data);
     target = ctx->string_data.size - len;
   }
 
-  String *str = allocate(ctx->allocator, sizeof(String));
+  ob_String *str = ob_allocate(ctx->allocator, sizeof(ob_String));
 
   str->offset = target;
   str->length = len;
@@ -41,52 +49,52 @@ String *str_create(Context ctx, size_t len, const char *data) {
   return str;
 }
 
-size_t str_get_length(String *str) {
+size_t obstr_get_length(ob_String *str) {
   return str->length & STRING_LENGTH_MASK;
 }
 
-const char *str_get_data(Context ctx, Str str) {
+const char *obstr_get_data(ob_Context ctx, ob_Str str) {
   return ((const char *)ctx->string_data.data) + str->offset;
 }
 
-uint64_t str_get_hash(Context ctx, Str str) {
-  return hash_start(str->length, str_get_data(ctx, str));
+uint64_t obstr_get_hash(ob_Context ctx, ob_Str str) {
+  return obhash_start(str->length, obstr_get_data(ctx, str));
 }
 
-void str_mark(String *str) {
+void obstr_mark(ob_String *str) {
   str->length |= STRING_MARK_BIT;
 }
 
-void str_unmark(String *str) {
+void obstr_unmark(ob_String *str) {
   str->length &= STRING_LENGTH_MASK;
 }
 
-bool str_get_mark(String *str) {
+bool obstr_get_mark(ob_String *str) {
   return (str->length & STRING_MARK_BIT) != 0;
 }
 
-static void str__delete(Context ctx, String *str) {
+static void str__delete(ob_Context ctx, ob_String *str) {
   StrAvailable avail = {};
 
   avail.offset = str->offset;
   avail.size = str->length;
 
-  arr_push(&ctx->string_available, sizeof(StrAvailable), (void *)&avail);
+  obarr_push(&ctx->string_available, sizeof(StrAvailable), (void *)&avail);
 }
 
-void str_sweep(Context ctx) {
-  String *new = NULL;
+void obstr_sweep(ob_Context ctx) {
+  ob_String *new = NULL;
 
   auto strings = ctx->strings;
 
   while (strings != NULL) {
     auto next = strings->next;
 
-    if (str_get_mark(strings)) {
-      str_unmark(strings);
+    if (obstr_get_mark(strings)) {
+      obstr_unmark(strings);
     } else {
       str__delete(ctx, strings);
-      deallocate(ctx->allocator, strings);
+      ob_deallocate(ctx->allocator, strings);
       strings = NULL;
     }
 

@@ -7,14 +7,14 @@
 #include <stdio.h>
 #include <string.h>
 
-void dofile(Context ctx, const char *path) {
+void dofile(ob_Context ctx, const char *path) {
   auto file = fopen(path, "r");
 
   if (file == NULL) {
     return;
   }
 
-  auto data = (Array){};
+  auto data = (ob_Array){};
   auto length = 0L;
 
   fseek(file, 0, SEEK_END);
@@ -23,37 +23,37 @@ void dofile(Context ctx, const char *path) {
 
   rewind(file);
 
-  arr_init(&data, ctx->allocator);
-  arr_reserve(&data, length);
+  obarr_init(&data, ctx->allocator);
+  obarr_reserve(&data, length);
   data.size = length;
 
   fread(data.data, sizeof(char), data.size, file);
 
-  auto method = load_file(ctx, data.size, data.data);
+  auto method = ob_load(ctx, data.size, data.data);
 
-  auto srl = (Serial){};
-  srl_init(&srl, ctx);
+  auto srl = (ob_Serial){};
+  obsrl_init(&srl, ctx);
 
-  srl_write(&srl, method);
+  obsrl_write(&srl, method);
   fwrite(srl.buffer.data, sizeof(uint8_t), srl.buffer.size, stdout);
 
-  srl_free(&srl);
+  obsrl_free(&srl);
 
   // exit:
-  arr_free(&data);
+  obarr_free(&data);
   fclose(file);
 }
 
 int main(int argn, char *argv[]) {
-  auto alloc = get_libc_allocator();
+  auto alloc = oballoc_create();
 
-  auto ctx = ctx_create(&alloc);
+  auto ctx = obctx_create(&alloc);
 
   for (int i = 1; i < argn; i++) {
     dofile(ctx, argv[i]);
   }
 
-  ctx_destroy(ctx);
+  obctx_destroy(ctx);
 
   return 0;
 }

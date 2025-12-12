@@ -3,63 +3,63 @@
 #include <ob/Context.h>
 #include <ob/Object.h>
 
-void bc_run(Context ctx, size_t len, const uint8_t *code) {
+void obbc_run(ob_Context ctx, size_t len, const uint8_t *code) {
   uint64_t index = 0;
 
   for (size_t pc = 0; pc < len; pc++) {
-    auto opcode = INSN_GET_OPCODE(code[pc]);
-    auto data = INSN_GET_DATA(code[pc]);
+    auto opcode = OBBC_GET_OPCODE(code[pc]);
+    auto data = OBBC_GET_DATA(code[pc]);
 
     auto this_index = (index << 4) | data;
 
-    ObjActivation *act = obj_get_data(ctx->activation);
-    ObjMethod *method = obj_get_data(act->method);
+    ob_ObjActivation *act = obobj_get_data(ctx->activation);
+    ob_ObjMethod *method = obobj_get_data(act->method);
 
-    Obj literal = ((Obj *)method->literals.data)[this_index];
+    ob_Obj literal = ((ob_Obj *)method->literals.data)[this_index];
 
     switch (opcode) {
-    case OP_PUSH_LITERAL: {
-      auto obj = ((Obj *)method->literals.data)[this_index];
-      arr_push(&ctx->stack, sizeof(Obj), (void *)&obj);
+    case OBBC_PUSH_LITERAL: {
+      auto obj = ((ob_Obj *)method->literals.data)[this_index];
+      obarr_push(&ctx->stack, sizeof(ob_Obj), (void *)&obj);
     }; break;
 
-    case OP_SEND: {
-      Obj recv = NULL;
-      arr_pop(&ctx->stack, sizeof(Obj), (void *)&recv);
+    case OBBC_SEND: {
+      ob_Obj recv = NULL;
+      obarr_pop(&ctx->stack, sizeof(ob_Obj), (void *)&recv);
 
-      ObjString *selector = obj_get_data(literal);
+      ob_ObjString *selector = obobj_get_data(literal);
 
-      ctx_send(ctx, recv, selector->inner);
+      obctx_send(ctx, recv, selector->inner);
     }; break;
 
-    case OP_IMPLICIT_SEND: {
-      ObjString *selector = obj_get_data(literal);
+    case OBBC_IMPLICIT_SEND: {
+      ob_ObjString *selector = obobj_get_data(literal);
 
-      ctx_send(ctx, act->env, selector->inner);
+      obctx_send(ctx, act->env, selector->inner);
     }; break;
 
-    case OP_EXTEND: {
+    case OBBC_EXTEND: {
       index = this_index;
       continue;
     }; break;
 
       // TODO: OP_RETURN
 
-    case OP_SELF: {
-      arr_push(&ctx->stack, sizeof(Obj), (void *)act->receiver);
+    case OBBC_SELF: {
+      obarr_push(&ctx->stack, sizeof(ob_Obj), (void *)act->receiver);
     }; break;
 
-    case OP_ARRAY: {
-      auto obj = ctx_alloc_array(ctx);
-      ObjArray *oarr = obj_get_data(obj);
+    case OBBC_ARRAY: {
+      auto obj = obctx_alloc_array(ctx);
+      ob_ObjArray *oarr = obobj_get_data(obj);
 
       auto arr = &oarr->items;
-      arr_reserve(arr, this_index * sizeof(Obj));
+      obarr_reserve(arr, this_index * sizeof(ob_Obj));
 
-      arr_pop(&ctx->stack, this_index * sizeof(Obj), arr->data);
-      arr->size = this_index * sizeof(Obj);
+      obarr_pop(&ctx->stack, this_index * sizeof(ob_Obj), arr->data);
+      arr->size = this_index * sizeof(ob_Obj);
 
-      ctx_push(ctx, obj);
+      obctx_push(ctx, obj);
     }; break;
 
     default:
@@ -70,14 +70,14 @@ void bc_run(Context ctx, size_t len, const uint8_t *code) {
   }
 }
 
-void bc_append_insn(Array *out, Instruction insn) {
-  arr_push(out, sizeof(Instruction), &insn);
+void obbc_append_insn(ob_Array *out, ob_Instruction insn) {
+  obarr_push(out, sizeof(ob_Instruction), &insn);
 }
 
 // NOLINTBEGIN
-uint8_t bc_append_index(Array *out, uint64_t index) {
+uint8_t obbc_append_index(ob_Array *out, uint64_t index) {
   while (index > 15) {
-    bc_append_insn(out, INSN_MAKE(OP_EXTEND, index & 0xf));
+    obbc_append_insn(out, OBBC_MAKE(OBBC_EXTEND, index & 0xf));
     index >>= 4;
   }
 

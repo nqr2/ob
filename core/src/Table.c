@@ -3,17 +3,17 @@
 #include <stdbit.h>
 #include <string.h>
 
-void tbl_init(Table *tbl, Allocator *alloc) {
+void obtbl_init(ob_Table *tbl, ob_Allocator *alloc) {
   tbl->allocator = alloc;
   tbl->length = 0;
   tbl->capacity = 0;
   tbl->data = NULL;
 }
 
-void tbl_free(Table *tbl) {
-  deallocate(tbl->allocator, tbl->data);
+void obtbl_free(ob_Table *tbl) {
+  ob_deallocate(tbl->allocator, tbl->data);
 
-  tbl_init(tbl, NULL);
+  obtbl_init(tbl, NULL);
 }
 
 static TableEntry *tbl__find(size_t capacity, TableEntry *entries,
@@ -33,10 +33,10 @@ static TableEntry *tbl__find(size_t capacity, TableEntry *entries,
   return NULL;
 }
 
-void tbl_reserve(Table *tbl, size_t newcap) {
+void obtbl_reserve(ob_Table *tbl, size_t newcap) {
   newcap = stdc_bit_ceil(newcap);
   auto new_entries =
-      (TableEntry *)allocate(tbl->allocator, newcap * sizeof(TableEntry));
+      (TableEntry *)ob_allocate(tbl->allocator, newcap * sizeof(TableEntry));
 
   memset(new_entries, 0, newcap * sizeof(TableEntry));
 
@@ -59,24 +59,24 @@ void tbl_reserve(Table *tbl, size_t newcap) {
     tbl->length++;
   }
 
-  deallocate(tbl->allocator, tbl->data);
+  ob_deallocate(tbl->allocator, tbl->data);
 
   tbl->data = new_entries;
   tbl->capacity = newcap;
 }
 
-void tbl_clear(Table *tbl) {
+void obtbl_clear(ob_Table *tbl) {
   tbl->length = 0;
   memset(tbl->data, 0, sizeof(TableEntry) * tbl->capacity);
 }
 
 // return true if entry is new
-bool tbl_set(Table *tbl, uint64_t key, void *value) {
+bool obtbl_set(ob_Table *tbl, uint64_t key, void *value) {
   TableEntry *entry = NULL;
   auto is_new = false;
 
   if (2 * (tbl->length + 1) > tbl->capacity) {
-    tbl_reserve(tbl, tbl->length + 1);
+    obtbl_reserve(tbl, tbl->length + 1);
   }
 
   entry = tbl__find(tbl->capacity, tbl->data, key);
@@ -92,17 +92,17 @@ bool tbl_set(Table *tbl, uint64_t key, void *value) {
   return is_new;
 }
 
-void tbl_merge(Table *tbl, Table *from) {
+void obtbl_merge(ob_Table *tbl, ob_Table *from) {
   for (size_t i = 0; i < from->capacity; i++) {
     auto entry = &from->data[i];
 
     if (entry->status != TES_USED) {
-      tbl_set(tbl, entry->key, entry->value);
+      obtbl_set(tbl, entry->key, entry->value);
     }
   }
 }
 
-bool tbl_get(Table *tbl, uint64_t key, void **value) {
+bool obtbl_get(ob_Table *tbl, uint64_t key, void **value) {
   if (tbl->length == 0) {
     return false;
   }
@@ -132,7 +132,7 @@ bool tbl_get(Table *tbl, uint64_t key, void **value) {
   return false;
 }
 
-bool tbl_remove(Table *table, uint64_t key) {
+bool obtbl_remove(ob_Table *table, uint64_t key) {
   TableEntry *entry = NULL;
 
   if (table->length == 0) {
@@ -149,7 +149,8 @@ bool tbl_remove(Table *table, uint64_t key) {
   return true;
 }
 
-bool tbl_iterate(Table *table, uint64_t *index, uint64_t *key, void **value) {
+bool obtbl_iterate(ob_Table *table, uint64_t *index, uint64_t *key,
+                   void **value) {
   uint64_t current_key = *index;
 
   while (current_key < table->capacity) {

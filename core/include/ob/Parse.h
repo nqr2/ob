@@ -1,16 +1,16 @@
-#ifndef PARSE_H_INCLUDED
-#define PARSE_H_INCLUDED
+#ifndef OB_CORE_PARSE_H_INCLUDED
+#define OB_CORE_PARSE_H_INCLUDED
 
 #include "ContextFwd.h"
 #include "Object.h"
 
 /* Parse some text, and return a unary closure */
-Obj load_file(Context ctx, size_t length, const char *text);
+ob_Obj ob_load(ob_Context ctx, size_t length, const char *text);
 
 /* Parse some text, and run it. */
-void run_file(Context ctx, size_t length, const char *text);
+void ob_run(ob_Context ctx, size_t length, const char *text);
 
-#define load_literal(Ctx, Lit) load_file((Ctx), sizeof(Lit) - 1, "" Lit)
-#define run_literal(Ctx, Lit) run_file((Ctx), sizeof(Lit) - 1, "" Lit)
+#define ob_load_literal(Ctx, Lit) ob_load((Ctx), sizeof(Lit) - 1, "" Lit)
+#define ob_run_literal(Ctx, Lit) ob_run((Ctx), sizeof(Lit) - 1, "" Lit)
 
 #endif

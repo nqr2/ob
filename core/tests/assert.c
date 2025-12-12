@@ -21,7 +21,7 @@ const Test SUITE[] = {
 };
 
 int main() {
-  assert_add_handler(assert_failure);
+  obassert_add_handler(assert_failure);
 
   test(SUITE);
 

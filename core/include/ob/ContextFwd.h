@@ -1,6 +1,6 @@
-#ifndef CONTEXT_FWD_H_INCLUDED
-#define CONTEXT_FWD_H_INCLUDED
+#ifndef OB_CORE_CONTEXT_FWD_H_INCLUDED
+#define OB_CORE_CONTEXT_FWD_H_INCLUDED
 
-typedef struct Context *Context;
+typedef struct Context *ob_Context;
 
 #endif

@@ -1,9 +1,9 @@
-#ifndef TABLE_H_INCLUDED
-#define TABLE_H_INCLUDED
-
-#include "Allocator.h"
+#ifndef OB_CORE_TABLE_H_INCLUDED
+#define OB_CORE_TABLE_H_INCLUDED
 
 #include <stdint.h>
+
+#include "Allocator.h"
 
 typedef enum {
   TES_EMPTY = 0,
@@ -19,26 +19,27 @@ typedef struct {
 } TableEntry;
 
 typedef struct {
-  Allocator *allocator;
+  ob_Allocator *allocator;
   size_t length, capacity;
   TableEntry *data;
-} Table;
+} ob_Table;
 
-void tbl_init(Table *tbl, Allocator *alloc);
-void tbl_free(Table *tbl);
+void obtbl_init(ob_Table *tbl, ob_Allocator *alloc);
+void obtbl_free(ob_Table *tbl);
 
-void tbl_reserve(Table *tbl, size_t newcap);
-void tbl_clear(Table *tbl);
+void obtbl_reserve(ob_Table *tbl, size_t newcap);
+void obtbl_clear(ob_Table *tbl);
 
 // return true if entry is new
-bool tbl_set(Table *tbl, uint64_t key, void *value);
+bool obtbl_set(ob_Table *tbl, uint64_t key, void *value);
 
-void tbl_merge(Table *tbl, Table *from);
+void obtbl_merge(ob_Table *tbl, ob_Table *from);
 
-bool tbl_get(Table *tbl, uint64_t key, void **value);
+bool obtbl_get(ob_Table *tbl, uint64_t key, void **value);
 
-bool tbl_remove(Table *table, uint64_t key);
+bool obtbl_remove(ob_Table *table, uint64_t key);
 
-bool tbl_iterate(Table *table, uint64_t *index, uint64_t *key, void **value);
+bool obtbl_iterate(ob_Table *table, uint64_t *index, uint64_t *key,
+                   void **value);
 
 #endif

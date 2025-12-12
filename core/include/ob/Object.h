@@ -1,130 +1,120 @@
-#ifndef OBJECT_H_INCLUDED
-#define OBJECT_H_INCLUDED
+#ifndef OB_CORE_OBJECT_H_INCLUDED
+#define OB_CORE_OBJECT_H_INCLUDED
 
+#include <stdint.h>
+
+#include "Array.h"
 #include "ContextFwd.h"
 #include "Number.h"
 #include "String.h"
 #include "Table.h"
 
-#include "Array.h"
-
-#include <stdint.h>
-
 // 4 bit tag, 1 bit mark, 11 rc?
-typedef uint16_t Header;
+typedef uint16_t ob_ObjectHeader;
 
 typedef enum Tag : uint8_t {
-  OT_NIL = 0,        // the nil object
-  OT_SYMBOL = 1,     // #... / #a:b:...y:z: / #'...' / #+...-
-  OT_STRING = 2,     // '...'
-  OT_SLOTS = 3,      // slot objects
-  OT_NUMBER = 4,     // numbers
-  OT_ARRAY = 5,      // [ ... ]
-  OT_METHOD = 6,     // closures
-  OT_CMETHOD = 7,    // functions from C
-  OT_CDATA = 8,      // data from C
-  OT_ACTIVATION = 9, // call stack entry
+  OBOBJ_NIL = 0,        // the nil object
+  OBOBJ_SYMBOL = 1,     // #... / #a:b:...y:z: / #'...' / #+...-
+  OBOBJ_STRING = 2,     // '...'
+  OBOBJ_SLOTS = 3,      // slot objects
+  OBOBJ_NUMBER = 4,     // numbers
+  OBOBJ_ARRAY = 5,      // [ ... ]
+  OBOBJ_METHOD = 6,     // closures
+  OBOBJ_CMETHOD = 7,    // functions from C
+  OBOBJ_CDATA = 8,      // data from C
+  OBOBJ_ACTIVATION = 9, // call stack entry
   OT_Ra = 10,
   OT_Rb = 11,
   OT_Rc = 12,
   OT_Rd = 13,
   OT_Re = 14,
   OT_Rf = 15,
-} ObjectTag;
+} ob_ObjectTag;
 
 typedef struct Object {
-  Header header;
+  ob_ObjectHeader header;
   struct Object *next;
-} Object;
+} ob_Object;
 
-typedef Object *Obj;
-
-typedef struct {
-  String *inner;
-} ObjSymbol, ObjString;
+typedef ob_Object *ob_Obj;
 
 typedef struct {
-  Object *prototype;
-  Table slots;
-} ObjSlots;
+  ob_Str inner;
+} ob_ObjSymbol, ob_ObjString;
 
 typedef struct {
-  Obj env;
-  Array parameters;
-  Array bytecode;
-  Array literals;
-} ObjMethod;
-
-typedef bool (*FnCMethod)(Context ctx);
+  ob_Object *prototype;
+  ob_Table slots;
+} ob_ObjSlots;
 
 typedef struct {
-  FnCMethod method;
-} ObjCMethod;
+  ob_Obj env;
+  ob_Array parameters;
+  ob_Array bytecode;
+  ob_Array literals;
+} ob_ObjMethod;
+
+typedef bool (*ob_FnCMethod)(ob_Context ctx);
+
+typedef struct {
+  ob_FnCMethod method;
+} ob_ObjCMethod;
 
 typedef struct {
   void *cdata;
-} ObjCData;
+} ob_ObjCData;
 
 typedef struct {
-  Number number;
-} ObjNumber;
+  ob_Number number;
+} ob_ObjNumber;
 
 typedef struct {
-  Array items;
-} ObjArray;
+  ob_Array items;
+} ob_ObjArray;
 
 typedef struct {
-  Obj parent;   // the parent activation
-  Obj caller;   // the method's caller
-  Obj method;   // this method
-  Obj receiver; // this method's receiver
-  Obj env;      // this context's environment
-} ObjActivation;
+  ob_Obj parent;   // the parent activation
+  ob_Obj caller;   // the method's caller
+  ob_Obj method;   // this method
+  ob_Obj receiver; // this method's receiver
+  ob_Obj env;      // this context's environment
+} ob_ObjActivation;
 
-#define HEADER_GET_TAG(H) ((Header)((H) & 0xf))
-#define HEADER_SET_TAG(H, T) ((Header)(((H) & 0xfff0) | ((T) & 0xf)))
-
-#define HEADER_GET_MARK(H) (((H) & 0x10) != 0)
-#define HEADER_SET_MARK(H, M) ((Header)(((H) & 0xffef) | (((M) != 0) << 4)))
-
-#define HEADER_GET_RC(H) ((H) >> 5)
-#define HEADER_SET_RC(H, C) (((H) & 0x1f) | ((C) << 5))
-
-#define RC_MAX 0x7ff
-
-typedef void (*FnVisit)(Obj obj, void *userdata);
+typedef void (*ob_FnVisit)(ob_Obj obj, void *userdata);
 
 typedef enum : uint8_t {
   VISIT_NONE = 0,
   VISIT_AFTER = 1,
   VISIT_BEFORE = 2,
-} VisitFlags;
+} ob_VisitFlags;
 
 // NOTE: this also invokes visit on the obj in question
-void obj_visit(Obj obj, VisitFlags flags, FnVisit visit, void *userdata);
+void obobj_visit(ob_Obj obj, ob_VisitFlags flags, ob_FnVisit visit,
+                 void *userdata);
 
-#define obj_visit_before(Obj, Visit, Userdata)                                 \
-  obj_visit((Obj), VISIT_BEFORE, (Visit), (Userdata))
+#define obobj_visit_before(Obj, Visit, Userdata)                               \
+  obobj_visit((Obj), VISIT_BEFORE, (Visit), (Userdata))
 
-#define obj_visit_after(Obj, Visit, Userdata)                                  \
-  obj_visit((Obj), VISIT_AFTER, (Visit), (Userdata))
+#define obobj_visit_after(Obj, Visit, Userdata)                                \
+  obobj_visit((Obj), VISIT_AFTER, (Visit), (Userdata))
 
-ObjectTag obj_get_tag(Obj obj);
-void *obj_get_data(Obj obj);
+ob_ObjectTag obobj_get_tag(ob_Obj obj);
+void *obobj_get_data(ob_Obj obj);
+bool obobj_get_mark(ob_Obj obj);
 
-void obj_mark(Obj obj);
+void obobj_mark(ob_Obj obj);
 
-Obj obj_ref(Obj obj);
+ob_Obj obobj_ref(ob_Obj obj);
 
 // true if rc=0
-bool obj_unref(Obj obj);
+bool obobj_unref(ob_Obj obj);
 
 // NOTE: call before destroying an obj
-void obj_destroy(Obj obj);
+void obobj_destroy(ob_Obj obj);
 
-#define OBJ_ISA(Obj, Tag) (obj_get_tag((Obj)) == (Tag))
+#define OBOBJ_ISA(Obj, Tag) (obobj_get_tag((Obj)) == (Tag))
 
-#define OBJ_IS_INVOCABLE(Obj)                                                  \
-  (OBJ_ISA((Obj), OT_METHOD) || OBJ_ISA((Obj), OT_CMETHOD))
+#define OBOBJ_IS_INVOCABLE(Obj)                                                \
+  (OBOBJ_ISA((Obj), OBOBJ_METHOD) || OBOBJ_ISA((Obj), OBOBJ_CMETHOD))
 
 #endif

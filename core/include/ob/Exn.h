@@ -1,22 +1,22 @@
-#ifndef EXN_H_INCLUDED
-#define EXN_H_INCLUDED
-
-#include "Array.h"
+#ifndef OB_CORE_EXN_H_INCLUDED
+#define OB_CORE_EXN_H_INCLUDED
 
 #include <setjmp.h>
 
-typedef int Exncode;
+#include "Array.h"
+
+typedef int ob_Exncode;
 
 typedef union {
   void *pointer;
   size_t integer;
-} Exndata;
+} ob_Exndata;
 
 typedef struct {
-  Array entries;
-} Exnbuf;
+  ob_Array entries;
+} ob_Exnbuf;
 
-#define EXN_BEGIN(Buf, OnFailure)                                              \
+#define OB_EXN_BEGIN(Buf, OnFailure)                                           \
   do {                                                                         \
     jmp_buf jmp;                                                               \
     if (setjmp(jmp)) {                                                         \
@@ -25,16 +25,16 @@ typedef struct {
     exn__begin((Buf), jmp);                                                    \
   } while (false)
 
-#define EXN_END(Buf) exn__end((Buf))
+#define OB_EXN_END(Buf) exn__end((Buf))
 
-void exn__begin(Exnbuf *buf, jmp_buf jmp);
-void exn__end(Exnbuf *buf);
+void obexn__begin(ob_Exnbuf *buf, jmp_buf jmp);
+void obexn__end(ob_Exnbuf *buf);
 
-void exn_init(Exnbuf *buf, Allocator *alloc);
-void exn_free(Exnbuf *buf);
+void obexn_init(ob_Exnbuf *buf, ob_Allocator *alloc);
+void obexn_free(ob_Exnbuf *buf);
 
-const Exndata *exn_data(Exnbuf *buf);
-void exn_throw(Exnbuf *buf, Exncode code, Exndata data);
-void exn_rethrow(Exnbuf *buf);
+const ob_Exndata *obexn_data(ob_Exnbuf *buf);
+void obexn_throw(ob_Exnbuf *buf, ob_Exncode code, ob_Exndata data);
+void obexn_rethrow(ob_Exnbuf *buf);
 
 #endif

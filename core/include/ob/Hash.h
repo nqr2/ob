@@ -1,16 +1,13 @@
-#ifndef HASH_H_INCLUDED
-#define HASH_H_INCLUDED
+#ifndef OB_CORE_HASH_H_INCLUDED
+#define OB_CORE_HASH_H_INCLUDED
 
 #include <stddef.h>
 #include <stdint.h>
 
-#define FNV_PRIME 0x00000100000001b3ull
-#define FNV_OFFSET 0xcbf29ce484222325ull
+uint64_t obhash_continue(uint64_t state, size_t len, const void *ptr);
+uint64_t obhash_start(size_t len, const void *ptr);
 
-uint64_t hash_continue(uint64_t state, size_t len, const void *ptr);
-uint64_t hash_start(size_t len, const void *ptr);
-
-#define hash_literal(Literal)                                                  \
-  hash_start(sizeof("" Literal) - 1, (const void *)"" Literal "")
+#define obhash_literal(Literal)                                                \
+  obhash_start(sizeof("" Literal) - 1, (const void *)"" Literal "")
 
 #endif

@@ -1,23 +1,23 @@
-#ifndef SERIAL_H_INCLUDED
-#define SERIAL_H_INCLUDED
+#ifndef OB_CORE_SERIAL_H_INCLUDED
+#define OB_CORE_SERIAL_H_INCLUDED
 
 #include "Object.h"
 
-#define SERIAL_HEADER "obS"
+#define OB_SERIAL_HEADER "obS"
 
 typedef struct {
-  Context ctx;
-  Array buffer;
-  Table identifiers;
-} Serial;
+  ob_Context ctx;
+  ob_Array buffer;
+  ob_Table identifiers;
+} ob_Serial;
 
-void srl_init(Serial *srl, Context ctx);
-void srl_free(Serial *srl);
+void obsrl_init(ob_Serial *srl, ob_Context ctx);
+void obsrl_free(ob_Serial *srl);
 
-void srl_write(Serial *srl, Obj object);
-Obj srl_read(Serial *srl);
+void obsrl_write(ob_Serial *srl, ob_Obj object);
+ob_Obj obsrl_read(ob_Serial *srl);
 
-void srl_store(const Serial *srl, size_t len, uint8_t *data);
-void srl_load(Serial *srl, size_t len, const uint8_t *data);
+void obsrl_store(const ob_Serial *srl, size_t len, uint8_t *data);
+void obsrl_load(ob_Serial *srl, size_t len, const uint8_t *data);
 
 #endif

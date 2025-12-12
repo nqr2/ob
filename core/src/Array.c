@@ -3,7 +3,7 @@
 #include <stdbit.h>
 #include <string.h>
 
-void arr_init(Array *arr, Allocator *alloc) {
+void obarr_init(ob_Array *arr, ob_Allocator *alloc) {
   arr->allocator = alloc;
 
   arr->size = 0;
@@ -11,33 +11,33 @@ void arr_init(Array *arr, Allocator *alloc) {
   arr->data = NULL;
 }
 
-void arr_free(Array *arr) {
-  deallocate(arr->allocator, arr->data);
-  arr_init(arr, NULL);
+void obarr_free(ob_Array *arr) {
+  ob_deallocate(arr->allocator, arr->data);
+  obarr_init(arr, NULL);
 }
 
-void arr_reserve(Array *arr, size_t newcap) {
+void obarr_reserve(ob_Array *arr, size_t newcap) {
   auto capacity = stdc_bit_ceil(newcap);
 
   if (capacity > arr->capacity) {
     arr->capacity = capacity;
-    arr->data = reallocate(arr->allocator, arr->data, arr->capacity);
+    arr->data = ob_reallocate(arr->allocator, arr->data, arr->capacity);
   }
 }
 
-void arr_push(Array *arr, size_t len, const void *data) {
-  arr_reserve(arr, arr->size + len);
+void obarr_push(ob_Array *arr, size_t len, const void *data) {
+  obarr_reserve(arr, arr->size + len);
 
   memcpy(((uint8_t *)arr->data) + arr->size, data, len);
 
   arr->size += len;
 }
 
-void arr_clear(Array *arr) {
+void obarr_clear(ob_Array *arr) {
   arr->size = 0;
 }
 
-bool arr_pop(Array *arr, size_t len, void *data) {
+bool obarr_pop(ob_Array *arr, size_t len, void *data) {
   if (arr->size < len) {
     return false;
   }
@@ -51,23 +51,23 @@ bool arr_pop(Array *arr, size_t len, void *data) {
   return true;
 }
 
-void arr_remove(Array *arr, size_t size, size_t offset) {
+void obarr_remove(ob_Array *arr, size_t size, size_t offset) {
   uint8_t *bytes = arr->data;
   memcpy(bytes + offset, (bytes + arr->size - size), size);
 
-  arr_pop(arr, size, NULL);
+  obarr_pop(arr, size, NULL);
 }
 
-size_t arr_length(Array *arr, size_t size) {
+size_t obarr_length(ob_Array *arr, size_t size) {
   return arr->size / size;
 }
 
-void *arr_at(Array *arr, size_t size, size_t index) {
+void *obarr_at(ob_Array *arr, size_t size, size_t index) {
   uint8_t *bytes = arr->data;
 
-  return bytes + index * size;
+  return bytes + (index * size);
 }
 
-void *arr_last(Array *arr, size_t size) {
-  return arr_at(arr, size, arr_length(arr, size) - 1);
+void *obarr_last(ob_Array *arr, size_t size) {
+  return obarr_at(arr, size, obarr_length(arr, size) - 1);
 }

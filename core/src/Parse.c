@@ -42,13 +42,13 @@ static bool is_word_tail(char chr) {
 }
 
 typedef struct {
-  Context context;
-  ObjMethod *output;
+  ob_Context context;
+  ob_ObjMethod *output;
   size_t remaining;
   const char *head;
 } Reader;
 
-Reader rdr_new(Context context, ObjMethod *output, size_t length,
+Reader rdr_new(ob_Context context, ob_ObjMethod *output, size_t length,
                const char *text) {
   Reader rdr = {};
   rdr.context = context;
@@ -70,12 +70,12 @@ void rdr_takewhile(Reader *rdr, bool (*pred)(char)) {
   }
 }
 
-static void push_literal(Reader *rdr, Obj obj) {
-  auto index = arr_length(&rdr->output->literals, sizeof(Obj));
-  arr_push(&rdr->output->literals, sizeof(Obj), (const void *)&obj);
+static void push_literal(Reader *rdr, ob_Obj obj) {
+  auto index = obarr_length(&rdr->output->literals, sizeof(ob_Obj));
+  obarr_push(&rdr->output->literals, sizeof(ob_Obj), (const void *)&obj);
 
-  index = bc_append_index(&rdr->output->bytecode, index);
-  bc_append_insn(&rdr->output->bytecode, INSN_MAKE(OP_PUSH_LITERAL, index));
+  index = obbc_append_index(&rdr->output->bytecode, index);
+  obbc_append_insn(&rdr->output->bytecode, OBBC_MAKE(OBBC_PUSH_LITERAL, index));
 }
 
 /*
@@ -122,7 +122,7 @@ static void p_paren(Reader *rdr) {
   if (*rdr->head == ')') {
     // () is the nil literal
 
-    Obj nil = NULL;
+    ob_Obj nil = NULL;
     push_literal(rdr, nil);
   } else {
     // expression { . expression }
@@ -166,8 +166,8 @@ static void p_array(Reader *rdr) {
 
   ASSERT(*rdr->head == ']', "expected a closing ], got a %c", *rdr->head);
 
-  items = bc_append_index(&rdr->output->bytecode, items);
-  bc_append_insn(&rdr->output->bytecode, INSN_MAKE(OP_ARRAY, items));
+  items = obbc_append_index(&rdr->output->bytecode, items);
+  obbc_append_insn(&rdr->output->bytecode, OBBC_MAKE(OBBC_ARRAY, items));
 
   rdr_next(rdr);
 }
@@ -179,14 +179,14 @@ static void p_method(Reader *rdr) {
 
   auto original = rdr->output;
 
-  auto new = ctx_alloc_method(rdr->context);
-  ObjMethod *method = obj_get_data(new);
+  auto new = obctx_alloc_method(rdr->context);
+  ob_ObjMethod *method = obobj_get_data(new);
 
   rdr->output = method;
 
   // | {word} |
-  auto buf = (Array){};
-  arr_init(&buf, rdr->context->allocator);
+  auto buf = (ob_Array){};
+  obarr_init(&buf, rdr->context->allocator);
 
   if (*rdr->head == '|') {
     rdr_next(rdr);
@@ -199,16 +199,16 @@ static void p_method(Reader *rdr) {
         break;
       }
 
-      arr_clear(&buf);
+      obarr_clear(&buf);
 
       auto begin = rdr->head;
       rdr_takewhile(rdr, is_word_tail);
 
-      arr_push(&buf, sizeof(char) * (rdr->head - begin), begin);
+      obarr_push(&buf, sizeof(char) * (rdr->head - begin), begin);
 
       // TODO: also intern this
-      auto str = str_create(rdr->context, buf.size, buf.data);
-      arr_push(&rdr->output->parameters, sizeof(Str), (void *)&str);
+      auto str = obstr_create(rdr->context, buf.size, buf.data);
+      obarr_push(&rdr->output->parameters, sizeof(ob_Str), (void *)&str);
 
       p_skip_blank(rdr);
 
@@ -219,7 +219,7 @@ static void p_method(Reader *rdr) {
     }
   }
 
-  arr_free(&buf);
+  obarr_free(&buf);
 
   // expression { . expression }
   p_expression(rdr);
@@ -240,17 +240,17 @@ static void p_method(Reader *rdr) {
   rdr_next(rdr);
 }
 
-static Str p_string_inner(Reader *rdr) {
+static ob_Str p_string_inner(Reader *rdr) {
   rdr_next(rdr);
 
-  auto buf = (Array){};
-  arr_init(&buf, rdr->context->allocator);
+  auto buf = (ob_Array){};
+  obarr_init(&buf, rdr->context->allocator);
 
   auto begin = rdr->head;
 
   while (*rdr->head != '\'') {
     if (*rdr->head == '\\') {
-      arr_push(&buf, sizeof(char) * (rdr->head - begin - 1), begin - 1);
+      obarr_push(&buf, sizeof(char) * (rdr->head - begin - 1), begin - 1);
 
       rdr_next(rdr);
 
@@ -267,7 +267,7 @@ static Str p_string_inner(Reader *rdr) {
         break;
       }
 
-      arr_push(&buf, sizeof(char), &escaped);
+      obarr_push(&buf, sizeof(char), &escaped);
       rdr_next(rdr);
 
       begin = rdr->head;
@@ -277,19 +277,19 @@ static Str p_string_inner(Reader *rdr) {
     rdr_next(rdr);
   }
 
-  arr_push(&buf, sizeof(char) * (rdr->head - begin), begin);
+  obarr_push(&buf, sizeof(char) * (rdr->head - begin), begin);
 
   rdr_next(rdr);
 
-  auto str = str_create(rdr->context, buf.size, buf.data);
-  arr_free(&buf);
+  auto str = obstr_create(rdr->context, buf.size, buf.data);
+  obarr_free(&buf);
 
   return str;
 }
 
 static void p_string(Reader *rdr) {
   auto str = p_string_inner(rdr);
-  auto obj = ctx_alloc_string(rdr->context, str);
+  auto obj = obctx_alloc_string(rdr->context, str);
 
   push_literal(rdr, obj);
 }
@@ -297,9 +297,9 @@ static void p_string(Reader *rdr) {
 static void p_symbol(Reader *rdr) {
   rdr_next(rdr);
 
-  Str sel = NULL;
-  auto sym = (Array){};
-  arr_init(&sym, rdr->context->allocator);
+  ob_Str sel = NULL;
+  auto sym = (ob_Array){};
+  obarr_init(&sym, rdr->context->allocator);
 
   auto begin = rdr->head;
 
@@ -326,15 +326,15 @@ static void p_symbol(Reader *rdr) {
     }
   }
 
-  arr_push(&sym, sizeof(char) * (rdr->head - begin), begin);
+  obarr_push(&sym, sizeof(char) * (rdr->head - begin), begin);
 
-  sel = str_create(rdr->context, sym.size, sym.data);
+  sel = obstr_create(rdr->context, sym.size, sym.data);
 
 after_str:
-  auto objsel = ctx_alloc_symbol(rdr->context, sel);
+  auto objsel = obctx_alloc_symbol(rdr->context, sel);
 
   push_literal(rdr, objsel);
-  arr_free(&sym);
+  obarr_free(&sym);
 }
 
 static bool p_primary(Reader *rdr) {
@@ -363,7 +363,7 @@ static bool p_primary(Reader *rdr) {
     // TODO: arbitrary radix literals (16r, 8r, 2r, etc)
     // TODO: float literals (NOTE: always has a decimal digit, so 1. =/= 1.0)
 
-    auto obj = ctx_alloc_integer(rdr->context, num);
+    auto obj = obctx_alloc_integer(rdr->context, num);
     IGNORE fnum;
 
     push_literal(rdr, obj);
@@ -388,7 +388,7 @@ static bool p_primary(Reader *rdr) {
     break;
   case '@':
     rdr_next(rdr);
-    bc_append_insn(&rdr->output->bytecode, OP_SELF);
+    obbc_append_insn(&rdr->output->bytecode, OBBC_SELF);
     break;
   default:
     return false;
@@ -398,16 +398,17 @@ static bool p_primary(Reader *rdr) {
 }
 
 static void emit_send(Reader *rdr, int index, bool explicitp) {
-  bc_append_insn(&rdr->output->bytecode,
-                 INSN_MAKE((explicitp ? OP_SEND : OP_IMPLICIT_SEND), index));
+  obbc_append_insn(
+      &rdr->output->bytecode,
+      OBBC_MAKE((explicitp ? OBBC_SEND : OBBC_IMPLICIT_SEND), index));
 }
 
 static int p_message(Reader *rdr, bool explicitp) {
-  auto msg = (Array){};
-  arr_init(&msg, rdr->context->allocator);
+  auto msg = (ob_Array){};
+  obarr_init(&msg, rdr->context->allocator);
 
   while (true) {
-    arr_clear(&msg);
+    obarr_clear(&msg);
     p_skip_blank(rdr);
 
     if (is_word_start(*rdr->head)) {
@@ -418,13 +419,13 @@ static int p_message(Reader *rdr, bool explicitp) {
       auto begin = rdr->head;
       rdr_takewhile(rdr, is_word_tail);
 
-      arr_push(&msg, sizeof(char) * (rdr->head - begin), begin);
+      obarr_push(&msg, sizeof(char) * (rdr->head - begin), begin);
 
       // if this is a : then
       // keyword:   word { : word }
       while (*rdr->head == ':') {
         is_keyword = true;
-        arr_push(&msg, sizeof(char), rdr->head);
+        obarr_push(&msg, sizeof(char), rdr->head);
         rdr_next(rdr);
 
         p_expression(rdr);
@@ -434,22 +435,22 @@ static int p_message(Reader *rdr, bool explicitp) {
         begin = rdr->head;
         rdr_takewhile(rdr, is_word_tail);
 
-        arr_push(&msg, sizeof(char) * (rdr->head - begin), begin);
+        obarr_push(&msg, sizeof(char) * (rdr->head - begin), begin);
       }
 
       // TODO: actually intern this
-      auto sel = str_create(rdr->context, msg.size, msg.data);
-      auto objsel = ctx_alloc_string(rdr->context, sel);
+      auto sel = obstr_create(rdr->context, msg.size, msg.data);
+      auto objsel = obctx_alloc_string(rdr->context, sel);
 
-      auto index = arr_length(&rdr->output->literals, sizeof(Obj));
-      arr_push(&rdr->output->literals, sizeof(Obj), (const void *)&objsel);
+      auto index = obarr_length(&rdr->output->literals, sizeof(ob_Obj));
+      obarr_push(&rdr->output->literals, sizeof(ob_Obj), (const void *)&objsel);
 
       if (is_keyword) {
-        arr_free(&msg);
-        return bc_append_index(&rdr->output->bytecode, index);
+        obarr_free(&msg);
+        return obbc_append_index(&rdr->output->bytecode, index);
       }
 
-      index = bc_append_index(&rdr->output->bytecode, index);
+      index = obbc_append_index(&rdr->output->bytecode, index);
       emit_send(rdr, index, explicitp);
       explicitp = false;
       continue;
@@ -461,15 +462,15 @@ static int p_message(Reader *rdr, bool explicitp) {
       auto begin = rdr->head;
       rdr_takewhile(rdr, is_operator);
 
-      auto sel = str_create(rdr->context, rdr->head - begin, begin);
-      auto objsel = ctx_alloc_string(rdr->context, sel);
+      auto sel = obstr_create(rdr->context, rdr->head - begin, begin);
+      auto objsel = obctx_alloc_string(rdr->context, sel);
 
       p_expression(rdr);
 
-      auto index = arr_length(&rdr->output->literals, sizeof(Obj));
-      arr_push(&rdr->output->literals, sizeof(Obj), (const void *)&objsel);
+      auto index = obarr_length(&rdr->output->literals, sizeof(ob_Obj));
+      obarr_push(&rdr->output->literals, sizeof(ob_Obj), (const void *)&objsel);
 
-      index = bc_append_index(&rdr->output->bytecode, index);
+      index = obbc_append_index(&rdr->output->bytecode, index);
       emit_send(rdr, index, explicitp);
       explicitp = false;
       continue;
@@ -479,7 +480,7 @@ static int p_message(Reader *rdr, bool explicitp) {
   }
 
   // else, there was no message.
-  arr_free(&msg);
+  obarr_free(&msg);
   return -1;
 }
 
@@ -490,7 +491,7 @@ static void p_expression(Reader *rdr) {
     rdr_next(rdr);
     p_expression(rdr);
 
-    bc_append_insn(&rdr->output->bytecode, OP_RETURN);
+    obbc_append_insn(&rdr->output->bytecode, OBBC_RETURN);
     return;
   }
 
@@ -502,10 +503,10 @@ static void p_expression(Reader *rdr) {
   }
 
   if (explicit_receiver) {
-    bc_append_insn(&rdr->output->bytecode, INSN_MAKE(OP_SEND, msg_index));
+    obbc_append_insn(&rdr->output->bytecode, OBBC_MAKE(OBBC_SEND, msg_index));
   } else {
-    bc_append_insn(&rdr->output->bytecode,
-                   INSN_MAKE(OP_IMPLICIT_SEND, msg_index));
+    obbc_append_insn(&rdr->output->bytecode,
+                     OBBC_MAKE(OBBC_IMPLICIT_SEND, msg_index));
   }
 }
 
@@ -517,21 +518,21 @@ static void p_toplevel(Reader *rdr) {
   rdr_next(rdr);
 }
 
-Obj load_file(Context ctx, size_t length, const char *text) {
-  if (strncmp(text, SERIAL_HEADER, sizeof(SERIAL_HEADER)) == 0) {
-    auto srl = (Serial){};
-    srl_init(&srl, ctx);
+ob_Obj ob_load(ob_Context ctx, size_t length, const char *text) {
+  if (strncmp(text, OB_SERIAL_HEADER, sizeof(OB_SERIAL_HEADER)) == 0) {
+    auto srl = (ob_Serial){};
+    obsrl_init(&srl, ctx);
 
-    srl_load(&srl, length, (const uint8_t *)text);
-    auto obj = srl_read(&srl);
+    obsrl_load(&srl, length, (const uint8_t *)text);
+    auto obj = obsrl_read(&srl);
 
-    srl_free(&srl);
+    obsrl_free(&srl);
 
     return obj;
   }
 
-  Obj closure = ctx_alloc_method(ctx);
-  ObjMethod *clos = obj_get_data(closure);
+  ob_Obj closure = obctx_alloc_method(ctx);
+  ob_ObjMethod *clos = obobj_get_data(closure);
 
   auto reader = rdr_new(ctx, clos, length, text);
 
@@ -551,13 +552,13 @@ Obj load_file(Context ctx, size_t length, const char *text) {
   return closure;
 }
 
-void run_file(Context ctx, size_t length, const char *text) {
-  auto chunk = load_file(ctx, length, text);
-  ObjMethod *method = obj_get_data(chunk);
+void ob_run(ob_Context ctx, size_t length, const char *text) {
+  auto chunk = ob_load(ctx, length, text);
+  ob_ObjMethod *method = obobj_get_data(chunk);
 
-  ctx_enter_activation(ctx, NULL, chunk, ctx->shell);
+  obctx_enter_activation(ctx, NULL, chunk, ctx->shell);
 
-  bc_run(ctx, method->bytecode.size, method->bytecode.data);
+  obbc_run(ctx, method->bytecode.size, method->bytecode.data);
 
-  ctx_leave_activation(ctx);
+  obctx_leave_activation(ctx);
 }

@@ -20,8 +20,8 @@ static void *a_realloc(void *_self, void *source, size_t new) {
   return realloc(source, new);
 }
 
-Allocator get_libc_allocator() {
-  Allocator result = {};
+ob_Allocator oballoc_create() {
+  ob_Allocator result = {};
 
   result.self = NULL;
   result.allocate = a_malloc;
@@ -31,7 +31,7 @@ Allocator get_libc_allocator() {
   return result;
 }
 
-void *allocate(Allocator *alloc, size_t size) {
+void *ob_allocate(ob_Allocator *alloc, size_t size) {
   if (size == 0) {
     return NULL;
   }
@@ -45,16 +45,16 @@ void *allocate(Allocator *alloc, size_t size) {
   return ptr;
 }
 
-void *reallocate(Allocator *alloc, void *source, size_t new) {
+void *ob_reallocate(ob_Allocator *alloc, void *source, size_t new) {
   ASSERT_NONNULL(alloc);
 
   if (new == 0) {
-    deallocate(alloc, source);
+    ob_deallocate(alloc, source);
     return NULL;
   }
 
   if (source == 0) {
-    return allocate(alloc, new);
+    return ob_allocate(alloc, new);
   }
 
   ASSERT_NONNULL(alloc->reallocate);
@@ -64,7 +64,7 @@ void *reallocate(Allocator *alloc, void *source, size_t new) {
   return ptr;
 }
 
-void deallocate(Allocator *alloc, void *source) {
+void ob_deallocate(ob_Allocator *alloc, void *source) {
   ASSERT_NONNULL(alloc);
 
   if (source == 0) {

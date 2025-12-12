@@ -4,30 +4,30 @@
 
 struct Entry {
   jmp_buf jmp;
-  Exncode code;
-  Exndata data;
+  ob_Exncode code;
+  ob_Exndata data;
 };
 
-void exn__begin(Exnbuf *buf, jmp_buf jmp) {
+void obexn__begin(ob_Exnbuf *buf, jmp_buf jmp) {
   struct Entry entry = {};
   memcpy(entry.jmp, jmp, sizeof(jmp_buf));
-  arr_push(&buf->entries, sizeof(entry), &entry);
+  obarr_push(&buf->entries, sizeof(entry), &entry);
 }
 
-void exn__end(Exnbuf *buf) {
-  arr_pop(&buf->entries, sizeof(struct Entry), NULL);
+void obexn__end(ob_Exnbuf *buf) {
+  obarr_pop(&buf->entries, sizeof(struct Entry), NULL);
 }
 
-void exn_init(Exnbuf *buf, Allocator *alloc) {
-  arr_init(&buf->entries, alloc);
+void obexn_init(ob_Exnbuf *buf, ob_Allocator *alloc) {
+  obarr_init(&buf->entries, alloc);
 }
 
-void exn_free(Exnbuf *buf) {
-  arr_free(&buf->entries);
+void obexn_free(ob_Exnbuf *buf) {
+  obarr_free(&buf->entries);
 }
 
-const Exndata *exn_data(Exnbuf *buf) {
-  struct Entry *entry = arr_last(&buf->entries, sizeof(struct Entry));
+const ob_Exndata *obexn_data(ob_Exnbuf *buf) {
+  struct Entry *entry = obarr_last(&buf->entries, sizeof(struct Entry));
 
   if (entry) {
     return &entry->data;
@@ -36,8 +36,8 @@ const Exndata *exn_data(Exnbuf *buf) {
   return NULL;
 }
 
-void exn_throw(Exnbuf *buf, Exncode code, Exndata data) {
-  struct Entry *ent = arr_last(&buf->entries, sizeof(struct Entry));
+void obexn_throw(ob_Exnbuf *buf, ob_Exncode code, ob_Exndata data) {
+  struct Entry *ent = obarr_last(&buf->entries, sizeof(struct Entry));
 
   if (ent) {
     ent->code = code;
@@ -46,8 +46,8 @@ void exn_throw(Exnbuf *buf, Exncode code, Exndata data) {
   }
 }
 
-void exn_rethrow(Exnbuf *buf) {
-  struct Entry *ent = arr_last(&buf->entries, sizeof(struct Entry));
+void obexn_rethrow(ob_Exnbuf *buf) {
+  struct Entry *ent = obarr_last(&buf->entries, sizeof(struct Entry));
 
   if (ent) {
     longjmp(ent->jmp, ent->code);

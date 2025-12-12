@@ -6,8 +6,8 @@
 
 FnAssertFailure handler = NULL;
 
-void assert__report(const char *file, int line, const char *function,
-                    const char *condition) {
+void obassert__report(const char *file, int line, const char *function,
+                      const char *condition) {
   fprintf(stderr,
           "```\n"
           "Assertion failed\n"
@@ -17,7 +17,7 @@ void assert__report(const char *file, int line, const char *function,
           file, line, function, condition);
 }
 
-void assert__message(const char *message, ...) {
+void obassert__message(const char *message, ...) {
   va_list args;
   va_start(args, message);
 
@@ -28,7 +28,7 @@ void assert__message(const char *message, ...) {
   va_end(args);
 }
 
-void assert__fail() {
+void obassert__fail() {
   if (handler != NULL) {
     handler();
   }
@@ -36,6 +36,6 @@ void assert__fail() {
   exit(EXIT_FAILURE);
 }
 
-void assert_add_handler(FnAssertFailure fail) {
+void obassert_add_handler(FnAssertFailure fail) {
   handler = fail;
 }
