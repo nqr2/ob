@@ -1,6 +1,11 @@
 #ifndef OB_CORE_CONTEXT_H_INCLUDED
 #define OB_CORE_CONTEXT_H_INCLUDED
 
+/** @file
+ *
+ * @brief The interpreter state.
+ */
+
 #include "Allocator.h"
 #include "Array.h"
 #include "Object.h"

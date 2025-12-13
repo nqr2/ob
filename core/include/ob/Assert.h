@@ -1,6 +1,11 @@
 #ifndef OB_CORE_ASSERT_H_INCLUDED
 #define OB_CORE_ASSERT_H_INCLUDED
 
+/** @file
+ *
+ * @brief Assertions.
+ */
+
 #define ASSERT(Condition, Message, ...)                                        \
   do {                                                                         \
     if (!(Condition)) {                                                        \

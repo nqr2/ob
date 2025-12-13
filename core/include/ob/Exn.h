@@ -1,9 +1,14 @@
 #ifndef OB_CORE_EXN_H_INCLUDED
 #define OB_CORE_EXN_H_INCLUDED
 
-#include <setjmp.h>
+/** @file
+ *
+ * @brief "Exception" handling.
+ */
 
 #include "Array.h"
+
+#include <setjmp.h>
 
 typedef int ob_Exncode;
 

@@ -1,10 +1,15 @@
 #ifndef OB_CORE_STRING_H_INCLUDED
 #define OB_CORE_STRING_H_INCLUDED
 
-#include <stddef.h>
-#include <stdint.h>
+/** @file
+ *
+ * @brief Strings.
+ */
 
 #include "ContextFwd.h"
+
+#include <stddef.h>
+#include <stdint.h>
 
 typedef struct String {
   uint64_t length;

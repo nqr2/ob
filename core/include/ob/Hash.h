@@ -1,6 +1,11 @@
 #ifndef OB_CORE_HASH_H_INCLUDED
 #define OB_CORE_HASH_H_INCLUDED
 
+/** @file
+ *
+ * @brief Hashing.
+ */
+
 #include <stddef.h>
 #include <stdint.h>
 

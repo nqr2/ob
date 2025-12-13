@@ -1,27 +1,19 @@
 #ifndef OB_CORE_TABLE_H_INCLUDED
 #define OB_CORE_TABLE_H_INCLUDED
 
-#include <stdint.h>
+/** @file
+ *
+ * @brief Associative arrays between "hashes" and pointers.
+ */
 
 #include "Allocator.h"
 
-typedef enum {
-  TES_EMPTY = 0,
-  TES_USED = 1,
-  TES_DEAD = 2,
-} TableEntryStatus;
-
-typedef struct {
-  uint64_t key;
-
-  void *value;
-  TableEntryStatus status;
-} TableEntry;
+#include <stdint.h>
 
 typedef struct {
   ob_Allocator *allocator;
   size_t length, capacity;
-  TableEntry *data;
+  void *data;
 } ob_Table;
 
 void obtbl_init(ob_Table *tbl, ob_Allocator *alloc);

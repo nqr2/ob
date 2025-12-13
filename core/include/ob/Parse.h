@@ -1,6 +1,11 @@
 #ifndef OB_CORE_PARSE_H_INCLUDED
 #define OB_CORE_PARSE_H_INCLUDED
 
+/** @file
+ *
+ * @brief Loading and running text.
+ */
+
 #include "ContextFwd.h"
 #include "Object.h"
 

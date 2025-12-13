@@ -1,6 +1,11 @@
 #ifndef OB_CORE_INTERNER_H_INCLUDED
 #define OB_CORE_INTERNER_H_INCLUDED
 
+/** @file
+ *
+ * @brief String interners.
+ */
+
 #include "Allocator.h"
 #include "Array.h"
 #include "ContextFwd.h"

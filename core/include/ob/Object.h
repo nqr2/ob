@@ -1,13 +1,18 @@
 #ifndef OB_CORE_OBJECT_H_INCLUDED
 #define OB_CORE_OBJECT_H_INCLUDED
 
-#include <stdint.h>
+/** @file
+ *
+ * @brief Objects.
+ */
 
 #include "Array.h"
 #include "ContextFwd.h"
 #include "Number.h"
 #include "String.h"
 #include "Table.h"
+
+#include <stdint.h>
 
 // 4 bit tag, 1 bit mark, 11 rc?
 typedef uint16_t ob_ObjectHeader;

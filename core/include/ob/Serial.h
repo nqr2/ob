@@ -1,6 +1,11 @@
 #ifndef OB_CORE_SERIAL_H_INCLUDED
 #define OB_CORE_SERIAL_H_INCLUDED
 
+/** @file
+ *
+ * @brief (de)Serializing objects.
+ */
+
 #include "Object.h"
 
 #define OB_SERIAL_HEADER "obS"

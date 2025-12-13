@@ -1,6 +1,10 @@
 #ifndef OB_CORE_BYTECODE_H_INCLUDED
 #define OB_CORE_BYTECODE_H_INCLUDED
 
+/** @file
+ * @brief Bytecode definitions, and the interpreter.
+ */
+
 #include "Array.h"
 #include "ContextFwd.h"
 
@@ -15,13 +19,27 @@ typedef uint8_t ob_Instruction;
 #define OBBC_MAKE(I, D) ((I) | ((D) << 4))
 
 typedef enum {
-  OBBC_PUSH_LITERAL = 0,  // push a literal
-  OBBC_SEND = 1,          // send a message to a known receiver
-  OBBC_IMPLICIT_SEND = 2, // send a message to the implicit receiver
-  OBBC_EXTEND = 3,        // extend the payload by prepending 4 bits
-  OBBC_RETURN = 4,        // implements ^
-  OBBC_SELF = 5,          // push the explicit receiver
-  OBBC_ARRAY = 6,         // construct an Array from <index> items in the stack.
+  /// Push a literal
+  OBBC_PUSH_LITERAL = 0,
+
+  /// Send a message to a known receiver
+  OBBC_SEND = 1,
+
+  /// Send a message to the implicit receiver
+  OBBC_IMPLICIT_SEND = 2,
+
+  /// Extend the payload by prepending 4 bits
+  OBBC_EXTEND = 3,
+
+  /// Implements @c ^
+  OBBC_RETURN = 4,
+
+  /// Push the explicit receiver
+  OBBC_SELF = 5,
+
+  /// Construct an @c Array from @c index items in the stack.
+  OBBC_ARRAY = 6,
+
   OP_R7 = 7,
   OP_R8 = 8,
   OP_R9 = 9,

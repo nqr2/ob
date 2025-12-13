@@ -3,6 +3,19 @@
 #include <stdbit.h>
 #include <string.h>
 
+typedef enum {
+  TES_EMPTY = 0,
+  TES_USED = 1,
+  TES_DEAD = 2,
+} TableEntryStatus;
+
+typedef struct {
+  uint64_t key;
+
+  void *value;
+  TableEntryStatus status;
+} TableEntry;
+
 void obtbl_init(ob_Table *tbl, ob_Allocator *alloc) {
   tbl->allocator = alloc;
   tbl->length = 0;
@@ -43,7 +56,7 @@ void obtbl_reserve(ob_Table *tbl, size_t newcap) {
   tbl->length = 0;
 
   for (size_t i = 0; i < tbl->capacity; i++) {
-    auto entry = &tbl->data[i];
+    auto entry = &((TableEntry *)tbl->data)[i];
     TableEntry *dest = NULL;
 
     // shouldnt this be != TES_USED?
@@ -94,7 +107,7 @@ bool obtbl_set(ob_Table *tbl, uint64_t key, void *value) {
 
 void obtbl_merge(ob_Table *tbl, ob_Table *from) {
   for (size_t i = 0; i < from->capacity; i++) {
-    auto entry = &from->data[i];
+    auto entry = &((TableEntry *)from->data)[i];
 
     if (entry->status != TES_USED) {
       obtbl_set(tbl, entry->key, entry->value);
@@ -111,7 +124,7 @@ bool obtbl_get(ob_Table *tbl, uint64_t key, void **value) {
   auto start = index;
 
   while (true) {
-    auto entry = &tbl->data[index];
+    auto entry = &((TableEntry *)tbl->data)[index];
 
     if (entry->key == key && entry->status == TES_USED) {
       if (value != NULL) {
@@ -154,7 +167,7 @@ bool obtbl_iterate(ob_Table *table, uint64_t *index, uint64_t *key,
   uint64_t current_key = *index;
 
   while (current_key < table->capacity) {
-    auto entry = &table->data[current_key];
+    auto entry = &((TableEntry *)table->data)[current_key];
 
     if (entry->status == TES_USED) {
       if (key != NULL) {

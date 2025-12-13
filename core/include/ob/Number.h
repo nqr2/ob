@@ -1,6 +1,11 @@
 #ifndef OB_CORE_NUMBER_H_INCLUDED
 #define OB_CORE_NUMBER_H_INCLUDED
 
+/** @file
+ *
+ * @brief 63-bit integers and floats.
+ */
+
 #include <stdint.h>
 
 typedef union {
