@@ -16,10 +16,32 @@ ob_src = [
   'src/Table.c',
 ]
 
+install_headers(
+  'include/ob/Allocator.h',
+  'include/ob/Argparse.h',
+  'include/ob/Array.h',
+  'include/ob/Assert.h',
+  'include/ob/Bytecode.h',
+  'include/ob/Context.h',
+  'include/ob/ContextFwd.h',
+  'include/ob/Exn.h',
+  'include/ob/Exncodes.h',
+  'include/ob/Hash.h',
+  'include/ob/Interner.h',
+  'include/ob/Number.h',
+  'include/ob/Object.h',
+  'include/ob/Parse.h',
+  'include/ob/Serial.h',
+  'include/ob/String.h',
+  'include/ob/Table.h',
+  subdir: 'ob'
+)
+
 libOb = static_library(
   'ob',
   ob_src,
-  include_directories: 'include'
+  include_directories: 'include',
+  install: true
 )
 
 obCore = declare_dependency(
