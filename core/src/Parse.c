@@ -2,7 +2,6 @@
 #include <ob/Assert.h>
 #include <ob/Bytecode.h>
 #include <ob/Context.h>
-#include <ob/Macros.h>
 #include <ob/Object.h>
 #include <ob/Parse.h>
 #include <ob/Serial.h>
@@ -364,7 +363,7 @@ static bool p_primary(Reader *rdr) {
     // TODO: float literals (NOTE: always has a decimal digit, so 1. =/= 1.0)
 
     auto obj = obctx_alloc_integer(rdr->context, num);
-    IGNORE fnum;
+    (void)fnum;
 
     push_literal(rdr, obj);
     return true;

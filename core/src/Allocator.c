@@ -1,6 +1,5 @@
 #include <ob/Allocator.h>
 #include <ob/Assert.h>
-#include <ob/Macros.h>
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -8,8 +7,8 @@
 
 static void *a_alloc(void *userdata, size_t ptr_size, void *ptr,
                      size_t new_size) {
-  IGNORE userdata;
-  IGNORE ptr_size;
+  (void)userdata;
+  (void)ptr_size;
 
   if (new_size == 0) {
     free(ptr);
