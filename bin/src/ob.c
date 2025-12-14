@@ -23,9 +23,8 @@ void obj_print(ob_Context ctx, ob_Obj receiver) {
     [[fallthrough]];
 
   case OBOBJ_STRING: {
-    ob_ObjString *str = obobj_get_data(receiver);
-    printf("'%.*s'", (int)obstr_get_length(str->inner),
-           obstr_get_data(ctx, str->inner));
+    auto str = (ob_Str *)obobj_get_data(receiver);
+    printf("'%.*s'", (int)obstr_get_length(*str), obstr_get_data(ctx, *str));
   } break;
 
   case OBOBJ_SLOTS:
@@ -33,12 +32,12 @@ void obj_print(ob_Context ctx, ob_Obj receiver) {
     break;
 
   case OBOBJ_NUMBER: {
-    ob_ObjNumber *num = obobj_get_data(receiver);
+    ob_Number *num = obobj_get_data(receiver);
 
-    if (obnum_is_int(num->number)) {
-      printf("%ld", obnum_to_int(num->number));
+    if (obnum_is_int(*num)) {
+      printf("%ld", obnum_to_int(*num));
     } else {
-      printf("%f", obnum_to_float(num->number));
+      printf("%f", obnum_to_float(*num));
     }
   }; break;
 
@@ -47,10 +46,10 @@ void obj_print(ob_Context ctx, ob_Obj receiver) {
   case OBOBJ_ARRAY: {
     printf("[");
 
-    ob_ObjArray *arr = obobj_get_data(receiver);
-    auto size = arr->items.size / sizeof(ob_Obj);
+    ob_Array *arr = obobj_get_data(receiver);
+    auto size = arr->size / sizeof(ob_Obj);
 
-    auto items = (ob_Obj *)arr->items.data;
+    auto items = (ob_Obj *)arr->data;
 
     for (size_t i = 0; i < size; i++) {
       obj_print(ctx, items[i]);
@@ -68,15 +67,15 @@ void obj_print(ob_Context ctx, ob_Obj receiver) {
     break;
 
   case OBOBJ_CMETHOD: {
-    ob_ObjCMethod *method = obobj_get_data(receiver);
+    auto method = (ob_FnCMethod *)obobj_get_data(receiver);
     void *ptr = NULL;
-    memcpy((void *)&ptr, (void *)&method->method, sizeof(void *));
+    memcpy((void *)&ptr, (void *)&method, sizeof(void *));
     printf("#<cmethod:%p>", ptr);
   } break;
 
   case OBOBJ_CDATA: {
-    ob_ObjCData *data = obobj_get_data(receiver);
-    printf("#<cdata:%p>", data->cdata);
+    auto data = (void **)obobj_get_data(receiver);
+    printf("#<cdata:%p>", *data);
   } break;
 
   case OBOBJ_ACTIVATION:

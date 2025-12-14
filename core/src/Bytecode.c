@@ -27,15 +27,15 @@ void obbc_run(ob_Context ctx, size_t len, const uint8_t *code) {
       ob_Obj recv = NULL;
       obarr_pop(&ctx->stack, sizeof(ob_Obj), (void *)&recv);
 
-      ob_ObjString *selector = obobj_get_data(literal);
+      auto selector = (ob_Str *)obobj_get_data(literal);
 
-      obctx_send(ctx, recv, selector->inner);
+      obctx_send(ctx, recv, *selector);
     }; break;
 
     case OBBC_IMPLICIT_SEND: {
-      ob_ObjString *selector = obobj_get_data(literal);
+      auto selector = (ob_Str *)obobj_get_data(literal);
 
-      obctx_send(ctx, act->env, selector->inner);
+      obctx_send(ctx, act->env, *selector);
     }; break;
 
     case OBBC_EXTEND: {
@@ -51,9 +51,8 @@ void obbc_run(ob_Context ctx, size_t len, const uint8_t *code) {
 
     case OBBC_ARRAY: {
       auto obj = obctx_alloc_array(ctx);
-      ob_ObjArray *oarr = obobj_get_data(obj);
+      ob_Array *arr = obobj_get_data(obj);
 
-      auto arr = &oarr->items;
       obarr_reserve(arr, this_index * sizeof(ob_Obj));
 
       obarr_pop(&ctx->stack, this_index * sizeof(ob_Obj), arr->data);

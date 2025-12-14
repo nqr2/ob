@@ -8,8 +8,6 @@
 
 #include "Array.h"
 #include "ContextFwd.h"
-#include "Number.h"
-#include "String.h"
 #include "Table.h"
 
 #include <stdint.h>
@@ -51,10 +49,6 @@ typedef struct Object {
 typedef ob_Object *ob_Obj;
 
 typedef struct {
-  ob_Str inner;
-} ob_ObjSymbol, ob_ObjString;
-
-typedef struct {
   ob_Object *prototype;
   ob_Table slots;
 } ob_ObjSlots;
@@ -67,22 +61,6 @@ typedef struct {
 } ob_ObjMethod;
 
 typedef bool (*ob_FnCMethod)(ob_Context ctx);
-
-typedef struct {
-  ob_FnCMethod method;
-} ob_ObjCMethod;
-
-typedef struct {
-  void *cdata;
-} ob_ObjCData;
-
-typedef struct {
-  ob_Number number;
-} ob_ObjNumber;
-
-typedef struct {
-  ob_Array items;
-} ob_ObjArray;
 
 typedef struct {
   ob_Obj parent;   // the parent activation

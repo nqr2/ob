@@ -69,22 +69,22 @@ ob_Obj obctx_allocate(ob_Context ctx, size_t payload_size) {
   return obj;
 }
 
-ob_Obj obctx_alloc_symbol(ob_Context ctx, ob_String *symbol) {
-  auto obj = obctx_allocate(ctx, sizeof(ob_ObjSymbol));
+ob_Obj obctx_alloc_symbol(ob_Context ctx, ob_Str symbol) {
+  auto obj = obctx_allocate(ctx, sizeof(ob_Str));
   obj->header.tag = OBOBJ_SYMBOL;
 
-  ob_ObjSymbol *sym = obobj_get_data(obj);
-  sym->inner = symbol;
+  auto sym = (ob_Str *)obobj_get_data(obj);
+  *sym = symbol;
 
   return obj;
 }
 
-ob_Obj obctx_alloc_string(ob_Context ctx, ob_String *string) {
-  auto obj = obctx_allocate(ctx, sizeof(ob_ObjString));
+ob_Obj obctx_alloc_string(ob_Context ctx, ob_Str string) {
+  auto obj = obctx_allocate(ctx, sizeof(ob_Str));
   obj->header.tag = OBOBJ_STRING;
 
-  ob_ObjString *str = obobj_get_data(obj);
-  str->inner = string;
+  auto str = (ob_Str *)obobj_get_data(obj);
+  *str = string;
 
   return obj;
 }
@@ -102,11 +102,11 @@ ob_Obj obctx_alloc_slots(ob_Context ctx, ob_Obj prototype) {
 }
 
 ob_Obj obctx_alloc_number(ob_Context ctx, ob_Number number) {
-  auto obj = obctx_allocate(ctx, sizeof(ob_ObjNumber));
+  auto obj = obctx_allocate(ctx, sizeof(ob_Number));
   obj->header.tag = OBOBJ_NUMBER;
 
-  ob_ObjNumber *num = obobj_get_data(obj);
-  num->number = number;
+  ob_Number *num = obobj_get_data(obj);
+  *num = number;
 
   return obj;
 }
@@ -120,11 +120,11 @@ ob_Obj obctx_alloc_real(ob_Context ctx, double number) {
 }
 
 ob_Obj obctx_alloc_array(ob_Context ctx) {
-  auto obj = obctx_allocate(ctx, sizeof(ob_ObjArray));
+  auto obj = obctx_allocate(ctx, sizeof(ob_Array));
   obj->header.tag = OBOBJ_ARRAY;
 
-  ob_ObjArray *arr = obobj_get_data(obj);
-  obarr_init(&arr->items, ctx->allocator);
+  ob_Array *arr = obobj_get_data(obj);
+  obarr_init(arr, ctx->allocator);
 
   return obj;
 }
@@ -146,21 +146,21 @@ ob_Obj obctx_alloc_method(ob_Context ctx) {
 }
 
 ob_Obj obctx_alloc_cmethod(ob_Context ctx, ob_FnCMethod method) {
-  auto obj = obctx_allocate(ctx, sizeof(ob_ObjCMethod));
+  auto obj = obctx_allocate(ctx, sizeof(ob_FnCMethod));
   obj->header.tag = OBOBJ_CMETHOD;
 
-  ob_ObjCMethod *data = obobj_get_data(obj);
-  data->method = method;
+  auto data = (ob_FnCMethod *)obobj_get_data(obj);
+  *data = method;
 
   return obj;
 }
 
 ob_Obj obctx_alloc_cdata(ob_Context ctx, void *cdata) {
-  auto obj = obctx_allocate(ctx, sizeof(ob_ObjCData));
+  auto obj = obctx_allocate(ctx, sizeof(void *));
   obj->header.tag = OBOBJ_CMETHOD;
 
-  ob_ObjCData *data = obobj_get_data(obj);
-  data->cdata = cdata;
+  auto data = (void **)obobj_get_data(obj);
+  *data = cdata;
 
   return obj;
 }
@@ -342,9 +342,9 @@ void obctx_send(ob_Context ctx, ob_Obj recv, ob_String *selector) {
 
   if (tag == OBOBJ_CMETHOD) {
     obctx_enter_activation(ctx, ctx->activation, invoked, recv);
-    ob_ObjCMethod *data = obobj_get_data(invoked);
+    auto data = (ob_FnCMethod *)obobj_get_data(invoked);
 
-    if (!data->method(ctx)) {
+    if (!(*data)(ctx)) {
       obctx_push(ctx, recv);
     }
 

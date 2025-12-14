@@ -1,5 +1,6 @@
 #include <ob/Array.h>
 #include <ob/Object.h>
+#include <ob/String.h>
 #include <ob/Table.h>
 
 ob_ObjectTag obobj_get_tag(ob_Obj obj) {
@@ -40,8 +41,8 @@ void obobj_mark(ob_Obj obj) {
   switch (obj->header.tag) {
   case OBOBJ_STRING:
   case OBOBJ_SYMBOL: {
-    ob_ObjString *str = obobj_get_data(obj);
-    obstr_mark(str->inner);
+    ob_Str *str = (ob_Str *)obobj_get_data(obj);
+    obstr_mark(*str);
   } break;
 
   default:
@@ -82,8 +83,8 @@ void obobj_destroy(ob_Obj obj) {
   } break;
 
   case OBOBJ_ARRAY: {
-    ob_ObjArray *data = obobj_get_data(obj);
-    obarr_free(&data->items);
+    ob_Array *data = obobj_get_data(obj);
+    obarr_free(data);
   } break;
 
   case OBOBJ_METHOD: {
@@ -126,12 +127,11 @@ void obobj_visit(ob_Object *obj, ob_VisitFlags flags, ob_FnVisit visit,
   } break;
 
   case OBOBJ_ARRAY: {
-    ob_ObjArray *data = obobj_get_data(obj);
+    ob_Array *data = obobj_get_data(obj);
 
-    auto length = data->items.size / sizeof(ob_Obj);
+    auto length = data->size / sizeof(ob_Obj);
     for (size_t i = 0; i < length; i++) {
-      obobj_visit(obarr_at(&data->items, sizeof(ob_Obj), i), flags, visit,
-                  userdata);
+      obobj_visit(obarr_at(data, sizeof(ob_Obj), i), flags, visit, userdata);
     }
   } break;
 

@@ -8,6 +8,7 @@
 
 #include "Allocator.h"
 #include "Array.h"
+#include "Number.h"
 #include "Object.h"
 #include "String.h"
 
