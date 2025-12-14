@@ -52,7 +52,7 @@ void obctx_destroy(ob_Context ctx) {
   obarr_free(&ctx->string_data);
   obarr_free(&ctx->string_available);
 
-  ob_deallocate(alloc, ctx);
+  ob_deallocate(alloc, sizeof(struct Context), ctx);
 }
 
 ob_Obj obctx_allocate(ob_Context ctx, size_t payload_size) {
@@ -199,7 +199,8 @@ void obctx_sweep(ob_Context ctx) {
       newlive = live;
     } else {
       obobj_destroy(live);
-      ob_deallocate(ctx->allocator, live);
+      // TODO: add a `size` field to objects for this bit
+      ob_deallocate(ctx->allocator, sizeof(ob_Object), live);
     }
 
     live = next;

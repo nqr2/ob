@@ -3,33 +3,31 @@
 
 /** @file
  *
- * @brief Allocation utilities.
+ * @brief Memory allocators.
  */
 
 #include <stddef.h>
 
-typedef void *(*ob_FnAllocate)(void *self, size_t size);
-typedef void (*ob_FnDeallocate)(void *self, void *source);
-typedef void *(*ob_FnReallocate)(void *self, void *source, size_t new);
+/** @brief An allocation function.
+ *
+ * @returns @c NULL if @p new_size is 0.
+ * @returns An allocated pointer if @ptr is NULL and @p new_size is not 0.
+ * @returns A resized pointer otherwise.
+ */
+typedef void *(*ob_FnAllocate)(void *userdata, size_t ptr_size, void *ptr,
+                               size_t new_size);
 
 /// A vtable for a memory allocator.
 typedef struct {
   ob_FnAllocate allocate;
-  ob_FnDeallocate deallocate;
-  ob_FnReallocate reallocate;
-  void *self;
+  void *userdata;
 } ob_Allocator;
 
 /// Creates a default allocator.
 ob_Allocator oballoc_create();
 
-/// Allocates a pointer.
 void *ob_allocate(ob_Allocator *alloc, size_t size);
-
-/// Reallocates a pointer.
-void *ob_reallocate(ob_Allocator *alloc, void *source, size_t new);
-
-/// Deallocates a pointer.
-void ob_deallocate(ob_Allocator *alloc, void *source);
+void *ob_reallocate(ob_Allocator *alloc, size_t old, void *source, size_t new);
+void ob_deallocate(ob_Allocator *alloc, size_t size, void *source);
 
 #endif

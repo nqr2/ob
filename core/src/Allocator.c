@@ -2,75 +2,57 @@
 #include <ob/Assert.h>
 #include <ob/Macros.h>
 
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
-static void *a_malloc(void *_self, size_t size) {
-  IGNORE _self;
-  return calloc(1, size);
-}
+static void *a_alloc(void *userdata, size_t ptr_size, void *ptr,
+                     size_t new_size) {
+  IGNORE userdata;
+  IGNORE ptr_size;
 
-static void a_free(void *_self, void *source) {
-  IGNORE _self;
-  free(source);
-}
+  if (new_size == 0) {
+    free(ptr);
+    ptr = NULL;
+  } else if (ptr == NULL) {
+    ptr = malloc(new_size);
+  } else {
+    ptr = realloc(ptr, new_size);
+  }
 
-static void *a_realloc(void *_self, void *source, size_t new) {
-  IGNORE _self;
-  return realloc(source, new);
+  return ptr;
 }
 
 ob_Allocator oballoc_create() {
-  ob_Allocator result = {};
+  auto result = (ob_Allocator){};
 
-  result.self = NULL;
-  result.allocate = a_malloc;
-  result.deallocate = a_free;
-  result.reallocate = a_realloc;
+  result.userdata = NULL;
+  result.allocate = a_alloc;
 
   return result;
 }
 
 void *ob_allocate(ob_Allocator *alloc, size_t size) {
-  if (size == 0) {
-    return NULL;
-  }
+  return ob_reallocate(alloc, 0, NULL, size);
+}
+
+void *ob_reallocate(ob_Allocator *alloc, size_t old, void *source, size_t new) {
+  ASSERT_NONNULL(alloc);
 
   ASSERT_NONNULL(alloc->allocate);
-  void *ptr = alloc->allocate(alloc->self, size);
-  ASSERT_NONNULL(ptr);
+  void *ptr = alloc->allocate(alloc->userdata, old, source, new);
 
-  memset(ptr, 0, size);
+  if (new != 0) {
+    ASSERT_NONNULL(ptr);
+  }
+
+  if (old < new) {
+    memset(((uint8_t *)ptr) + old, 0, new - old);
+  }
 
   return ptr;
 }
 
-void *ob_reallocate(ob_Allocator *alloc, void *source, size_t new) {
-  ASSERT_NONNULL(alloc);
-
-  if (new == 0) {
-    ob_deallocate(alloc, source);
-    return NULL;
-  }
-
-  if (source == 0) {
-    return ob_allocate(alloc, new);
-  }
-
-  ASSERT_NONNULL(alloc->reallocate);
-  void *ptr = alloc->reallocate(alloc->self, source, new);
-  ASSERT_NONNULL(ptr);
-
-  return ptr;
-}
-
-void ob_deallocate(ob_Allocator *alloc, void *source) {
-  ASSERT_NONNULL(alloc);
-
-  if (source == 0) {
-    return;
-  }
-
-  ASSERT_NONNULL(alloc->deallocate);
-  alloc->deallocate(alloc->self, source);
+void ob_deallocate(ob_Allocator *alloc, size_t size, void *source) {
+  ob_reallocate(alloc, size, source, 0);
 }

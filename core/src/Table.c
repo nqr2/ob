@@ -24,14 +24,15 @@ void obtbl_init(ob_Table *tbl, ob_Allocator *alloc) {
 }
 
 void obtbl_free(ob_Table *tbl) {
-  ob_deallocate(tbl->allocator, tbl->data);
+  ob_deallocate(tbl->allocator, tbl->capacity * sizeof(TableEntry), tbl->data);
 
   obtbl_init(tbl, NULL);
 }
 
 static TableEntry *tbl__find(size_t capacity, TableEntry *entries,
                              uint64_t key) {
-  auto index = key % capacity;
+  // valid since capacity is always a power of 2
+  auto index = key & (capacity - 1);
 
   while (true) {
     auto entry = &entries[index];
@@ -72,7 +73,7 @@ void obtbl_reserve(ob_Table *tbl, size_t newcap) {
     tbl->length++;
   }
 
-  ob_deallocate(tbl->allocator, tbl->data);
+  ob_deallocate(tbl->allocator, tbl->capacity * sizeof(TableEntry), tbl->data);
 
   tbl->data = new_entries;
   tbl->capacity = newcap;

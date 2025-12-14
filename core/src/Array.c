@@ -12,7 +12,7 @@ void obarr_init(ob_Array *arr, ob_Allocator *alloc) {
 }
 
 void obarr_free(ob_Array *arr) {
-  ob_deallocate(arr->allocator, arr->data);
+  ob_deallocate(arr->allocator, arr->capacity, arr->data);
   obarr_init(arr, NULL);
 }
 
@@ -20,8 +20,10 @@ void obarr_reserve(ob_Array *arr, size_t newcap) {
   auto capacity = stdc_bit_ceil(newcap);
 
   if (capacity > arr->capacity) {
+    arr->data =
+        ob_reallocate(arr->allocator, arr->capacity, arr->data, capacity);
+
     arr->capacity = capacity;
-    arr->data = ob_reallocate(arr->allocator, arr->data, arr->capacity);
   }
 }
 

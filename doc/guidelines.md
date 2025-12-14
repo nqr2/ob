@@ -23,9 +23,41 @@ there should be an abbreviated typedef (`Obj`, `Str`).
 
 Global variables are forbidden.
 
+When taking an array as a parameter, the corresponding length parameter must
+come before the pointer to the array (so `f(len, items)`, not `f(items, len)`).
+
+### Header structure
+
+Ideally, a public header should be arranged as:
+- Header guards
+- The file's documentation
+- #includes from the same library
+- #includes from dependencies
+- #includes from the standard library
+- Constants
+- Type definitions
+- Functions
+- Macros
+
 ## Documenting
 
-Nothing here yet.
+All public headers should include a section as follows:
+
+``` c
+/** @file
+ *
+ * @brief (brief description goes here)
+ * (...)
+ */
+```
+
+If the item is "descriptively named enough" to make documentation redundant,
+then it can be omitted. As an example, for a function like
+`bool string_equal(lhs, rhs)`, there is no need to add something such as
+"Compares two strings, and returns `true` if both are equal".
+
+When documenting the semantics of a function, avoid writing about implementation
+details if unneeded.
 
 ## TODO
 - Use vocabulary from RFC 2119?

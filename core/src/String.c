@@ -94,7 +94,7 @@ void obstr_sweep(ob_Context ctx) {
       obstr_unmark(strings);
     } else {
       str__delete(ctx, strings);
-      ob_deallocate(ctx->allocator, strings);
+      ob_deallocate(ctx->allocator, sizeof(struct String), strings);
       strings = NULL;
     }
 
