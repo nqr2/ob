@@ -2,24 +2,12 @@
 #include <ob/Object.h>
 #include <ob/Table.h>
 
-#define HEADER_GET_TAG(H) ((ob_ObjectHeader)((H) & 0xf))
-#define HEADER_SET_TAG(H, T) ((ob_ObjectHeader)(((H) & 0xfff0) | ((T) & 0xf)))
-
-#define HEADER_GET_MARK(H) (((H) & 0x10) != 0)
-#define HEADER_SET_MARK(H, M)                                                  \
-  ((ob_ObjectHeader)(((H) & 0xffef) | (((M) != 0) << 4)))
-
-#define HEADER_GET_RC(H) ((H) >> 5)
-#define HEADER_SET_RC(H, C) (((H) & 0x1f) | ((C) << 5))
-
-#define RC_MAX 0x7ff
-
 ob_ObjectTag obobj_get_tag(ob_Obj obj) {
   if (obj == NULL) {
     return OBOBJ_NIL;
   }
 
-  return HEADER_GET_TAG(obj->header);
+  return obj->header.tag;
 }
 
 void *obobj_get_data(ob_Obj obj) {
@@ -32,7 +20,7 @@ bool obobj_get_mark(ob_Obj obj) {
     return true;
   }
 
-  return HEADER_GET_MARK(obj->header);
+  return obj->header.mark;
 }
 
 static void mark(ob_Obj obj, void *unused) {
@@ -41,11 +29,15 @@ static void mark(ob_Obj obj, void *unused) {
 }
 
 void obobj_mark(ob_Obj obj) {
-  if (HEADER_GET_MARK(obj->header)) {
+  if (obj == NULL) {
     return;
   }
 
-  switch (HEADER_GET_TAG(obj->header)) {
+  if (obj->header.mark) {
+    return;
+  }
+
+  switch (obj->header.tag) {
   case OBOBJ_STRING:
   case OBOBJ_SYMBOL: {
     ob_ObjString *str = obobj_get_data(obj);
@@ -56,17 +48,14 @@ void obobj_mark(ob_Obj obj) {
     break;
   }
 
-  obj->header = HEADER_SET_MARK(obj->header, true);
+  obj->header.mark = true;
 
   obobj_visit_before(obj, mark, NULL);
 }
 
 ob_Obj obobj_ref(ob_Obj obj) {
-  auto refcount = HEADER_GET_RC(obj->header);
-
-  if (refcount < RC_MAX) {
-    refcount++;
-    obj->header = HEADER_SET_RC(obj->header, refcount);
+  if (obj->refcount < UINT32_MAX) {
+    obj->refcount++;
   }
 
   return obj;
@@ -78,14 +67,11 @@ bool obobj_unref(ob_Obj obj) {
     return false;
   }
 
-  auto refcount = HEADER_GET_RC(obj->header);
-
-  if (refcount < RC_MAX) {
-    refcount--;
-    obj->header = HEADER_SET_RC(obj->header, refcount);
+  if (obj->refcount < UINT32_MAX) {
+    obj->refcount--;
   }
 
-  return refcount == 0;
+  return obj->refcount == 0;
 }
 
 void obobj_destroy(ob_Obj obj) {
@@ -125,7 +111,7 @@ void obobj_visit(ob_Object *obj, ob_VisitFlags flags, ob_FnVisit visit,
     visit(obj, userdata);
   }
 
-  switch (HEADER_GET_TAG(obj->header)) {
+  switch (obj->header.tag) {
   case OBOBJ_SLOTS: {
     ob_ObjSlots *data = obobj_get_data(obj);
 

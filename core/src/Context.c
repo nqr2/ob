@@ -59,8 +59,10 @@ ob_Obj obctx_allocate(ob_Context ctx, size_t payload_size) {
   auto obj =
       (ob_Obj)ob_allocate(ctx->allocator, sizeof(ob_Object) + payload_size);
 
-  obj->header = 0;
+  obj->header.word = 0;
   obj->next = ctx->objects;
+  obj->refcount = 0;
+  obj->size = payload_size;
 
   ctx->objects = obj;
 
@@ -69,7 +71,7 @@ ob_Obj obctx_allocate(ob_Context ctx, size_t payload_size) {
 
 ob_Obj obctx_alloc_symbol(ob_Context ctx, ob_String *symbol) {
   auto obj = obctx_allocate(ctx, sizeof(ob_ObjSymbol));
-  obj->header = OBOBJ_SYMBOL;
+  obj->header.tag = OBOBJ_SYMBOL;
 
   ob_ObjSymbol *sym = obobj_get_data(obj);
   sym->inner = symbol;
@@ -79,7 +81,7 @@ ob_Obj obctx_alloc_symbol(ob_Context ctx, ob_String *symbol) {
 
 ob_Obj obctx_alloc_string(ob_Context ctx, ob_String *string) {
   auto obj = obctx_allocate(ctx, sizeof(ob_ObjString));
-  obj->header = OBOBJ_STRING;
+  obj->header.tag = OBOBJ_STRING;
 
   ob_ObjString *str = obobj_get_data(obj);
   str->inner = string;
@@ -89,7 +91,7 @@ ob_Obj obctx_alloc_string(ob_Context ctx, ob_String *string) {
 
 ob_Obj obctx_alloc_slots(ob_Context ctx, ob_Obj prototype) {
   auto obj = obctx_allocate(ctx, sizeof(ob_ObjSlots));
-  obj->header = OBOBJ_SLOTS;
+  obj->header.tag = OBOBJ_SLOTS;
 
   ob_ObjSlots *slots = obobj_get_data(obj);
 
@@ -101,7 +103,7 @@ ob_Obj obctx_alloc_slots(ob_Context ctx, ob_Obj prototype) {
 
 ob_Obj obctx_alloc_number(ob_Context ctx, ob_Number number) {
   auto obj = obctx_allocate(ctx, sizeof(ob_ObjNumber));
-  obj->header = OBOBJ_NUMBER;
+  obj->header.tag = OBOBJ_NUMBER;
 
   ob_ObjNumber *num = obobj_get_data(obj);
   num->number = number;
@@ -119,7 +121,7 @@ ob_Obj obctx_alloc_real(ob_Context ctx, double number) {
 
 ob_Obj obctx_alloc_array(ob_Context ctx) {
   auto obj = obctx_allocate(ctx, sizeof(ob_ObjArray));
-  obj->header = OBOBJ_ARRAY;
+  obj->header.tag = OBOBJ_ARRAY;
 
   ob_ObjArray *arr = obobj_get_data(obj);
   obarr_init(&arr->items, ctx->allocator);
@@ -129,7 +131,7 @@ ob_Obj obctx_alloc_array(ob_Context ctx) {
 
 ob_Obj obctx_alloc_method(ob_Context ctx) {
   auto obj = obctx_allocate(ctx, sizeof(ob_ObjMethod));
-  obj->header = OBOBJ_METHOD;
+  obj->header.tag = OBOBJ_METHOD;
 
   ob_ObjMethod *method = obobj_get_data(obj);
 
@@ -145,7 +147,7 @@ ob_Obj obctx_alloc_method(ob_Context ctx) {
 
 ob_Obj obctx_alloc_cmethod(ob_Context ctx, ob_FnCMethod method) {
   auto obj = obctx_allocate(ctx, sizeof(ob_ObjCMethod));
-  obj->header = OBOBJ_CMETHOD;
+  obj->header.tag = OBOBJ_CMETHOD;
 
   ob_ObjCMethod *data = obobj_get_data(obj);
   data->method = method;
@@ -155,7 +157,7 @@ ob_Obj obctx_alloc_cmethod(ob_Context ctx, ob_FnCMethod method) {
 
 ob_Obj obctx_alloc_cdata(ob_Context ctx, void *cdata) {
   auto obj = obctx_allocate(ctx, sizeof(ob_ObjCData));
-  obj->header = OBOBJ_CMETHOD;
+  obj->header.tag = OBOBJ_CMETHOD;
 
   ob_ObjCData *data = obobj_get_data(obj);
   data->cdata = cdata;
@@ -194,13 +196,12 @@ void obctx_sweep(ob_Context ctx) {
     ob_Object *next = live->next;
 
     if (obobj_get_mark(live)) {
-      live->header &= 0xffff'ffef;
+      live->header.mark = false;
       live->next = newlive;
       newlive = live;
     } else {
       obobj_destroy(live);
-      // TODO: add a `size` field to objects for this bit
-      ob_deallocate(ctx->allocator, sizeof(ob_Object), live);
+      ob_deallocate(ctx->allocator, sizeof(ob_Object) + live->size, live);
     }
 
     live = next;

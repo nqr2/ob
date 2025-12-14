@@ -14,9 +14,6 @@
 
 #include <stdint.h>
 
-// 4 bit tag, 1 bit mark, 11 rc?
-typedef uint16_t ob_ObjectHeader;
-
 typedef enum Tag : uint8_t {
   OBOBJ_NIL = 0,        // the nil object
   OBOBJ_SYMBOL = 1,     // #... / #a:b:...y:z: / #'...' / #+...-
@@ -37,7 +34,17 @@ typedef enum Tag : uint8_t {
 } ob_ObjectTag;
 
 typedef struct Object {
-  ob_ObjectHeader header;
+  union {
+    struct {
+      ob_ObjectTag tag : 4;
+      bool mark : 1;
+    };
+
+    uint16_t word;
+  } header;
+
+  uint16_t size;
+  uint32_t refcount;
   struct Object *next;
 } ob_Object;
 
