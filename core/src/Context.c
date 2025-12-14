@@ -31,8 +31,8 @@ ob_Context obctx_create(ob_Allocator *alloc) {
   ctx->proto_number = obctx_alloc_slots(ctx, ctx->proto_object);
   ctx->proto_array = obctx_alloc_slots(ctx, ctx->proto_object);
   ctx->proto_method = obctx_alloc_slots(ctx, ctx->proto_object);
-  ctx->proto_cmethod = obctx_alloc_slots(ctx, ctx->proto_object);
-  ctx->proto_cdata = obctx_alloc_slots(ctx, ctx->proto_object);
+  ctx->proto_lightcmethod = obctx_alloc_slots(ctx, ctx->proto_object);
+  ctx->proto_lightcdata = obctx_alloc_slots(ctx, ctx->proto_object);
   ctx->proto_activation = obctx_alloc_slots(ctx, ctx->proto_object);
 
   ctx->shell = obctx_alloc_slots(ctx, ctx->proto_slots);
@@ -145,9 +145,9 @@ ob_Obj obctx_alloc_method(ob_Context ctx) {
   return obj;
 }
 
-ob_Obj obctx_alloc_cmethod(ob_Context ctx, ob_FnCMethod method) {
+ob_Obj obctx_alloc_lightcmethod(ob_Context ctx, ob_FnCMethod method) {
   auto obj = obctx_allocate(ctx, sizeof(ob_FnCMethod));
-  obj->header.tag = OBOBJ_CMETHOD;
+  obj->header.tag = OBOBJ_LIGHT_CMETHOD;
 
   auto data = (ob_FnCMethod *)obobj_get_data(obj);
   *data = method;
@@ -155,9 +155,9 @@ ob_Obj obctx_alloc_cmethod(ob_Context ctx, ob_FnCMethod method) {
   return obj;
 }
 
-ob_Obj obctx_alloc_cdata(ob_Context ctx, void *cdata) {
+ob_Obj obctx_alloc_lightcdata(ob_Context ctx, void *cdata) {
   auto obj = obctx_allocate(ctx, sizeof(void *));
-  obj->header.tag = OBOBJ_CMETHOD;
+  obj->header.tag = OBOBJ_LIGHT_CMETHOD;
 
   auto data = (void **)obobj_get_data(obj);
   *data = cdata;
@@ -175,8 +175,8 @@ void obctx_mark(ob_Context ctx) {
   obobj_mark(ctx->proto_number);
   obobj_mark(ctx->proto_array);
   obobj_mark(ctx->proto_method);
-  obobj_mark(ctx->proto_cmethod);
-  obobj_mark(ctx->proto_cdata);
+  obobj_mark(ctx->proto_lightcmethod);
+  obobj_mark(ctx->proto_lightcdata);
   obobj_mark(ctx->proto_activation);
 
   auto data = (ob_Object **)ctx->stack.data;
@@ -274,10 +274,10 @@ ob_Obj obctx_get_prototype(ob_Context ctx, ob_Obj obj) {
     return ctx->proto_array;
   case OBOBJ_METHOD:
     return ctx->proto_method;
-  case OBOBJ_CMETHOD:
-    return ctx->proto_cmethod;
-  case OBOBJ_CDATA:
-    return ctx->proto_cdata;
+  case OBOBJ_LIGHT_CMETHOD:
+    return ctx->proto_lightcmethod;
+  case OBOBJ_LIGHT_CDATA:
+    return ctx->proto_lightcdata;
   case OBOBJ_ACTIVATION:
     return ctx->proto_activation;
   case OT_Ra:
@@ -340,7 +340,7 @@ void obctx_send(ob_Context ctx, ob_Obj recv, ob_String *selector) {
 
   auto tag = obobj_get_tag(invoked);
 
-  if (tag == OBOBJ_CMETHOD) {
+  if (tag == OBOBJ_LIGHT_CMETHOD) {
     obctx_enter_activation(ctx, ctx->activation, invoked, recv);
     auto data = (ob_FnCMethod *)obobj_get_data(invoked);
 

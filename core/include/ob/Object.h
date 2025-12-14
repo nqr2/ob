@@ -13,16 +13,16 @@
 #include <stdint.h>
 
 typedef enum Tag : uint8_t {
-  OBOBJ_NIL = 0,        // the nil object
-  OBOBJ_SYMBOL = 1,     // #... / #a:b:...y:z: / #'...' / #+...-
-  OBOBJ_STRING = 2,     // '...'
-  OBOBJ_SLOTS = 3,      // slot objects
-  OBOBJ_NUMBER = 4,     // numbers
-  OBOBJ_ARRAY = 5,      // [ ... ]
-  OBOBJ_METHOD = 6,     // closures
-  OBOBJ_CMETHOD = 7,    // functions from C
-  OBOBJ_CDATA = 8,      // data from C
-  OBOBJ_ACTIVATION = 9, // call stack entry
+  OBOBJ_NIL = 0,           // the nil object
+  OBOBJ_SYMBOL = 1,        // #... / #a:b:...y:z: / #'...' / #+...-
+  OBOBJ_STRING = 2,        // '...'
+  OBOBJ_SLOTS = 3,         // slot objects
+  OBOBJ_NUMBER = 4,        // numbers
+  OBOBJ_ARRAY = 5,         // [ ... ]
+  OBOBJ_METHOD = 6,        // closures
+  OBOBJ_LIGHT_CMETHOD = 7, // functions from C
+  OBOBJ_LIGHT_CDATA = 8,   // data from C
+  OBOBJ_ACTIVATION = 9,    // call stack entry
   OT_Ra = 10,
   OT_Rb = 11,
   OT_Rc = 12,
@@ -105,6 +105,6 @@ void obobj_destroy(ob_Obj obj);
 #define OBOBJ_ISA(Obj, Tag) (obobj_get_tag((Obj)) == (Tag))
 
 #define OBOBJ_IS_INVOCABLE(Obj)                                                \
-  (OBOBJ_ISA((Obj), OBOBJ_METHOD) || OBOBJ_ISA((Obj), OBOBJ_CMETHOD))
+  (OBOBJ_ISA((Obj), OBOBJ_METHOD) || OBOBJ_ISA((Obj), OBOBJ_LIGHT_CMETHOD))
 
 #endif

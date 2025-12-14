@@ -20,8 +20,8 @@ typedef struct Context {
   ob_Obj objects;
 
   ob_Obj proto_object, proto_nil, proto_symbol, proto_string, proto_slots,
-      proto_number, proto_array, proto_method, proto_cmethod, proto_cdata,
-      proto_activation;
+      proto_number, proto_array, proto_method, proto_lightcmethod,
+      proto_lightcdata, proto_activation;
 
   ob_Obj shell;
 
@@ -45,8 +45,8 @@ ob_Obj obctx_alloc_integer(ob_Context ctx, int64_t number);
 ob_Obj obctx_alloc_real(ob_Context ctx, double number);
 ob_Obj obctx_alloc_array(ob_Context ctx);
 ob_Obj obctx_alloc_method(ob_Context ctx);
-ob_Obj obctx_alloc_cmethod(ob_Context ctx, ob_FnCMethod method);
-ob_Obj obctx_alloc_cdata(ob_Context ctx, void *cdata);
+ob_Obj obctx_alloc_lightcmethod(ob_Context ctx, ob_FnCMethod method);
+ob_Obj obctx_alloc_lightcdata(ob_Context ctx, void *cdata);
 
 void obctx_mark(ob_Context ctx);
 void obctx_sweep(ob_Context ctx);

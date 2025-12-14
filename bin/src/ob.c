@@ -66,14 +66,14 @@ void obj_print(ob_Context ctx, ob_Obj receiver) {
     printf("#<method:%p>", (void *)receiver);
     break;
 
-  case OBOBJ_CMETHOD: {
+  case OBOBJ_LIGHT_CMETHOD: {
     auto method = (ob_FnCMethod *)obobj_get_data(receiver);
     void *ptr = NULL;
     memcpy((void *)&ptr, (void *)&method, sizeof(void *));
     printf("#<cmethod:%p>", ptr);
   } break;
 
-  case OBOBJ_CDATA: {
+  case OBOBJ_LIGHT_CDATA: {
     auto data = (void **)obobj_get_data(receiver);
     printf("#<cdata:%p>", *data);
   } break;
@@ -175,7 +175,7 @@ void add_method(ob_Context ctx, ob_Obj target, const char *name,
 
   ob_ObjSlots *slots = obobj_get_data(target);
 
-  auto obj = obctx_alloc_cmethod(ctx, method);
+  auto obj = obctx_alloc_lightcmethod(ctx, method);
   auto hash = obhash_start(strlen(name), name);
 
   obtbl_set(&slots->slots, hash, (void *)obj);
