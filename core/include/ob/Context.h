@@ -32,6 +32,7 @@ typedef struct Context {
   ob_Array string_available;
 
   ob_String *strings;
+  ob_Table interned;
 
   ob_Exnbuf exnbuf;
 } *ob_Context;

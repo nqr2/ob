@@ -1,3 +1,4 @@
+#include "ob/Table.h"
 #include <ob/Allocator.h>
 #include <ob/Array.h>
 #include <ob/Assert.h>
@@ -37,6 +38,8 @@ ob_Context obctx_create(ob_Allocator *alloc) {
 
   ctx->shell = obctx_alloc_slots(ctx, ctx->proto_slots);
 
+  obtbl_init(&ctx->interned, ctx->allocator);
+
   obexn_init(&ctx->exnbuf, ctx->allocator);
 
   return ctx;
@@ -53,6 +56,8 @@ void obctx_destroy(ob_Context ctx) {
   obarr_free(&ctx->stack);
   obarr_free(&ctx->string_data);
   obarr_free(&ctx->string_available);
+
+  obtbl_free(&ctx->interned);
 
   obexn_free(&ctx->exnbuf);
 
@@ -72,11 +77,24 @@ ob_Obj obctx_allocate(ob_Context ctx, size_t payload_size) {
 }
 
 ob_Obj obctx_alloc_symbol(ob_Context ctx, ob_Str symbol) {
-  auto obj = obctx_allocate(ctx, sizeof(ob_Str));
+  auto data = obstr_get_data(ctx, symbol);
+  auto len = obstr_get_length(symbol);
+
+  auto hash = obhash_start(len, data);
+
+  ob_Obj obj = NULL;
+
+  if (obtbl_get(&ctx->interned, hash, (void **)&obj)) {
+    return obj;
+  }
+
+  obj = obctx_allocate(ctx, sizeof(ob_Str));
   obj->header.tag = OBOBJ_SYMBOL;
 
   auto sym = (ob_Str *)obobj_get_data(obj);
   *sym = symbol;
+
+  obtbl_set(&ctx->interned, hash, (void *)&obj);
 
   return obj;
 }
@@ -185,6 +203,13 @@ void obctx_mark(ob_Context ctx) {
 
   for (size_t i = 0; i < ctx->stack.size / sizeof(ob_Object *); i++) {
     obobj_mark(data[i]);
+  }
+
+  uint64_t index = 0;
+  ob_Obj obj = NULL;
+
+  while (obtbl_iterate(&ctx->interned, &index, NULL, (void **)&obj)) {
+    obobj_mark(obj);
   }
 }
 
