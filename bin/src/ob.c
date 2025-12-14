@@ -66,14 +66,14 @@ void obj_print(ob_Context ctx, ob_Obj receiver) {
     printf("#<method:%p>", (void *)receiver);
     break;
 
-  case OBOBJ_LIGHT_CMETHOD: {
+  case OBOBJ_LIGHTCMETHOD: {
     auto method = (ob_FnCMethod *)obobj_get_data(receiver);
     void *ptr = NULL;
     memcpy((void *)&ptr, (void *)&method, sizeof(void *));
     printf("#<cmethod:%p>", ptr);
   } break;
 
-  case OBOBJ_LIGHT_CDATA: {
+  case OBOBJ_LIGHTCDATA: {
     auto data = (void **)obobj_get_data(receiver);
     printf("#<cdata:%p>", *data);
   } break;

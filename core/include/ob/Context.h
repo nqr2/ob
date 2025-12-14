@@ -8,6 +8,7 @@
 
 #include "Allocator.h"
 #include "Array.h"
+#include "Exn.h"
 #include "Number.h"
 #include "Object.h"
 #include "String.h"
@@ -31,6 +32,8 @@ typedef struct Context {
   ob_Array string_available;
 
   ob_String *strings;
+
+  ob_Exnbuf exnbuf;
 } *ob_Context;
 
 ob_Context obctx_create(ob_Allocator *alloc);
@@ -62,5 +65,9 @@ bool obctx_checkstack(ob_Context ctx, size_t narg);
 ob_Obj obctx_get_prototype(ob_Context ctx, ob_Obj obj);
 ob_Obj obctx_get_slot(ob_Context ctx, ob_Obj obj, ob_String *selector);
 void obctx_send(ob_Context ctx, ob_Obj recv, ob_String *selector);
+
+ob_Exncode obctx_pcall(ob_Context ctx,
+                       void (*inner)(ob_Context ctx, void *userdata),
+                       void *userdata);
 
 #endif

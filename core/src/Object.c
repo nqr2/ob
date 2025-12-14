@@ -54,27 +54,6 @@ void obobj_mark(ob_Obj obj) {
   obobj_visit_before(obj, mark, NULL);
 }
 
-ob_Obj obobj_ref(ob_Obj obj) {
-  if (obj->refcount < UINT32_MAX) {
-    obj->refcount++;
-  }
-
-  return obj;
-}
-
-// true if rc=0
-bool obobj_unref(ob_Obj obj) {
-  if (obj == NULL) {
-    return false;
-  }
-
-  if (obj->refcount < UINT32_MAX) {
-    obj->refcount--;
-  }
-
-  return obj->refcount == 0;
-}
-
 void obobj_destroy(ob_Obj obj) {
   switch (obobj_get_tag(obj)) {
   case OBOBJ_SLOTS: {

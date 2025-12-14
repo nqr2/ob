@@ -1,4 +1,5 @@
 #include <ob/Exn.h>
+#include <ob/Exncodes.h>
 
 #include <string.h>
 
@@ -34,6 +35,16 @@ const ob_Exndata *obexn_data(ob_Exnbuf *buf) {
   }
 
   return NULL;
+}
+
+ob_Exncode obexn_code(ob_Exnbuf *buf) {
+  struct Entry *entry = obarr_last(&buf->entries, sizeof(struct Entry));
+
+  if (entry) {
+    return entry->code;
+  }
+
+  return OB_OK;
 }
 
 void obexn_throw(ob_Exnbuf *buf, ob_Exncode code, ob_Exndata data) {
