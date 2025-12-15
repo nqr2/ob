@@ -7,20 +7,23 @@
 #include <ob/Parse.h>
 #include <ob/String.h>
 
+#include <ob/Std.h>
+#include <ob/bits/AddMethods.h>
+
 #include <stdio.h>
 #include <string.h>
 
 void obj_print(ob_Context ctx, ob_Obj receiver) {
-
   auto tag = obobj_get_tag(receiver);
   switch (tag) {
   case OBOBJ_NIL:
     printf("nil");
     break;
 
-  case OBOBJ_SYMBOL:
-    putchar('#');
-    [[fallthrough]];
+  case OBOBJ_SYMBOL: {
+    auto str = (ob_Str *)obobj_get_data(receiver);
+    printf("#'%.*s'", (int)obstr_get_length(*str), obstr_get_data(ctx, *str));
+  } break;
 
   case OBOBJ_STRING: {
     auto str = (ob_Str *)obobj_get_data(receiver);
@@ -69,7 +72,7 @@ void obj_print(ob_Context ctx, ob_Obj receiver) {
   case OBOBJ_LIGHTCMETHOD: {
     auto method = (ob_FnCMethod *)obobj_get_data(receiver);
     void *ptr = NULL;
-    memcpy((void *)&ptr, (void *)&method, sizeof(void *));
+    memcpy((void *)&ptr, (void *)method, sizeof(void *));
     printf("#<cmethod:%p>", ptr);
   } break;
 
@@ -169,44 +172,17 @@ void repl(ob_Context ctx) {
   obarr_free(&line);
 }
 
-void add_method(ob_Context ctx, ob_Obj target, const char *name,
-                ob_FnCMethod method) {
-  ASSERT(obobj_get_tag(target) == OBOBJ_SLOTS, "expected a slots object");
-
-  ob_ObjSlots *slots = obobj_get_data(target);
-
-  auto obj = obctx_alloc_lightcmethod(ctx, method);
-  auto hash = obhash_start(strlen(name), name);
-
-  obtbl_set(&slots->slots, hash, (void *)obj);
-}
-
-typedef struct {
-  const char *name;
-  ob_FnCMethod method;
-} Entry;
-
-void add_methods(ob_Context ctx, ob_Obj target, const Entry *entries) {
-  while (entries->name != NULL) {
-    add_method(ctx, target, entries->name, entries->method);
-
-    entries++;
-  }
-}
-
 int main(int argn, char *argv[]) {
   auto alloc = oballoc_create();
 
   auto ctx = obctx_create(&alloc);
+  oblib_load_all(ctx);
 
-  auto lib = (Entry[]){
-      {"print", o__print},
-      {"right:", o__other},
-      {">:", o__other},
-      {NULL, NULL},
-  };
-
-  add_methods(ctx, ctx->proto_object, lib);
+  ob_add_methods(ctx, ctx->proto_object,
+                 (ob_MethodEntry[]){{"print", o__print},
+                                    {"right:", o__other},
+                                    {">:", o__other},
+                                    OB_METHODS_END});
 
   if (argn != 1) {
     for (int i = 1; i < argn; i++) {

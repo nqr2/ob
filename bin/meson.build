@@ -1,6 +1,6 @@
 ob = executable(
   'ob',
   'src/ob.c',
-  dependencies: [obCore],
+  dependencies: [obCore, obStd],
   install: true
 )

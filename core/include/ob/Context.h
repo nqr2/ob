@@ -41,8 +41,8 @@ ob_Context obctx_create(ob_Allocator *alloc);
 void obctx_destroy(ob_Context ctx);
 
 ob_Obj obctx_allocate(ob_Context ctx, size_t payload_size);
-ob_Obj obctx_alloc_symbol(ob_Context ctx, ob_String *symbol);
-ob_Obj obctx_alloc_string(ob_Context ctx, ob_String *string);
+ob_Obj obctx_alloc_symbol(ob_Context ctx, ob_Str symbol);
+ob_Obj obctx_alloc_string(ob_Context ctx, ob_Str string);
 ob_Obj obctx_alloc_slots(ob_Context ctx, ob_Obj prototype);
 ob_Obj obctx_alloc_number(ob_Context ctx, ob_Number number);
 ob_Obj obctx_alloc_integer(ob_Context ctx, int64_t number);
