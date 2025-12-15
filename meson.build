@@ -17,4 +17,5 @@ endif
 
 subdir('core')
 subdir('tools')
+subdir('std')
 subdir('bin')
