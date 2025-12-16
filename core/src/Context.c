@@ -193,7 +193,7 @@ ob_Obj obctx_alloc_lightcdata(ob_Context ctx, void *cdata) {
   return obj;
 }
 
-void obctx_deallocate(ob_Context ctx, ob_Obj object) {
+static void deallocate(ob_Context ctx, ob_Obj object) {
   auto size = sizeof(ob_Object) + object->size;
 
   obobj_destroy(object);
@@ -236,18 +236,18 @@ static void mark(ob_Context ctx) {
 static void sweep(ob_Context ctx) {
   obstr_sweep(ctx);
 
-  ob_Object *newlive = NULL;
+  ob_Obj newlive = NULL;
   auto live = ctx->objects;
 
   while (live != NULL) {
-    ob_Object *next = live->next;
+    ob_Obj next = live->next;
 
     if (obobj_get_mark(live)) {
       live->header.mark = false;
       live->next = newlive;
       newlive = live;
     } else {
-      obctx_deallocate(ctx, live);
+      deallocate(ctx, live);
     }
 
     live = next;
@@ -274,7 +274,7 @@ void obctx_gc(ob_Context ctx) {
 
 void obctx_enter_activation(ob_Context ctx, ob_Obj caller, ob_Obj method,
                             ob_Obj receiver) {
-  ob_Object *act = obctx_allocate(ctx, sizeof(ob_ObjActivation));
+  auto act = obctx_allocate(ctx, sizeof(ob_ObjActivation));
 
   ob_ObjActivation *data = obobj_get_data(act);
   data->parent = ctx->activation;

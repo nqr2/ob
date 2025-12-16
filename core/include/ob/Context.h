@@ -59,8 +59,6 @@ ob_Obj obctx_alloc_method(ob_Context ctx);
 ob_Obj obctx_alloc_lightcmethod(ob_Context ctx, ob_FnCMethod method);
 ob_Obj obctx_alloc_lightcdata(ob_Context ctx, void *cdata);
 
-void obctx_deallocate(ob_Context ctx, ob_Obj object);
-
 void obctx_gc(ob_Context ctx);
 
 void obctx_enter_activation(ob_Context ctx, ob_Obj caller, ob_Obj method,
