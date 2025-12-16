@@ -65,6 +65,8 @@ void obbc_run(ob_Context ctx, size_t len, const uint8_t *code) {
       break;
     }
 
+    obctx_gc(ctx);
+
     index = 0;
   }
 }

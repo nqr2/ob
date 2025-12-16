@@ -14,8 +14,14 @@
 #include <ctype.h>
 #include <string.h>
 
+#define DEFAULT_GC_FACTOR 1.5f
+
+static void sweep(ob_Context ctx);
+
 ob_Context obctx_create(ob_Allocator *alloc) {
   ob_Context ctx = ob_allocate(alloc, sizeof(struct Context));
+
+  ctx->gc_state.factor = DEFAULT_GC_FACTOR;
 
   obarr_init(&ctx->stack, alloc);
   obarr_init(&ctx->string_data, alloc);
@@ -50,8 +56,8 @@ void obctx_destroy(ob_Context ctx) {
 
   // TODO: get rid of objects and strings here
 
-  obctx_sweep(ctx);
-  obctx_sweep(ctx);
+  sweep(ctx);
+  sweep(ctx);
 
   obarr_free(&ctx->stack);
   obarr_free(&ctx->string_data);
@@ -72,6 +78,8 @@ ob_Obj obctx_allocate(ob_Context ctx, size_t payload_size) {
   obj->size = payload_size;
 
   ctx->objects = obj;
+
+  ctx->gc_state.current_hs += sizeof(ob_Object) + payload_size;
 
   return obj;
 }
@@ -185,9 +193,19 @@ ob_Obj obctx_alloc_lightcdata(ob_Context ctx, void *cdata) {
   return obj;
 }
 
-void obctx_mark(ob_Context ctx) {
+void obctx_deallocate(ob_Context ctx, ob_Obj object) {
+  auto size = sizeof(ob_Object) + object->size;
+
+  obobj_destroy(object);
+  ob_deallocate(ctx->allocator, size, object);
+
+  ctx->gc_state.current_hs -= size;
+}
+
+static void mark(ob_Context ctx) {
   obobj_mark(ctx->activation);
 
+  obobj_mark(ctx->proto_object);
   obobj_mark(ctx->proto_nil);
   obobj_mark(ctx->proto_symbol);
   obobj_mark(ctx->proto_string);
@@ -198,6 +216,8 @@ void obctx_mark(ob_Context ctx) {
   obobj_mark(ctx->proto_lightcmethod);
   obobj_mark(ctx->proto_lightcdata);
   obobj_mark(ctx->proto_activation);
+
+  obobj_mark(ctx->shell);
 
   auto data = (ob_Obj *)ctx->stack.data;
 
@@ -213,7 +233,7 @@ void obctx_mark(ob_Context ctx) {
   }
 }
 
-void obctx_sweep(ob_Context ctx) {
+static void sweep(ob_Context ctx) {
   obstr_sweep(ctx);
 
   ob_Object *newlive = NULL;
@@ -227,14 +247,29 @@ void obctx_sweep(ob_Context ctx) {
       live->next = newlive;
       newlive = live;
     } else {
-      obobj_destroy(live);
-      ob_deallocate(ctx->allocator, sizeof(ob_Object) + live->size, live);
+      obctx_deallocate(ctx, live);
     }
 
     live = next;
   }
 
   ctx->objects = newlive;
+}
+
+void obctx_gc(ob_Context ctx) {
+  if (!ctx->gc_state.enabled) {
+    return;
+  }
+
+  auto max_hs =
+      (size_t)((float)ctx->gc_state.previous_hs * ctx->gc_state.factor);
+
+  if (ctx->gc_state.current_hs > max_hs) {
+    mark(ctx);
+    sweep(ctx);
+
+    ctx->gc_state.previous_hs = ctx->gc_state.current_hs;
+  }
 }
 
 void obctx_enter_activation(ob_Context ctx, ob_Obj caller, ob_Obj method,
@@ -368,6 +403,8 @@ void obctx_send(ob_Context ctx, ob_Obj recv, ob_String *selector) {
   auto tag = obobj_get_tag(invoked);
 
   if (tag == OBOBJ_LIGHTCMETHOD) {
+    ctx->gc_state.enabled = false;
+
     obctx_enter_activation(ctx, ctx->activation, invoked, recv);
     auto data = (ob_FnCMethod *)obobj_get_data(invoked);
 
@@ -378,6 +415,8 @@ void obctx_send(ob_Context ctx, ob_Obj recv, ob_String *selector) {
     obctx_leave_activation(ctx);
 
     // TODO: check that we actually popped n args
+
+    ctx->gc_state.enabled = true;
   }
 
   else if (tag == OBOBJ_METHOD) {

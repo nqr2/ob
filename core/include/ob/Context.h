@@ -14,6 +14,13 @@
 #include "String.h"
 
 typedef struct Context {
+  struct {
+    bool enabled;
+    float factor;
+    size_t previous_hs;
+    size_t current_hs;
+  } gc_state;
+
   ob_Allocator *allocator;
 
   ob_Array stack;
@@ -52,8 +59,9 @@ ob_Obj obctx_alloc_method(ob_Context ctx);
 ob_Obj obctx_alloc_lightcmethod(ob_Context ctx, ob_FnCMethod method);
 ob_Obj obctx_alloc_lightcdata(ob_Context ctx, void *cdata);
 
-void obctx_mark(ob_Context ctx);
-void obctx_sweep(ob_Context ctx);
+void obctx_deallocate(ob_Context ctx, ob_Obj object);
+
+void obctx_gc(ob_Context ctx);
 
 void obctx_enter_activation(ob_Context ctx, ob_Obj caller, ob_Obj method,
                             ob_Obj receiver);
