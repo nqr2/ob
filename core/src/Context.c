@@ -242,7 +242,7 @@ static void sweep(ob_Context ctx) {
   while (live != NULL) {
     ob_Obj next = live->next;
 
-    if (obobj_get_mark(live)) {
+    if (live->header.mark) {
       live->header.mark = false;
       live->next = newlive;
       newlive = live;

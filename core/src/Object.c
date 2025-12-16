@@ -41,7 +41,7 @@ void obobj_mark(ob_Obj obj) {
   switch (obj->header.tag) {
   case OBOBJ_STRING:
   case OBOBJ_SYMBOL: {
-    ob_Str *str = (ob_Str *)obobj_get_data(obj);
+    auto str = (ob_Str *)obobj_get_data(obj);
     obstr_mark(*str);
   } break;
 
@@ -51,7 +51,7 @@ void obobj_mark(ob_Obj obj) {
 
   obj->header.mark = true;
 
-  obobj_visit_before(obj, mark, NULL);
+  obobj_visit(obj, VISIT_BEFORE, mark, NULL);
 }
 
 void obobj_destroy(ob_Obj obj) {
