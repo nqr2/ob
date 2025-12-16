@@ -199,9 +199,9 @@ void obctx_mark(ob_Context ctx) {
   obobj_mark(ctx->proto_lightcdata);
   obobj_mark(ctx->proto_activation);
 
-  auto data = (ob_Object **)ctx->stack.data;
+  auto data = (ob_Obj *)ctx->stack.data;
 
-  for (size_t i = 0; i < ctx->stack.size / sizeof(ob_Object *); i++) {
+  for (size_t i = 0; i < ctx->stack.size / sizeof(ob_Obj); i++) {
     obobj_mark(data[i]);
   }
 

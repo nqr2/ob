@@ -92,9 +92,9 @@ static void write_obj(ob_Obj object, void *userdata) {
   case OBOBJ_SYMBOL: // <length> <characters>
   case OBOBJ_STRING: // same
   {
-    ob_Str str = obobj_get_data(object);
-    auto length = obstr_get_length(str);
-    auto data = obstr_get_data(srl->ctx, str);
+    ob_Str *str = (ob_Str *)obobj_get_data(object);
+    auto length = obstr_get_length(*str);
+    auto data = obstr_get_data(srl->ctx, *str);
 
     write_int(srl, length);
     obarr_push(&srl->buffer, length, data);

@@ -437,9 +437,8 @@ static int p_message(Reader *rdr, bool explicitp) {
         obarr_push(&msg, sizeof(char) * (rdr->head - begin), begin);
       }
 
-      // TODO: actually intern this
       auto sel = obstr_create(rdr->context, msg.size, msg.data);
-      auto objsel = obctx_alloc_string(rdr->context, sel);
+      auto objsel = obctx_alloc_symbol(rdr->context, sel);
 
       auto index = obarr_length(&rdr->output->literals, sizeof(ob_Obj));
       obarr_push(&rdr->output->literals, sizeof(ob_Obj), (const void *)&objsel);
@@ -451,7 +450,7 @@ static int p_message(Reader *rdr, bool explicitp) {
 
       index = obbc_append_index(&rdr->output->bytecode, index);
       emit_send(rdr, index, explicitp);
-      explicitp = false;
+      explicitp = true;
       continue;
     }
 
@@ -462,7 +461,7 @@ static int p_message(Reader *rdr, bool explicitp) {
       rdr_takewhile(rdr, is_operator);
 
       auto sel = obstr_create(rdr->context, rdr->head - begin, begin);
-      auto objsel = obctx_alloc_string(rdr->context, sel);
+      auto objsel = obctx_alloc_symbol(rdr->context, sel);
 
       p_expression(rdr);
 
