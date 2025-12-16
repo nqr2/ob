@@ -94,7 +94,7 @@ ob_Obj obctx_alloc_symbol(ob_Context ctx, ob_Str symbol) {
   auto sym = (ob_Str *)obobj_get_data(obj);
   *sym = symbol;
 
-  obtbl_set(&ctx->interned, hash, (void *)&obj);
+  obtbl_set(&ctx->interned, hash, (void *)obj);
 
   return obj;
 }
@@ -177,7 +177,7 @@ ob_Obj obctx_alloc_lightcmethod(ob_Context ctx, ob_FnCMethod method) {
 
 ob_Obj obctx_alloc_lightcdata(ob_Context ctx, void *cdata) {
   auto obj = obctx_allocate(ctx, sizeof(void *));
-  obj->header.tag = OBOBJ_LIGHTCMETHOD;
+  obj->header.tag = OBOBJ_LIGHTCDATA;
 
   auto data = (void **)obobj_get_data(obj);
   *data = cdata;

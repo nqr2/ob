@@ -95,7 +95,7 @@ void obobj_visit(ob_Object *obj, ob_VisitFlags flags, ob_FnVisit visit,
   case OBOBJ_SLOTS: {
     ob_ObjSlots *data = obobj_get_data(obj);
 
-    ob_Object *ref = NULL;
+    ob_Obj ref = NULL;
     uint64_t index = 0;
 
     while (obtbl_iterate(&data->slots, &index, NULL, (void **)&ref)) {
@@ -117,8 +117,8 @@ void obobj_visit(ob_Object *obj, ob_VisitFlags flags, ob_FnVisit visit,
   case OBOBJ_METHOD: {
     ob_ObjMethod *data = obobj_get_data(obj);
 
-    for (size_t i = 0; i < data->literals.size / sizeof(ob_Object *); i++) {
-      ob_Object *item = ((ob_Object **)data->literals.data)[i];
+    for (size_t i = 0; i < data->literals.size / sizeof(ob_Obj); i++) {
+      ob_Obj item = ((ob_Obj *)data->literals.data)[i];
 
       obobj_visit(item, flags, visit, userdata);
     }

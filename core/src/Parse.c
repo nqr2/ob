@@ -396,13 +396,15 @@ static bool p_primary(Reader *rdr) {
   return true;
 }
 
-static void emit_send(Reader *rdr, int index, bool explicitp) {
+static void emit_send(Reader *rdr, size_t index, bool explicitp) {
+  index = obbc_append_index(&rdr->output->bytecode, index);
+
   obbc_append_insn(
       &rdr->output->bytecode,
       OBBC_MAKE((explicitp ? OBBC_SEND : OBBC_IMPLICIT_SEND), index));
 }
 
-static int p_message(Reader *rdr, bool explicitp) {
+static void p_message(Reader *rdr, bool explicitp) {
   auto msg = (ob_Array){};
   obarr_init(&msg, rdr->context->allocator);
 
@@ -445,13 +447,14 @@ static int p_message(Reader *rdr, bool explicitp) {
 
       if (is_keyword) {
         obarr_free(&msg);
-        return obbc_append_index(&rdr->output->bytecode, index);
+        emit_send(rdr, index, explicitp);
+        return;
       }
 
-      index = obbc_append_index(&rdr->output->bytecode, index);
+      obarr_free(&msg);
       emit_send(rdr, index, explicitp);
-      explicitp = true;
-      continue;
+      p_message(rdr, true);
+      return;
     }
 
     if (is_operator(*rdr->head)) {
@@ -468,10 +471,11 @@ static int p_message(Reader *rdr, bool explicitp) {
       auto index = obarr_length(&rdr->output->literals, sizeof(ob_Obj));
       obarr_push(&rdr->output->literals, sizeof(ob_Obj), (const void *)&objsel);
 
-      index = obbc_append_index(&rdr->output->bytecode, index);
       emit_send(rdr, index, explicitp);
-      explicitp = false;
-      continue;
+
+      obarr_free(&msg);
+      p_message(rdr, true);
+      return;
     }
 
     break;
@@ -479,7 +483,6 @@ static int p_message(Reader *rdr, bool explicitp) {
 
   // else, there was no message.
   obarr_free(&msg);
-  return -1;
 }
 
 static void p_expression(Reader *rdr) {
@@ -494,18 +497,7 @@ static void p_expression(Reader *rdr) {
   }
 
   auto explicit_receiver = p_primary(rdr);
-  auto msg_index = p_message(rdr, explicit_receiver);
-
-  if (msg_index == -1) {
-    return;
-  }
-
-  if (explicit_receiver) {
-    obbc_append_insn(&rdr->output->bytecode, OBBC_MAKE(OBBC_SEND, msg_index));
-  } else {
-    obbc_append_insn(&rdr->output->bytecode,
-                     OBBC_MAKE(OBBC_IMPLICIT_SEND, msg_index));
-  }
+  p_message(rdr, explicit_receiver);
 }
 
 static void p_toplevel(Reader *rdr) {
