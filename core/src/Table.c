@@ -52,8 +52,6 @@ void obtbl_reserve(ob_Table *tbl, size_t newcap) {
   auto new_entries =
       (TableEntry *)ob_allocate(tbl->allocator, newcap * sizeof(TableEntry));
 
-  memset(new_entries, 0, newcap * sizeof(TableEntry));
-
   tbl->length = 0;
 
   for (size_t i = 0; i < tbl->capacity; i++) {
@@ -67,8 +65,7 @@ void obtbl_reserve(ob_Table *tbl, size_t newcap) {
     }
 
     dest = tbl__find(newcap, new_entries, entry->key);
-
-    memcpy(dest, entry, sizeof(TableEntry));
+    *dest = *entry;
 
     tbl->length++;
   }
@@ -175,7 +172,7 @@ bool obtbl_iterate(ob_Table *table, uint64_t *index, uint64_t *key,
         *key = entry->key;
       }
 
-      if (key != NULL) {
+      if (value != NULL) {
         *value = entry->value;
       }
 
@@ -190,7 +187,6 @@ bool obtbl_iterate(ob_Table *table, uint64_t *index, uint64_t *key,
   }
 
   current_key += 1;
-
   *index = current_key;
   return true;
 }

@@ -24,6 +24,8 @@ bool obobj_get_mark(ob_Obj obj) {
   return obj->header.mark;
 }
 
+// TODO:undebug
+#include <stdio.h>
 static void mark(ob_Obj obj, void *unused) {
   (void)unused;
   obobj_mark(obj);
@@ -38,6 +40,9 @@ void obobj_mark(ob_Obj obj) {
     return;
   }
 
+  printf("mark: %p\n", obj);
+  obj->header.mark = true;
+
   switch (obj->header.tag) {
   case OBOBJ_STRING:
   case OBOBJ_SYMBOL: {
@@ -49,9 +54,7 @@ void obobj_mark(ob_Obj obj) {
     break;
   }
 
-  obj->header.mark = true;
-
-  obobj_visit(obj, VISIT_BEFORE, mark, NULL);
+  obobj_visit(obj, VISIT_NONE, mark, NULL);
 }
 
 void obobj_destroy(ob_Obj obj) {
@@ -82,7 +85,6 @@ void obobj_destroy(ob_Obj obj) {
 
 void obobj_visit(ob_Object *obj, ob_VisitFlags flags, ob_FnVisit visit,
                  void *userdata) {
-  // TODO: properly handle NULLs.
   if (obj == NULL) {
     return;
   }

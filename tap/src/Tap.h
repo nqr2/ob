@@ -11,6 +11,12 @@ typedef struct {
   bool should_fail;
 } Test;
 
+#define PASS(Function)                                                         \
+  {.name = #Function, .body = (Function), .should_fail = false}
+
+#define FAIL(Function)                                                         \
+  {.name = #Function, .body = (Function), .should_fail = true}
+
 #define SUITE_END {.name = NULL, .body = NULL, .should_fail = false}
 
 void skip();

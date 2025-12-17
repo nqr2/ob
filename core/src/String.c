@@ -92,15 +92,11 @@ void obstr_sweep(ob_Context ctx) {
 
     if (obstr_get_mark(strings)) {
       obstr_unmark(strings);
+      strings->next = new;
+      new = strings;
     } else {
       str__delete(ctx, strings);
       ob_deallocate(ctx->allocator, sizeof(struct String), strings);
-      strings = NULL;
-    }
-
-    if (strings != NULL) {
-      strings->next = new;
-      new = strings;
     }
 
     strings = next;

@@ -16,12 +16,13 @@
 
 #define DEFAULT_GC_FACTOR 1.5f
 
-static void sweep(ob_Context ctx);
+static void gc_sweep(ob_Context ctx);
 
 ob_Context obctx_create(ob_Allocator *alloc) {
   ob_Context ctx = ob_allocate(alloc, sizeof(struct Context));
 
   ctx->gc_state.factor = DEFAULT_GC_FACTOR;
+  ctx->gc_state.enabled = true;
 
   obarr_init(&ctx->stack, alloc);
   obarr_init(&ctx->string_data, alloc);
@@ -42,11 +43,13 @@ ob_Context obctx_create(ob_Allocator *alloc) {
   ctx->proto_lightcdata = obctx_alloc_slots(ctx, ctx->proto_object);
   ctx->proto_activation = obctx_alloc_slots(ctx, ctx->proto_object);
 
-  ctx->shell = obctx_alloc_slots(ctx, ctx->proto_slots);
+  ctx->shell = obctx_alloc_slots(ctx, NULL);
 
   obtbl_init(&ctx->interned, ctx->allocator);
 
   obexn_init(&ctx->exnbuf, ctx->allocator);
+
+  ctx->gc_state.previous_hs = ctx->gc_state.current_hs;
 
   return ctx;
 }
@@ -54,10 +57,8 @@ ob_Context obctx_create(ob_Allocator *alloc) {
 void obctx_destroy(ob_Context ctx) {
   auto alloc = ctx->allocator;
 
-  // TODO: get rid of objects and strings here
-
-  sweep(ctx);
-  sweep(ctx);
+  gc_sweep(ctx);
+  gc_sweep(ctx);
 
   obarr_free(&ctx->stack);
   obarr_free(&ctx->string_data);
@@ -202,10 +203,11 @@ static void deallocate(ob_Context ctx, ob_Obj object) {
   ctx->gc_state.current_hs -= size;
 }
 
-static void mark(ob_Context ctx) {
+static void gc_mark(ob_Context ctx) {
   obobj_mark(ctx->activation);
 
   obobj_mark(ctx->proto_object);
+
   obobj_mark(ctx->proto_nil);
   obobj_mark(ctx->proto_symbol);
   obobj_mark(ctx->proto_string);
@@ -233,7 +235,9 @@ static void mark(ob_Context ctx) {
   }
 }
 
-static void sweep(ob_Context ctx) {
+//TODO:undebug
+#include <stdio.h>
+static void gc_sweep(ob_Context ctx) {
   obstr_sweep(ctx);
 
   ob_Obj newlive = NULL;
@@ -247,6 +251,7 @@ static void sweep(ob_Context ctx) {
       live->next = newlive;
       newlive = live;
     } else {
+      printf("swipe:%p\n", live);
       deallocate(ctx, live);
     }
 
@@ -265,8 +270,8 @@ void obctx_gc(ob_Context ctx) {
       (size_t)((float)ctx->gc_state.previous_hs * ctx->gc_state.factor);
 
   if (ctx->gc_state.current_hs > max_hs) {
-    mark(ctx);
-    sweep(ctx);
+    gc_mark(ctx);
+    gc_sweep(ctx);
 
     ctx->gc_state.previous_hs = ctx->gc_state.current_hs;
   }
@@ -275,6 +280,7 @@ void obctx_gc(ob_Context ctx) {
 void obctx_enter_activation(ob_Context ctx, ob_Obj caller, ob_Obj method,
                             ob_Obj receiver) {
   auto act = obctx_allocate(ctx, sizeof(ob_ObjActivation));
+  act->header.tag = OBOBJ_ACTIVATION;
 
   ob_ObjActivation *data = obobj_get_data(act);
   data->parent = ctx->activation;

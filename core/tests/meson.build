@@ -3,6 +3,7 @@ tests = [
   'argparse',
   'assert',
   'hash',
+  'table',
 ]
 
 foreach t : tests
