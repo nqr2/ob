@@ -32,16 +32,16 @@ ob_Context obctx_create(ob_Allocator *alloc) {
 
   ctx->proto_object = obctx_alloc_slots(ctx, NULL);
 
-  ctx->proto_nil = obctx_alloc_slots(ctx, ctx->proto_object);
-  ctx->proto_symbol = obctx_alloc_slots(ctx, ctx->proto_object);
-  ctx->proto_string = obctx_alloc_slots(ctx, ctx->proto_object);
-  ctx->proto_slots = obctx_alloc_slots(ctx, ctx->proto_object);
-  ctx->proto_number = obctx_alloc_slots(ctx, ctx->proto_object);
-  ctx->proto_array = obctx_alloc_slots(ctx, ctx->proto_object);
-  ctx->proto_method = obctx_alloc_slots(ctx, ctx->proto_object);
-  ctx->proto_lightcmethod = obctx_alloc_slots(ctx, ctx->proto_object);
-  ctx->proto_lightcdata = obctx_alloc_slots(ctx, ctx->proto_object);
-  ctx->proto_activation = obctx_alloc_slots(ctx, ctx->proto_object);
+  ctx->proto_nil = obctx_alloc_slots(ctx, NULL);
+  ctx->proto_symbol = obctx_alloc_slots(ctx, NULL);
+  ctx->proto_string = obctx_alloc_slots(ctx, NULL);
+  ctx->proto_slots = obctx_alloc_slots(ctx, NULL);
+  ctx->proto_number = obctx_alloc_slots(ctx, NULL);
+  ctx->proto_array = obctx_alloc_slots(ctx, NULL);
+  ctx->proto_method = obctx_alloc_slots(ctx, NULL);
+  ctx->proto_lightcmethod = obctx_alloc_slots(ctx, NULL);
+  ctx->proto_lightcdata = obctx_alloc_slots(ctx, NULL);
+  ctx->proto_activation = obctx_alloc_slots(ctx, NULL);
 
   ctx->shell = obctx_alloc_slots(ctx, NULL);
 
@@ -235,7 +235,7 @@ static void gc_mark(ob_Context ctx) {
   }
 }
 
-//TODO:undebug
+// TODO:undebug
 #include <stdio.h>
 static void gc_sweep(ob_Context ctx) {
   obstr_sweep(ctx);
