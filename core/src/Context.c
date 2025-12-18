@@ -49,7 +49,7 @@ ob_Context obctx_create(ob_Allocator *alloc) {
 
   obexn_init(&ctx->exnbuf, ctx->allocator);
 
-  ctx->gc_state.previous_hs = ctx->gc_state.current_hs;
+  ctx->gc_state.previous_hs = ctx->allocator->used;
 
   return ctx;
 }
@@ -80,8 +80,6 @@ ob_Obj obctx_allocate(ob_Context ctx, ob_ObjectTag tag, size_t payload_size) {
   obj->header.tag = tag;
 
   ctx->objects = obj;
-
-  ctx->gc_state.current_hs += sizeof(ob_Object) + payload_size;
 
   return obj;
 }
@@ -192,8 +190,6 @@ static void deallocate(ob_Context ctx, ob_Obj object) {
 
   obobj_destroy(object);
   ob_deallocate(ctx->allocator, size, object);
-
-  ctx->gc_state.current_hs -= size;
 }
 
 static void gc_mark(ob_Context ctx) {
@@ -260,11 +256,11 @@ void obctx_gc(ob_Context ctx) {
   auto max_hs =
       (size_t)((float)ctx->gc_state.previous_hs * ctx->gc_state.factor);
 
-  if (ctx->gc_state.current_hs > max_hs) {
+  if (ctx->allocator->used > max_hs) {
     gc_mark(ctx);
     gc_sweep(ctx);
 
-    ctx->gc_state.previous_hs = ctx->gc_state.current_hs;
+    ctx->gc_state.previous_hs = ctx->allocator->used;
   }
 }
 

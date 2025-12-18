@@ -18,7 +18,6 @@ typedef struct Context {
     bool enabled;
     float factor;
     size_t previous_hs;
-    size_t current_hs;
   } gc_state;
 
   ob_Allocator *allocator;

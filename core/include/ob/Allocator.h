@@ -20,6 +20,7 @@ typedef void *(*ob_FnAllocate)(void *userdata, size_t ptr_size, void *ptr,
 /// A vtable for a memory allocator.
 typedef struct {
   ob_FnAllocate allocate;
+  size_t used;
   void *userdata;
 } ob_Allocator;
 

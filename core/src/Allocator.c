@@ -26,6 +26,7 @@ ob_Allocator oballoc_create() {
   auto result = (ob_Allocator){};
 
   result.userdata = NULL;
+  result.used = 0;
   result.allocate = a_alloc;
 
   return result;
@@ -46,7 +47,10 @@ void *ob_reallocate(ob_Allocator *alloc, size_t old, void *source, size_t new) {
   }
 
   if (old < new) {
+    alloc->used += new - old;
     memset(((uint8_t *)ptr) + old, 0, new - old);
+  } else if (old > new) {
+    alloc->used -= old - new;
   }
 
   return ptr;
