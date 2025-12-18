@@ -1,3 +1,4 @@
+#include <ob/Argparse.h>
 #include <ob/Array.h>
 #include <ob/Assert.h>
 #include <ob/Context.h>
@@ -145,6 +146,7 @@ void repl(ob_Context ctx) {
 
   while (true) {
     obarr_clear(&line);
+    obarr_clear(&ctx->stack);
 
     if (feof(stdin)) {
       break;
@@ -180,7 +182,17 @@ void repl(ob_Context ctx) {
   obarr_free(&line);
 }
 
-int main(int argn, char *argv[]) {
+int main(int argn, const char *argv[]) {
+  bool is_interactive = argn == 1;
+
+  auto f_interactive =
+      obarg_create_flag('i', "interactive", OBARG_FLAG_SET, &is_interactive);
+  f_interactive.description = "Open the interactive shell";
+
+  auto parser = obarg_create_parser((ob_Flag[]){f_interactive, OB_FLAGS_END});
+
+  obarg_parse(&parser, argn, argv);
+
   auto alloc = oballoc_create();
 
   auto ctx = obctx_create(&alloc);
@@ -196,7 +208,9 @@ int main(int argn, char *argv[]) {
     for (int i = 1; i < argn; i++) {
       dofile(ctx, argv[i]);
     }
-  } else {
+  }
+
+  if (is_interactive) {
     repl(ctx);
   }
 
