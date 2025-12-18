@@ -71,6 +71,7 @@ typedef struct {
 } ob_ObjActivation;
 
 typedef void (*ob_FnVisit)(ob_Obj obj, void *userdata);
+typedef bool (*ob_FnVisitPredicate)(ob_Obj obj, void *userdata);
 
 typedef enum : uint8_t {
   VISIT_NONE = 0,
@@ -80,7 +81,7 @@ typedef enum : uint8_t {
 
 // NOTE: this also invokes visit on the obj in question
 void obobj_visit(ob_Obj obj, ob_VisitFlags flags, ob_FnVisit visit,
-                 void *userdata);
+                 ob_FnVisitPredicate predicate, void *userdata);
 
 #define obobj_visit_before(Obj, Visit, Userdata)                               \
   obobj_visit((Obj), VISIT_BEFORE, (Visit), (Userdata))

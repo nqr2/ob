@@ -24,24 +24,24 @@ bool obobj_get_mark(ob_Obj obj) {
   return obj->header.mark;
 }
 
-// TODO:undebug
-#include <stdio.h>
-static void mark(ob_Obj obj, void *unused) {
+static void mark_inner(ob_Obj obj, void *unused) {
   (void)unused;
+
+  obj->header.mark = true;
+
   obobj_mark(obj);
+}
+
+static bool mark_pred(ob_Obj obj, void *unused) {
+  (void)unused;
+
+  return obj->header.mark;
 }
 
 void obobj_mark(ob_Obj obj) {
   if (obj == NULL) {
     return;
   }
-
-  if (obj->header.mark) {
-    return;
-  }
-
-  printf("mark: %p\n", obj);
-  obj->header.mark = true;
 
   switch (obj->header.tag) {
   case OBOBJ_STRING:
@@ -54,7 +54,7 @@ void obobj_mark(ob_Obj obj) {
     break;
   }
 
-  obobj_visit(obj, VISIT_NONE, mark, NULL);
+  obobj_visit(obj, VISIT_AFTER, mark_inner, mark_pred, NULL);
 }
 
 void obobj_destroy(ob_Obj obj) {
@@ -84,8 +84,12 @@ void obobj_destroy(ob_Obj obj) {
 }
 
 void obobj_visit(ob_Object *obj, ob_VisitFlags flags, ob_FnVisit visit,
-                 void *userdata) {
+                 ob_FnVisitPredicate predicate, void *userdata) {
   if (obj == NULL) {
+    return;
+  }
+
+  if ((predicate != NULL) && predicate(obj, userdata)) {
     return;
   }
 
@@ -101,10 +105,10 @@ void obobj_visit(ob_Object *obj, ob_VisitFlags flags, ob_FnVisit visit,
     uint64_t index = 0;
 
     while (obtbl_iterate(&data->slots, &index, NULL, (void **)&ref)) {
-      obobj_visit(ref, flags, visit, userdata);
+      obobj_visit(ref, flags, visit, predicate, userdata);
     }
 
-    obobj_visit(data->prototype, flags, visit, userdata);
+    obobj_visit(data->prototype, flags, visit, predicate, userdata);
   } break;
 
   case OBOBJ_ARRAY: {
@@ -112,7 +116,8 @@ void obobj_visit(ob_Object *obj, ob_VisitFlags flags, ob_FnVisit visit,
 
     auto length = data->size / sizeof(ob_Obj);
     for (size_t i = 0; i < length; i++) {
-      obobj_visit(obarr_at(data, sizeof(ob_Obj), i), flags, visit, userdata);
+      auto item = obarr_at(data, sizeof(ob_Obj), i);
+      obobj_visit(item, flags, visit, predicate, userdata);
     }
   } break;
 
@@ -122,19 +127,19 @@ void obobj_visit(ob_Object *obj, ob_VisitFlags flags, ob_FnVisit visit,
     for (size_t i = 0; i < data->literals.size / sizeof(ob_Obj); i++) {
       ob_Obj item = ((ob_Obj *)data->literals.data)[i];
 
-      obobj_visit(item, flags, visit, userdata);
+      obobj_visit(item, flags, visit, predicate, userdata);
     }
 
-    obobj_visit(data->env, flags, visit, userdata);
+    obobj_visit(data->env, flags, visit, predicate, userdata);
   }; break;
 
   case OBOBJ_ACTIVATION: {
     ob_ObjActivation *data = obobj_get_data(obj);
-    obobj_visit(data->parent, flags, visit, userdata);
-    obobj_visit(data->caller, flags, visit, userdata);
-    obobj_visit(data->method, flags, visit, userdata);
-    obobj_visit(data->receiver, flags, visit, userdata);
-    obobj_visit(data->env, flags, visit, userdata);
+    obobj_visit(data->parent, flags, visit, predicate, userdata);
+    obobj_visit(data->caller, flags, visit, predicate, userdata);
+    obobj_visit(data->method, flags, visit, predicate, userdata);
+    obobj_visit(data->receiver, flags, visit, predicate, userdata);
+    obobj_visit(data->env, flags, visit, predicate, userdata);
   }; break;
 
   default:

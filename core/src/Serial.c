@@ -135,7 +135,7 @@ void obsrl_write(ob_Serial *srl, ob_Obj object) {
 
   obarr_push(&srl->buffer, sizeof(OB_SERIAL_HEADER), OB_SERIAL_HEADER);
 
-  obobj_visit_after(object, write_obj, srl);
+  obobj_visit(object, VISIT_AFTER, write_obj, NULL, srl);
 }
 
 static bool string_equal(size_t n, void *left, void *right) {
