@@ -350,7 +350,7 @@ ob_Obj obctx_get_prototype(ob_Context ctx, ob_Obj obj) {
   return obctx_get_prototype(ctx, NULL);
 }
 
-ob_Obj obctx_get_slot(ob_Context ctx, ob_Obj obj, ob_String *selector) {
+ob_Obj obctx_get_slot(ob_Context ctx, ob_Obj obj, ob_Str selector) {
   while (obj != NULL) {
     if (OBOBJ_ISA(obj, OBOBJ_SLOTS)) {
       ob_ObjSlots *data = obobj_get_data(obj);

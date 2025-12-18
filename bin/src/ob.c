@@ -167,6 +167,14 @@ void repl(ob_Context ctx) {
     }
 
     ob_run(ctx, line.size, line.data);
+
+    putchar('=');
+    putchar('\t');
+
+    auto obj = obctx_pop(ctx);
+    obj_print(ctx, obj);
+
+    putchar('\n');
   }
 
   obarr_free(&line);
