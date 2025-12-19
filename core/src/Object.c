@@ -76,6 +76,11 @@ void obobj_destroy(ob_Obj obj) {
     obarr_free(&data->bytecode);
   } break;
 
+  case OBOBJ_CDATA: {
+    ob_ObjCData *data = obobj_get_data(obj);
+    data->destroy(obj);
+  };
+
     // TODO: implement uninterning afterwards
 
   default:
@@ -139,6 +144,11 @@ void obobj_visit(ob_Object *obj, ob_VisitFlags flags, ob_FnVisit visit,
     obobj_visit(data->method, flags, visit, predicate, userdata);
     obobj_visit(data->receiver, flags, visit, predicate, userdata);
     obobj_visit(data->env, flags, visit, predicate, userdata);
+  }; break;
+
+  case OBOBJ_CDATA: {
+    ob_ObjCData *data = obobj_get_data(obj);
+    data->visit(obj, data->data);
   }; break;
 
   default:

@@ -40,7 +40,9 @@ ob_Context obctx_create(ob_Allocator *alloc) {
   ctx->proto_array = obctx_alloc_slots(ctx, NULL);
   ctx->proto_method = obctx_alloc_slots(ctx, NULL);
   ctx->proto_lightcmethod = obctx_alloc_slots(ctx, NULL);
+  ctx->proto_cmethod = obctx_alloc_slots(ctx, NULL);
   ctx->proto_lightcdata = obctx_alloc_slots(ctx, NULL);
+  ctx->proto_cdata = obctx_alloc_slots(ctx, NULL);
   ctx->proto_activation = obctx_alloc_slots(ctx, NULL);
 
   ctx->shell = obctx_alloc_slots(ctx, NULL);
@@ -185,6 +187,19 @@ ob_Obj obctx_alloc_lightcdata(ob_Context ctx, void *cdata) {
   return obj;
 }
 
+ob_Obj obctx_alloc_cdata(ob_Context ctx, ob_Obj prototype, ob_FnVisit visit,
+                         ob_FnDestroy destructor, void *data) {
+  auto obj = obctx_allocate(ctx, OBOBJ_CDATA, sizeof(ob_ObjCData));
+
+  ob_ObjCData *cdata = obobj_get_data(obj);
+  cdata->prototype = prototype;
+  cdata->visit = visit;
+  cdata->destroy = destructor;
+  cdata->data = data;
+
+  return obj;
+}
+
 static void deallocate(ob_Context ctx, ob_Obj object) {
   auto size = sizeof(ob_Object) + object->size;
 
@@ -205,7 +220,9 @@ static void gc_mark(ob_Context ctx) {
   obobj_mark(ctx->proto_array);
   obobj_mark(ctx->proto_method);
   obobj_mark(ctx->proto_lightcmethod);
+  obobj_mark(ctx->proto_cmethod);
   obobj_mark(ctx->proto_lightcdata);
+  obobj_mark(ctx->proto_cdata);
   obobj_mark(ctx->proto_activation);
 
   obobj_mark(ctx->shell);
@@ -332,12 +349,21 @@ ob_Obj obctx_get_prototype(ob_Context ctx, ob_Obj obj) {
     return ctx->proto_method;
   case OBOBJ_LIGHTCMETHOD:
     return ctx->proto_lightcmethod;
+  case OBOBJ_CMETHOD:
+    return ctx->proto_cmethod;
   case OBOBJ_LIGHTCDATA:
     return ctx->proto_lightcdata;
+  case OBOBJ_CDATA: {
+    ob_ObjCData *data = obobj_get_data(obj);
+
+    if (data->prototype != NULL) {
+      return data->prototype;
+    }
+
+    return ctx->proto_cdata;
+  }
   case OBOBJ_ACTIVATION:
     return ctx->proto_activation;
-  case OT_Ra:
-  case OT_Rb:
   case OT_Rc:
   case OT_Rd:
   case OT_Re:

@@ -21,10 +21,10 @@ typedef enum Tag : uint8_t {
   OBOBJ_ARRAY = 5,        // [ ... ]
   OBOBJ_METHOD = 6,       // closures
   OBOBJ_LIGHTCMETHOD = 7, // functions from C
-  OBOBJ_LIGHTCDATA = 8,   // data from C
-  OBOBJ_ACTIVATION = 9,   // call stack entry
-  OT_Ra = 10,
-  OT_Rb = 11,
+  OBOBJ_CMETHOD = 8,      // annotated cmethod
+  OBOBJ_LIGHTCDATA = 9,   // data from C
+  OBOBJ_CDATA = 10,       // annotated cdata
+  OBOBJ_ACTIVATION = 11,  // call stack entry
   OT_Rc = 12,
   OT_Rd = 13,
   OT_Re = 14,
@@ -69,7 +69,21 @@ typedef struct {
   ob_Obj env;      // this context's environment
 } ob_ObjActivation;
 
+typedef struct {
+  ob_Array parameters;
+  ob_FnCMethod method;
+} ob_ObjCMethod;
+
+typedef void (*ob_FnDestroy)(ob_Obj obj);
 typedef void (*ob_FnVisit)(ob_Obj obj, void *userdata);
+
+typedef struct {
+  ob_Obj prototype;
+  ob_FnVisit visit;
+  ob_FnDestroy destroy;
+  void *data;
+} ob_ObjCData;
+
 typedef bool (*ob_FnVisitPredicate)(ob_Obj obj, void *userdata);
 
 typedef enum : uint8_t {
