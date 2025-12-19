@@ -136,7 +136,6 @@ void obobj_visit(ob_Object *obj, ob_VisitFlags flags, ob_FnVisit visit,
   case OBOBJ_ACTIVATION: {
     ob_ObjActivation *data = obobj_get_data(obj);
     obobj_visit(data->parent, flags, visit, predicate, userdata);
-    obobj_visit(data->caller, flags, visit, predicate, userdata);
     obobj_visit(data->method, flags, visit, predicate, userdata);
     obobj_visit(data->receiver, flags, visit, predicate, userdata);
     obobj_visit(data->env, flags, visit, predicate, userdata);

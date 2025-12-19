@@ -264,13 +264,11 @@ void obctx_gc(ob_Context ctx) {
   }
 }
 
-void obctx_enter_activation(ob_Context ctx, ob_Obj caller, ob_Obj method,
-                            ob_Obj receiver) {
+void obctx_enter_activation(ob_Context ctx, ob_Obj method, ob_Obj receiver) {
   auto act = obctx_allocate(ctx, OBOBJ_ACTIVATION, sizeof(ob_ObjActivation));
 
   ob_ObjActivation *data = obobj_get_data(act);
   data->parent = ctx->activation;
-  data->caller = caller;
   data->method = method;
   data->receiver = receiver;
   data->env = obctx_alloc_slots(ctx, NULL);
@@ -405,7 +403,7 @@ void obctx_send(ob_Context ctx, ob_Obj recv, ob_String *selector) {
   if (tag == OBOBJ_LIGHTCMETHOD) {
     ctx->gc_state.enabled = false;
 
-    obctx_enter_activation(ctx, ctx->activation, invoked, recv);
+    obctx_enter_activation(ctx, invoked, recv);
     auto data = (ob_FnCMethod *)obobj_get_data(invoked);
 
     if (!(*data)(ctx)) {
@@ -420,7 +418,7 @@ void obctx_send(ob_Context ctx, ob_Obj recv, ob_String *selector) {
   }
 
   else if (tag == OBOBJ_METHOD) {
-    obctx_enter_activation(ctx, ctx->activation, invoked, recv);
+    obctx_enter_activation(ctx, invoked, recv);
 
     // TODO: bind every argument to the implicit recv
 

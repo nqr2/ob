@@ -64,7 +64,6 @@ typedef bool (*ob_FnCMethod)(ob_Context ctx);
 
 typedef struct {
   ob_Obj parent;   // the parent activation
-  ob_Obj caller;   // the method's caller
   ob_Obj method;   // this method
   ob_Obj receiver; // this method's receiver
   ob_Obj env;      // this context's environment

@@ -60,8 +60,7 @@ ob_Obj obctx_alloc_lightcdata(ob_Context ctx, void *cdata);
 
 void obctx_gc(ob_Context ctx);
 
-void obctx_enter_activation(ob_Context ctx, ob_Obj caller, ob_Obj method,
-                            ob_Obj receiver);
+void obctx_enter_activation(ob_Context ctx, ob_Obj method, ob_Obj receiver);
 void obctx_leave_activation(ob_Context ctx);
 
 void obctx_push(ob_Context ctx, ob_Obj obj);
