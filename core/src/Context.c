@@ -478,12 +478,11 @@ void obctx_send(ob_Context ctx, ob_Obj recv, ob_Str selector) {
   bool is_invocable = OBOBJ_IS_INVOCABLE(invoked);
 
   if (n_args != 0) {
-    ASSERT(OBOBJ_IS_INVOCABLE(invoked),
-           "tried to invoke a non-method object %p", invoked);
+    ASSERT(is_invocable, "tried to invoke a non-method object %p", invoked);
   }
 
-  ASSERT(obctx_checkstack(ctx, n_args + 1),
-         "expected to have %lu arguments on stack", n_args + 1);
+  ASSERT(obctx_checkstack(ctx, n_args),
+         "expected to have %lu arguments on stack", n_args);
 
   if (is_invocable) {
     obctx_enter_activation(ctx, invoked, recv);
