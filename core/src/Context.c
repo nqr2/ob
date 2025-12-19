@@ -469,6 +469,9 @@ void obctx_send(ob_Context ctx, ob_Obj recv, ob_Str selector) {
     }
   }
 
+  ASSERT(obctx_checkstack(ctx, n_args),
+         "expected to have %lu arguments on stack", n_args);
+
   ob_Obj invoked = NULL;
 
   if (!obctx_get_slot(ctx, &invoked, recv, selector)) {
@@ -480,9 +483,6 @@ void obctx_send(ob_Context ctx, ob_Obj recv, ob_Str selector) {
   if (n_args != 0) {
     ASSERT(is_invocable, "tried to invoke a non-method object %p", invoked);
   }
-
-  ASSERT(obctx_checkstack(ctx, n_args),
-         "expected to have %lu arguments on stack", n_args);
 
   if (is_invocable) {
     obctx_enter_activation(ctx, invoked, recv);

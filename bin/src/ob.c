@@ -78,13 +78,15 @@ void repl(ob_Context ctx) {
 
     ob_run(ctx, line.size, line.data);
 
-    putchar('=');
-    putchar('\t');
+    if (ctx->stack.size > 0) {
+      putchar('=');
+      putchar('\t');
 
-    auto obj = obctx_pop(ctx);
-    obj_print(ctx, obj);
+      auto obj = obctx_pop(ctx);
+      obj_print(ctx, obj);
 
-    putchar('\n');
+      putchar('\n');
+    }
   }
 
   obarr_free(&line);

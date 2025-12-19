@@ -34,4 +34,6 @@ bool obstr_get_mark(ob_Str str);
 
 void obstr_sweep(ob_Context ctx);
 
+ob_Str obstr_concat(ob_Context ctx, ob_Str left, ob_Str right);
+
 #endif

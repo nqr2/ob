@@ -3,6 +3,26 @@
 #include <ob/Context.h>
 #include <ob/Object.h>
 
+#include <ctype.h>
+
+static size_t nargs_for_sel(ob_Context ctx, ob_Str selector) {
+  size_t n_args = 0;
+
+  auto sel = obstr_get_data(ctx, selector);
+
+  if (ispunct(sel[0])) {
+    n_args = 1;
+  } else {
+    for (size_t i = 0; i < selector->length; i++) {
+      if (sel[i] == ':') {
+        n_args++;
+      }
+    }
+  }
+
+  return n_args;
+}
+
 void obbc_run(ob_Context ctx, size_t len, const uint8_t *code) {
   uint64_t index = 0;
 
@@ -24,18 +44,23 @@ void obbc_run(ob_Context ctx, size_t len, const uint8_t *code) {
     }; break;
 
     case OBBC_SEND: {
-      ob_Obj recv = NULL;
-      obarr_pop(&ctx->stack, sizeof(ob_Obj), (void *)&recv);
+      auto selector = *(ob_Str *)obobj_get_data(literal);
+      auto nargs = nargs_for_sel(ctx, selector);
 
-      auto selector = (ob_Str *)obobj_get_data(literal);
+      auto stack_len = obarr_length(&ctx->stack, sizeof(ob_Obj));
 
-      obctx_send(ctx, recv, *selector);
+      ob_Obj recv = *(ob_Obj *)obarr_at(&ctx->stack, sizeof(ob_Obj),
+                                        stack_len - nargs - 1);
+
+      obarr_remove(&ctx->stack, sizeof(ob_Obj), stack_len - nargs - 1);
+
+      obctx_send(ctx, recv, selector);
     }; break;
 
     case OBBC_IMPLICIT_SEND: {
-      auto selector = (ob_Str *)obobj_get_data(literal);
+      auto selector = *(ob_Str *)obobj_get_data(literal);
 
-      obctx_send(ctx, act->env, *selector);
+      obctx_send(ctx, act->env, selector);
     }; break;
 
     case OBBC_EXTEND: {

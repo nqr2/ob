@@ -1,3 +1,4 @@
+#include "ob/Array.h"
 #include <ob/Context.h>
 #include <ob/Hash.h>
 #include <ob/String.h>
@@ -14,14 +15,15 @@ typedef struct {
 
 ob_String *obstr_create(ob_Context ctx, size_t len, const char *data) {
   size_t target = 0;
+  auto length = obarr_length(&ctx->string_available, sizeof(StrAvailable));
 
-  for (size_t i = 0; i < ctx->string_available.size / sizeof(StrAvailable);
-       i++) {
-    StrAvailable *avail = ((StrAvailable *)ctx->string_available.data) + i;
+  for (size_t i = 0; i < length; i++) {
+    StrAvailable *avail =
+        obarr_at(&ctx->string_available, sizeof(StrAvailable), i);
 
     if (len <= avail->size) {
       target = avail->offset;
-      memcpy((char *)(ctx->string_available.data) + target, data, len);
+      memcpy((char *)(ctx->string_data.data) + target, data, len);
 
       avail->size -= len;
 
@@ -38,7 +40,7 @@ ob_String *obstr_create(ob_Context ctx, size_t len, const char *data) {
     target = ctx->string_data.size - len;
   }
 
-  ob_String *str = ob_allocate(ctx->allocator, sizeof(ob_String));
+  ob_Str str = ob_allocate(ctx->allocator, sizeof(ob_String));
 
   str->offset = target;
   str->length = len;
@@ -103,4 +105,24 @@ void obstr_sweep(ob_Context ctx) {
   }
 
   ctx->strings = new;
+}
+
+ob_Str obstr_concat(ob_Context ctx, ob_Str left, ob_Str right) {
+  auto buf = (ob_Array){};
+  obarr_init(&buf, ctx->allocator);
+
+  auto data = obstr_get_data(ctx, left);
+  auto len = obstr_get_length(left);
+
+  obarr_push(&buf, len, data);
+
+  data = obstr_get_data(ctx, right);
+  len = obstr_get_length(right);
+
+  obarr_push(&buf, len, data);
+
+  auto res = obstr_create(ctx, buf.size, buf.data);
+  obarr_free(&buf);
+
+  return res;
 }
