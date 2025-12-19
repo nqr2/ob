@@ -55,9 +55,9 @@ typedef struct {
 
 typedef struct {
   ob_Obj env;
-  ob_Array parameters;
-  ob_Array bytecode;
-  ob_Array literals;
+  ob_ArrayT(ob_Str) parameters;
+  ob_ArrayT(uint8_t) bytecode;
+  ob_ArrayT(ob_Obj) literals;
 } ob_ObjMethod;
 
 typedef bool (*ob_FnCMethod)(ob_Context ctx);
@@ -70,7 +70,7 @@ typedef struct {
 } ob_ObjActivation;
 
 typedef struct {
-  ob_Array parameters;
+  ob_ArrayT(ob_Str) parameters;
   ob_FnCMethod method;
 } ob_ObjCMethod;
 
@@ -114,6 +114,7 @@ void obobj_destroy(ob_Obj obj);
 #define OBOBJ_ISA(Obj, Tag) (obobj_get_tag((Obj)) == (Tag))
 
 #define OBOBJ_IS_INVOCABLE(Obj)                                                \
-  (OBOBJ_ISA((Obj), OBOBJ_METHOD) || OBOBJ_ISA((Obj), OBOBJ_LIGHTCMETHOD))
+  (OBOBJ_ISA((Obj), OBOBJ_METHOD) || OBOBJ_ISA((Obj), OBOBJ_LIGHTCMETHOD) ||   \
+   OBOBJ_ISA((Obj), OBOBJ_CMETHOD))
 
 #endif

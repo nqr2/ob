@@ -416,44 +416,74 @@ void obctx_send(ob_Context ctx, ob_Obj recv, ob_String *selector) {
 
   // TODO: doesNotUnderstand
 
+  bool is_invocable = OBOBJ_IS_INVOCABLE(invoked);
+
   if (n_args != 0) {
     ASSERT(OBOBJ_IS_INVOCABLE(invoked),
            "tried to invoke a non-method object %p", invoked);
-
-    ASSERT(obctx_checkstack(ctx, n_args),
-           "expected to have %lu arguments on stack", n_args);
   }
+
+  ASSERT(obctx_checkstack(ctx, n_args + 1),
+         "expected to have %lu arguments on stack", n_args + 1);
 
   auto tag = obobj_get_tag(invoked);
 
-  if (tag == OBOBJ_LIGHTCMETHOD) {
+  if (is_invocable) {
+    obctx_enter_activation(ctx, invoked, recv);
+  }
+
+  switch (tag) {
+  case OBOBJ_LIGHTCMETHOD: {
     ctx->gc_state.enabled = false;
 
-    obctx_enter_activation(ctx, invoked, recv);
-    auto data = (ob_FnCMethod *)obobj_get_data(invoked);
+    auto data = *(ob_FnCMethod *)obobj_get_data(invoked);
 
-    if (!(*data)(ctx)) {
+    if (!data(ctx)) {
       obctx_push(ctx, recv);
     }
 
-    obctx_leave_activation(ctx);
-
     // TODO: check that we actually popped n args
+    ctx->gc_state.enabled = true;
+  }; break;
+
+  case OBOBJ_CMETHOD: {
+    ob_ObjCMethod *data = obobj_get_data(invoked);
+
+    ASSERT(n_args == obarr_length(&data->parameters, sizeof(ob_Str)),
+           "not enough arguments to invoke C method");
+
+    ctx->gc_state.enabled = false;
+
+    if (!data->method(ctx)) {
+      obctx_push(ctx, recv);
+    }
 
     ctx->gc_state.enabled = true;
+  }; break;
+
+  case OBOBJ_METHOD: {
+    ob_ObjMethod *data = obobj_get_data(invoked);
+    ob_ObjActivation *act = obobj_get_data(ctx->activation);
+    ob_ObjSlots *env = obobj_get_data(act->env);
+
+    size_t length = obarr_length(&data->parameters, sizeof(ob_Str));
+
+    for (size_t i = 0; i < length; i++) {
+      auto param = (ob_Str *)obarr_at(&data->parameters, sizeof(ob_Str), i);
+      auto item = obctx_pop(ctx);
+
+      obtbl_set(&env->slots, obstr_get_hash(ctx, *param), item);
+    }
+
+    obbc_run(ctx, data->bytecode.size, data->bytecode.data);
+  }; break;
+  default: {
+    obctx_push(ctx, invoked);
+  }
   }
 
-  else if (tag == OBOBJ_METHOD) {
-    obctx_enter_activation(ctx, invoked, recv);
-
-    // TODO: bind every argument to the implicit recv
-
-    ob_ObjMethod *data = obobj_get_data(invoked);
-    obbc_run(ctx, data->bytecode.size, data->bytecode.data);
+  if (is_invocable) {
     obctx_leave_activation(ctx);
-
-  } else {
-    obctx_push(ctx, invoked);
   }
 }
 

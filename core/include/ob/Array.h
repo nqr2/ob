@@ -34,6 +34,6 @@ void *obarr_at(ob_Array *arr, size_t size, size_t index);
 
 void *obarr_last(ob_Array *arr, size_t size);
 
-#define ob_ArrayT(_T) ob_Array
+#define ob_ArrayT(...) ob_Array
 
 #endif
