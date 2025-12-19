@@ -50,6 +50,26 @@ void obobj_mark(ob_Obj obj) {
     obstr_mark(*str);
   } break;
 
+  case OBOBJ_METHOD: {
+    ob_ObjMethod *method = obobj_get_data(obj);
+    auto len = obarr_length(&method->parameters, sizeof(ob_Str));
+
+    for (size_t i = 0; i < len; i++) {
+      auto str = (ob_Str *)obarr_at(&method->parameters, sizeof(ob_Str), i);
+      obstr_mark(*str);
+    }
+  };
+
+  case OBOBJ_CMETHOD: {
+    ob_ObjCMethod *method = obobj_get_data(obj);
+    auto len = obarr_length(&method->parameters, sizeof(ob_Str));
+
+    for (size_t i = 0; i < len; i++) {
+      auto str = (ob_Str *)obarr_at(&method->parameters, sizeof(ob_Str), i);
+      obstr_mark(*str);
+    }
+  };
+
   default:
     break;
   }
@@ -148,6 +168,7 @@ void obobj_visit(ob_Object *obj, ob_VisitFlags flags, ob_FnVisit visit,
 
   case OBOBJ_CDATA: {
     ob_ObjCData *data = obobj_get_data(obj);
+    obobj_visit(data->prototype, flags, visit, predicate, userdata);
     data->visit(obj, data->data);
   }; break;
 

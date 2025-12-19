@@ -4,6 +4,7 @@ std_c_src = [
   'src/AddMethods.c',
   'src/String.c',
   'src/Object.c',
+  'src/Method.c',
 ]
 
 libObStd = static_library(
