@@ -397,40 +397,8 @@ ob_Obj obctx_get_slot(ob_Context ctx, ob_Obj obj, ob_Str selector) {
   return NULL;
 }
 
-void obctx_send(ob_Context ctx, ob_Obj recv, ob_String *selector) {
-  size_t n_args = 0;
-
-  auto sel = obstr_get_data(ctx, selector);
-
-  if (ispunct(sel[0])) {
-    n_args = 1;
-  } else {
-    for (size_t i = 0; i < selector->length; i++) {
-      if (sel[i] == ':') {
-        n_args++;
-      }
-    }
-  }
-
-  auto invoked = obctx_get_slot(ctx, recv, selector);
-
-  // TODO: doesNotUnderstand
-
-  bool is_invocable = OBOBJ_IS_INVOCABLE(invoked);
-
-  if (n_args != 0) {
-    ASSERT(OBOBJ_IS_INVOCABLE(invoked),
-           "tried to invoke a non-method object %p", invoked);
-  }
-
-  ASSERT(obctx_checkstack(ctx, n_args + 1),
-         "expected to have %lu arguments on stack", n_args + 1);
-
+static void invoke(ob_Context ctx, ob_Obj invoked, ob_Obj recv, size_t n_args) {
   auto tag = obobj_get_tag(invoked);
-
-  if (is_invocable) {
-    obctx_enter_activation(ctx, invoked, recv);
-  }
 
   switch (tag) {
   case OBOBJ_LIGHTCMETHOD: {
@@ -477,13 +445,48 @@ void obctx_send(ob_Context ctx, ob_Obj recv, ob_String *selector) {
 
     obbc_run(ctx, data->bytecode.size, data->bytecode.data);
   }; break;
-  default: {
-    obctx_push(ctx, invoked);
+  default:
+    ASSERT(false, "should not be able to invoke this object");
   }
+}
+
+void obctx_send(ob_Context ctx, ob_Obj recv, ob_String *selector) {
+  size_t n_args = 0;
+
+  auto sel = obstr_get_data(ctx, selector);
+
+  if (ispunct(sel[0])) {
+    n_args = 1;
+  } else {
+    for (size_t i = 0; i < selector->length; i++) {
+      if (sel[i] == ':') {
+        n_args++;
+      }
+    }
   }
 
+  auto invoked = obctx_get_slot(ctx, recv, selector);
+
+  // TODO: doesNotUnderstand
+
+  bool is_invocable = OBOBJ_IS_INVOCABLE(invoked);
+
+  if (n_args != 0) {
+    ASSERT(OBOBJ_IS_INVOCABLE(invoked),
+           "tried to invoke a non-method object %p", invoked);
+  }
+
+  ASSERT(obctx_checkstack(ctx, n_args + 1),
+         "expected to have %lu arguments on stack", n_args + 1);
+
   if (is_invocable) {
+    obctx_enter_activation(ctx, invoked, recv);
+    invoke(ctx, invoked, recv, n_args);
     obctx_leave_activation(ctx);
+  }
+
+  else {
+    obctx_push(ctx, invoked);
   }
 }
 
