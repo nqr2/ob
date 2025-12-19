@@ -546,7 +546,7 @@ void ob_run(ob_Context ctx, size_t length, const char *text) {
   auto chunk = ob_load(ctx, length, text);
   ob_ObjMethod *method = obobj_get_data(chunk);
 
-  obctx_enter_activation(ctx, NULL, chunk, ctx->shell);
+  obctx_enter_activation(ctx, chunk, ctx->shell);
 
   obbc_run(ctx, method->bytecode.size, method->bytecode.data);
 

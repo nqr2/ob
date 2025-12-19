@@ -22,9 +22,10 @@ void dofile(const char *input_path, const char *output_path,
 
   rewind(input_file);
 
-  unsigned char *data = calloc(sizeof(char), length);
+  unsigned char *data = calloc(length, sizeof(char));
   fread(data, sizeof(char), length, input_file);
 
+  fprintf(output_file, "const unsigned long LENGTH_%s = %lu\n", symbol, length);
   fprintf(output_file, "const char* DATA_%s = \"", symbol);
 
   for (size_t i = 0; i < length; i++) {
@@ -56,7 +57,10 @@ void dofile(const char *input_path, const char *output_path,
 }
 
 int main(int argn, const char *argv[]) {
-  assert(argn == 4);
+  if (argn != 4) {
+    printf("usage: %s <input> <output> <symbol>\n", argv[0]);
+    return 1;
+  }
 
   auto input = argv[1];
   auto output = argv[2];
