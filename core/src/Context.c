@@ -374,7 +374,7 @@ ob_Obj obctx_get_prototype(ob_Context ctx, ob_Obj obj) {
   return obctx_get_prototype(ctx, NULL);
 }
 
-ob_Obj obctx_get_slot(ob_Context ctx, ob_Obj obj, ob_Str selector) {
+bool obctx_get_slot(ob_Context ctx, ob_Obj *slot, ob_Obj obj, ob_Str selector) {
   while (obj != NULL) {
     if (OBOBJ_ISA(obj, OBOBJ_SLOTS)) {
       ob_ObjSlots *data = obobj_get_data(obj);
@@ -383,7 +383,11 @@ ob_Obj obctx_get_slot(ob_Context ctx, ob_Obj obj, ob_Str selector) {
       auto hash = obhash_start(selector->length, str);
 
       if (obtbl_get(&data->slots, hash, (void **)&obj)) {
-        return obj;
+        if (slot != NULL) {
+          *slot = obj;
+        }
+
+        return true;
       }
     }
 
@@ -394,7 +398,7 @@ ob_Obj obctx_get_slot(ob_Context ctx, ob_Obj obj, ob_Str selector) {
     }
   }
 
-  return NULL;
+  return false;
 }
 
 static void invoke(ob_Context ctx, ob_Obj invoked, ob_Obj recv, size_t n_args) {
@@ -450,7 +454,7 @@ static void invoke(ob_Context ctx, ob_Obj invoked, ob_Obj recv, size_t n_args) {
   }
 }
 
-void obctx_send(ob_Context ctx, ob_Obj recv, ob_String *selector) {
+void obctx_send(ob_Context ctx, ob_Obj recv, ob_Str selector) {
   size_t n_args = 0;
 
   auto sel = obstr_get_data(ctx, selector);
@@ -465,9 +469,11 @@ void obctx_send(ob_Context ctx, ob_Obj recv, ob_String *selector) {
     }
   }
 
-  auto invoked = obctx_get_slot(ctx, recv, selector);
+  ob_Obj invoked = NULL;
 
-  // TODO: doesNotUnderstand
+  if (!obctx_get_slot(ctx, &invoked, recv, selector)) {
+    // TODO: doesNotUnderstand
+  }
 
   bool is_invocable = OBOBJ_IS_INVOCABLE(invoked);
 
