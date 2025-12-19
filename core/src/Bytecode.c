@@ -1,3 +1,4 @@
+#include "ob/String.h"
 #include <ob/Array.h>
 #include <ob/Bytecode.h>
 #include <ob/Context.h>

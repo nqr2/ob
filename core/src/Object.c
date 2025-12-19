@@ -58,7 +58,7 @@ void obobj_mark(ob_Obj obj) {
       auto str = (ob_Str *)obarr_at(&method->parameters, sizeof(ob_Str), i);
       obstr_mark(*str);
     }
-  };
+  }; break;
 
   case OBOBJ_CMETHOD: {
     ob_ObjCMethod *method = obobj_get_data(obj);
@@ -68,7 +68,7 @@ void obobj_mark(ob_Obj obj) {
       auto str = (ob_Str *)obarr_at(&method->parameters, sizeof(ob_Str), i);
       obstr_mark(*str);
     }
-  };
+  }; break;
 
   default:
     break;

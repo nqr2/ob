@@ -94,12 +94,17 @@ void repl(ob_Context ctx) {
 
 int main(int argn, const char *argv[]) {
   bool is_interactive = argn == 1;
+  const char *execute = NULL;
 
   auto f_interactive =
       obarg_create_flag('i', "interactive", OBARG_FLAG_SET, &is_interactive);
   f_interactive.description = "Open the interactive shell";
 
-  auto parser = obarg_create_parser((ob_Flag[]){f_interactive, OB_FLAGS_END});
+  auto f_exec =
+      obarg_create_flag('e', NULL, OBARG_FLAG_STRING, (void *)&execute);
+
+  auto parser =
+      obarg_create_parser((ob_Flag[]){f_interactive, f_exec, OB_FLAGS_END});
 
   obarg_parse(&parser, argn, argv);
 
@@ -107,6 +112,10 @@ int main(int argn, const char *argv[]) {
 
   auto ctx = obctx_create(&alloc);
   oblib_load_all(ctx);
+
+  if (execute != NULL) {
+    ob_run(ctx, strlen(execute), execute);
+  }
 
   if (argn != 1) {
     for (int i = 1; i < argn; i++) {

@@ -55,7 +55,11 @@ bool obarr_pop(ob_Array *arr, size_t len, void *data) {
 
 void obarr_remove(ob_Array *arr, size_t size, size_t offset) {
   uint8_t *bytes = arr->data;
-  memcpy(bytes + offset, (bytes + arr->size - size), size);
+
+  auto length = arr->size / size;
+
+  memmove(bytes + (offset * size), bytes + (offset + 1) * size,
+          (length - offset - 1) * size);
 
   obarr_pop(arr, size, NULL);
 }

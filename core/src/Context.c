@@ -159,7 +159,6 @@ ob_Obj obctx_alloc_method(ob_Context ctx) {
 
   ob_ObjMethod *method = obobj_get_data(obj);
 
-  // TODO: bind any later activation environments to this env
   method->env = ctx->activation;
 
   obarr_init(&method->bytecode, ctx->allocator);
@@ -295,6 +294,11 @@ void obctx_enter_activation(ob_Context ctx, ob_Obj method, ob_Obj receiver) {
 
 void obctx_leave_activation(ob_Context ctx) {
   ob_ObjActivation *data = obobj_get_data(ctx->activation);
+
+  // we know an activation is "live" if it's env is allocated, else it belongs
+  // to a method that already returned.
+  data->env = NULL;
+
   ctx->activation = data->parent;
 }
 
@@ -306,7 +310,7 @@ ob_Obj obctx_pop(ob_Context ctx) {
   ob_Obj obj;
 
   if (!obarr_pop(&ctx->stack, sizeof(ob_Obj), (void *)&obj)) {
-    // TODO: fail? cannot pop empty stack.
+    ASSERT(false, "cannot pop from empty stack");
   }
 
   return obj;
@@ -475,6 +479,7 @@ void obctx_send(ob_Context ctx, ob_Obj recv, ob_Str selector) {
   ob_Obj invoked = NULL;
 
   if (!obctx_get_slot(ctx, &invoked, recv, selector)) {
+    ASSERT(false, "todo doesNotUnderstand");
     // TODO: doesNotUnderstand
   }
 
