@@ -44,7 +44,7 @@ static bool str_concat(ob_Context ctx) {
 }
 
 void oblib_load_string(ob_Context ctx) {
-  ob_add_methods(ctx, ctx->proto_string,
+  ob_add_methods(ctx, ctx->proto.string,
                  (ob_MethodEntry[]){{"intern", str_intern},
                                     {"length", str_length},
                                     {"+", str_concat},

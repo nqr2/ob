@@ -96,6 +96,6 @@ bool o__print(ob_Context ctx) {
 }
 
 void oblib_load_object(ob_Context ctx) {
-  ob_add_methods(ctx, ctx->proto_object,
+  ob_add_methods(ctx, ctx->proto.object,
                  (ob_MethodEntry[]){{"print", o__print}, OB_METHODS_END});
 }

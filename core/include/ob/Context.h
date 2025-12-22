@@ -26,9 +26,10 @@ typedef struct Context {
 
   ob_Obj objects;
 
-  ob_Obj proto_object, proto_nil, proto_symbol, proto_string, proto_slots,
-      proto_number, proto_array, proto_method, proto_lightcmethod,
-      proto_cmethod, proto_lightcdata, proto_cdata, proto_activation;
+  struct {
+    ob_Obj object, nil, symbol, string, slots, number, array, method,
+        lightcmethod, cmethod, lightcdata, cdata, activation;
+  } proto;
 
   ob_Obj shell;
 

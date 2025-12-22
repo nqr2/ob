@@ -34,6 +34,6 @@ static bool method_call(ob_Context ctx) {
 }
 
 void oblib_load_method(ob_Context ctx) {
-  ob_add_methods(ctx, ctx->proto_method,
+  ob_add_methods(ctx, ctx->proto.method,
                  (ob_MethodEntry[]){{"call:", method_call}, OB_METHODS_END});
 }

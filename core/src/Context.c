@@ -30,20 +30,20 @@ ob_Context obctx_create(ob_Allocator *alloc) {
 
   ctx->allocator = alloc;
 
-  ctx->proto_object = obctx_alloc_slots(ctx, NULL);
+  ctx->proto.object = obctx_alloc_slots(ctx, NULL);
 
-  ctx->proto_nil = obctx_alloc_slots(ctx, NULL);
-  ctx->proto_symbol = obctx_alloc_slots(ctx, NULL);
-  ctx->proto_string = obctx_alloc_slots(ctx, NULL);
-  ctx->proto_slots = obctx_alloc_slots(ctx, NULL);
-  ctx->proto_number = obctx_alloc_slots(ctx, NULL);
-  ctx->proto_array = obctx_alloc_slots(ctx, NULL);
-  ctx->proto_method = obctx_alloc_slots(ctx, NULL);
-  ctx->proto_lightcmethod = obctx_alloc_slots(ctx, NULL);
-  ctx->proto_cmethod = obctx_alloc_slots(ctx, NULL);
-  ctx->proto_lightcdata = obctx_alloc_slots(ctx, NULL);
-  ctx->proto_cdata = obctx_alloc_slots(ctx, NULL);
-  ctx->proto_activation = obctx_alloc_slots(ctx, NULL);
+  ctx->proto.nil = obctx_alloc_slots(ctx, NULL);
+  ctx->proto.symbol = obctx_alloc_slots(ctx, NULL);
+  ctx->proto.string = obctx_alloc_slots(ctx, NULL);
+  ctx->proto.slots = obctx_alloc_slots(ctx, NULL);
+  ctx->proto.number = obctx_alloc_slots(ctx, NULL);
+  ctx->proto.array = obctx_alloc_slots(ctx, NULL);
+  ctx->proto.method = obctx_alloc_slots(ctx, NULL);
+  ctx->proto.lightcmethod = obctx_alloc_slots(ctx, NULL);
+  ctx->proto.cmethod = obctx_alloc_slots(ctx, NULL);
+  ctx->proto.lightcdata = obctx_alloc_slots(ctx, NULL);
+  ctx->proto.cdata = obctx_alloc_slots(ctx, NULL);
+  ctx->proto.activation = obctx_alloc_slots(ctx, NULL);
 
   ctx->shell = obctx_alloc_slots(ctx, NULL);
 
@@ -209,20 +209,20 @@ static void deallocate(ob_Context ctx, ob_Obj object) {
 static void gc_mark(ob_Context ctx) {
   obobj_mark(ctx->activation);
 
-  obobj_mark(ctx->proto_object);
+  obobj_mark(ctx->proto.object);
 
-  obobj_mark(ctx->proto_nil);
-  obobj_mark(ctx->proto_symbol);
-  obobj_mark(ctx->proto_string);
-  obobj_mark(ctx->proto_slots);
-  obobj_mark(ctx->proto_number);
-  obobj_mark(ctx->proto_array);
-  obobj_mark(ctx->proto_method);
-  obobj_mark(ctx->proto_lightcmethod);
-  obobj_mark(ctx->proto_cmethod);
-  obobj_mark(ctx->proto_lightcdata);
-  obobj_mark(ctx->proto_cdata);
-  obobj_mark(ctx->proto_activation);
+  obobj_mark(ctx->proto.nil);
+  obobj_mark(ctx->proto.symbol);
+  obobj_mark(ctx->proto.string);
+  obobj_mark(ctx->proto.slots);
+  obobj_mark(ctx->proto.number);
+  obobj_mark(ctx->proto.array);
+  obobj_mark(ctx->proto.method);
+  obobj_mark(ctx->proto.lightcmethod);
+  obobj_mark(ctx->proto.cmethod);
+  obobj_mark(ctx->proto.lightcdata);
+  obobj_mark(ctx->proto.cdata);
+  obobj_mark(ctx->proto.activation);
 
   obobj_mark(ctx->shell);
 
@@ -321,21 +321,21 @@ bool obctx_checkstack(ob_Context ctx, size_t narg) {
 }
 
 ob_Obj obctx_get_prototype(ob_Context ctx, ob_Obj obj) {
-  if (obj == ctx->proto_object) {
+  if (obj == ctx->proto.object) {
     return NULL;
   }
 
-  if (obj == ctx->proto_slots) {
-    return ctx->proto_object;
+  if (obj == ctx->proto.slots) {
+    return ctx->proto.object;
   }
 
   switch (obobj_get_tag(obj)) {
   case OBOBJ_NIL:
-    return ctx->proto_nil;
+    return ctx->proto.nil;
   case OBOBJ_SYMBOL:
-    return ctx->proto_symbol;
+    return ctx->proto.symbol;
   case OBOBJ_STRING:
-    return ctx->proto_string;
+    return ctx->proto.string;
   case OBOBJ_SLOTS: {
     ob_ObjSlots *slots = obobj_get_data(obj);
 
@@ -343,20 +343,20 @@ ob_Obj obctx_get_prototype(ob_Context ctx, ob_Obj obj) {
       return slots->prototype;
     }
 
-    return ctx->proto_slots;
+    return ctx->proto.slots;
   }
   case OBOBJ_NUMBER:
-    return ctx->proto_number;
+    return ctx->proto.number;
   case OBOBJ_ARRAY:
-    return ctx->proto_array;
+    return ctx->proto.array;
   case OBOBJ_METHOD:
-    return ctx->proto_method;
+    return ctx->proto.method;
   case OBOBJ_LIGHTCMETHOD:
-    return ctx->proto_lightcmethod;
+    return ctx->proto.lightcmethod;
   case OBOBJ_CMETHOD:
-    return ctx->proto_cmethod;
+    return ctx->proto.cmethod;
   case OBOBJ_LIGHTCDATA:
-    return ctx->proto_lightcdata;
+    return ctx->proto.lightcdata;
   case OBOBJ_CDATA: {
     ob_ObjCData *data = obobj_get_data(obj);
 
@@ -364,10 +364,10 @@ ob_Obj obctx_get_prototype(ob_Context ctx, ob_Obj obj) {
       return data->prototype;
     }
 
-    return ctx->proto_cdata;
+    return ctx->proto.cdata;
   }
   case OBOBJ_ACTIVATION:
-    return ctx->proto_activation;
+    return ctx->proto.activation;
   case OT_Rc:
   case OT_Rd:
   case OT_Re:
@@ -395,7 +395,7 @@ bool obctx_get_slot(ob_Context ctx, ob_Obj *slot, ob_Obj obj, ob_Str selector) {
       }
     }
 
-    if (obj != ctx->proto_object) {
+    if (obj != ctx->proto.object) {
       obj = obctx_get_prototype(ctx, obj);
     } else {
       break;
