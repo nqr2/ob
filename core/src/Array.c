@@ -58,8 +58,10 @@ void obarr_remove(ob_Array *arr, size_t size, size_t offset) {
 
   auto length = arr->size / size;
 
-  memmove(bytes + (offset * size), bytes + (offset + 1) * size,
-          (length - offset - 1) * size);
+  if (offset != length - 1) {
+    memmove(bytes + (offset * size), bytes + (offset + 1) * size,
+            (length - offset - 1) * size);
+  }
 
   obarr_pop(arr, size, NULL);
 }

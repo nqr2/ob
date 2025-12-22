@@ -33,11 +33,36 @@ void dofile(const char *input_path, const char *output_path,
     auto chr = data[i];
 
     if (iscntrl(chr) || chr > 128) {
+      const char *escape = NULL;
       switch (chr) {
       case '\n':
-        fprintf(output_file, "\\n");
+        escape = "\\n";
         break;
+        break;
+      case '\r':
+        escape = "\\r";
+        break;
+      case '\a':
+        escape = "\\a";
+        break;
+      case '\b':
+        escape = "\\b";
+        break;
+      case '\t':
+        escape = "\\t";
+        break;
+      case '\v':
+        escape = "\\v";
+        break;
+      case 0:
+        escape = "\\0";
       default:
+        break;
+      }
+
+      if (escape != NULL) {
+        fprintf(output_file, "%s", escape);
+      } else {
         fprintf(output_file, "\\x%02x", chr);
       }
     } else {

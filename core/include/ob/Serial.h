@@ -8,7 +8,7 @@
 
 #include "Object.h"
 
-#define OB_SERIAL_HEADER "obS"
+#define OB_SERIAL_HEADER "\x0bOB"
 
 typedef struct {
   ob_Context ctx;

@@ -28,9 +28,9 @@ ob_String *obstr_create(ob_Context ctx, size_t len, const char *data) {
       avail->size -= len;
 
       if (avail->size == 0) {
-        obarr_remove(&ctx->string_available, sizeof(StrAvailable),
-                     i * sizeof(StrAvailable));
+        obarr_remove(&ctx->string_available, sizeof(StrAvailable), i);
         i -= 1;
+        length--;
       }
     }
   }
@@ -85,7 +85,7 @@ static void str__delete(ob_Context ctx, ob_String *str) {
 }
 
 void obstr_sweep(ob_Context ctx) {
-  ob_String *new = NULL;
+  ob_Str new = NULL;
 
   auto strings = ctx->strings;
 
