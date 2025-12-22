@@ -93,7 +93,19 @@ bool o__print(ob_Context ctx) {
   return false;
 }
 
+static bool o__share(ob_Context ctx) {
+  auto receiver = obctx_get_receiver(ctx);
+  auto operand = obctx_pop(ctx);
+
+  auto result = (receiver == operand) ? ctx->known.o_true : ctx->known.o_false;
+  obctx_push(ctx, result);
+
+  return true;
+}
+
 void oblib_load_object(ob_Context ctx) {
   ob_add_methods(ctx, ctx->proto.object,
-                 (ob_MethodEntry[]){{"print", o__print}, OB_METHODS_END});
+                 (ob_MethodEntry[]){{"print", o__print},
+                                    {"sharesAddressWith:", o__share},
+                                    OB_METHODS_END});
 }
