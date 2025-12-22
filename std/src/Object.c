@@ -97,7 +97,7 @@ static bool o__share(ob_Context ctx) {
   auto receiver = obctx_get_receiver(ctx);
   auto operand = obctx_pop(ctx);
 
-  auto result = (receiver == operand) ? ctx->known.o_true : ctx->known.o_false;
+  auto result = OB_BOOL_CAST(ctx, (receiver == operand));
   obctx_push(ctx, result);
 
   return true;

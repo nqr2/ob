@@ -85,4 +85,8 @@ ob_Exncode obctx_pcall(ob_Context ctx,
                        void *userdata);
 
 ob_Obj obctx_get_receiver(ob_Context ctx);
+
+#define OB_BOOL_CAST(Ctx, Bool)                                                \
+  (Bool) ? (ctx->known.o_true) : (ctx->known.o_false)
+
 #endif
