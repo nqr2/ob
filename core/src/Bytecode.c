@@ -61,7 +61,7 @@ void obbc_run(ob_Context ctx, size_t len, const uint8_t *code) {
     case OBBC_IMPLICIT_SEND: {
       auto selector = *(ob_Str *)obobj_get_data(literal);
 
-      obctx_send(ctx, act->env, selector);
+      obctx_send(ctx, ctx->this_activation, selector);
     }; break;
 
     case OBBC_EXTEND: {

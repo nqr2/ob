@@ -1,10 +1,8 @@
+#include <ob/Context.h>
 #include <ob/Parse.h>
 #include <ob/lib/Shell.h>
 
 #include "Shell.h"
-#include "ob/Context.h"
-#include "ob/Object.h"
-#include "ob/String.h"
 
 static void run(ob_Context ctx, unsigned long length, const char *data) {
   ob_run(ctx, length, (void *)data);

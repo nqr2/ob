@@ -399,6 +399,20 @@ bool obctx_get_slot(ob_Context ctx, ob_Obj *slot, ob_Obj obj, ob_Str selector) {
       }
     }
 
+    if (OBOBJ_ISA(obj, OBOBJ_ACTIVATION)) {
+      ob_ObjActivation *act = obobj_get_data(obj);
+
+      if (obctx_get_slot(ctx, slot, act->env, selector)) {
+        return true;
+      }
+
+      if (obctx_get_slot(ctx, slot, act->receiver, selector)) {
+        return true;
+      }
+
+      obj = act->parent;
+    }
+
     if (obj != ctx->proto.object) {
       obj = obctx_get_prototype(ctx, obj);
     } else {

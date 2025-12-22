@@ -74,7 +74,6 @@ void obctx_push(ob_Context ctx, ob_Obj obj);
 ob_Obj obctx_pop(ob_Context ctx);
 bool obctx_checkstack(ob_Context ctx, size_t narg);
 
-
 ob_Obj obctx_get_prototype(ob_Context ctx, ob_Obj obj);
 
 bool obctx_get_slot(ob_Context ctx, ob_Obj *slot, ob_Obj obj, ob_Str selector);
