@@ -33,7 +33,7 @@ void obbc_run(ob_Context ctx, size_t len, const uint8_t *code) {
 
     auto this_index = (index << 4) | data;
 
-    ob_ObjActivation *act = obobj_get_data(ctx->activation);
+    ob_ObjActivation *act = obobj_get_data(ctx->this_activation);
     ob_ObjMethod *method = obobj_get_data(act->method);
 
     ob_Obj literal = ((ob_Obj *)method->literals.data)[this_index];

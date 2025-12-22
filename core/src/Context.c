@@ -45,7 +45,9 @@ ob_Context obctx_create(ob_Allocator *alloc) {
   ctx->proto.cdata = obctx_alloc_slots(ctx, NULL);
   ctx->proto.activation = obctx_alloc_slots(ctx, NULL);
 
-  ctx->shell = obctx_alloc_slots(ctx, NULL);
+  ctx->known.shell = obctx_alloc_slots(ctx, NULL);
+  ctx->known.o_true = obctx_alloc_slots(ctx, NULL);
+  ctx->known.o_false = obctx_alloc_slots(ctx, NULL);
 
   obtbl_init(&ctx->interned, ctx->allocator);
 
@@ -159,7 +161,7 @@ ob_Obj obctx_alloc_method(ob_Context ctx) {
 
   ob_ObjMethod *method = obobj_get_data(obj);
 
-  method->env = ctx->activation;
+  method->env = ctx->this_activation;
 
   obarr_init(&method->bytecode, ctx->allocator);
   obarr_init(&method->literals, ctx->allocator);
@@ -207,7 +209,7 @@ static void deallocate(ob_Context ctx, ob_Obj object) {
 }
 
 static void gc_mark(ob_Context ctx) {
-  obobj_mark(ctx->activation);
+  obobj_mark(ctx->this_activation);
 
   obobj_mark(ctx->proto.object);
 
@@ -224,7 +226,9 @@ static void gc_mark(ob_Context ctx) {
   obobj_mark(ctx->proto.cdata);
   obobj_mark(ctx->proto.activation);
 
-  obobj_mark(ctx->shell);
+  obobj_mark(ctx->known.shell);
+  obobj_mark(ctx->known.o_false);
+  obobj_mark(ctx->known.o_true);
 
   auto data = (ob_Obj *)ctx->stack.data;
 
@@ -284,22 +288,22 @@ void obctx_enter_activation(ob_Context ctx, ob_Obj method, ob_Obj receiver) {
   auto act = obctx_allocate(ctx, OBOBJ_ACTIVATION, sizeof(ob_ObjActivation));
 
   ob_ObjActivation *data = obobj_get_data(act);
-  data->parent = ctx->activation;
+  data->parent = ctx->this_activation;
   data->method = method;
   data->receiver = receiver;
   data->env = obctx_alloc_slots(ctx, NULL);
 
-  ctx->activation = act;
+  ctx->this_activation = act;
 }
 
 void obctx_leave_activation(ob_Context ctx) {
-  ob_ObjActivation *data = obobj_get_data(ctx->activation);
+  ob_ObjActivation *data = obobj_get_data(ctx->this_activation);
 
   // we know an activation is "live" if it's env is allocated, else it belongs
   // to a method that already returned.
   data->env = NULL;
 
-  ctx->activation = data->parent;
+  ctx->this_activation = data->parent;
 }
 
 void obctx_push(ob_Context ctx, ob_Obj obj) {
@@ -439,7 +443,7 @@ static void invoke(ob_Context ctx, ob_Obj invoked, ob_Obj recv, size_t n_args) {
 
   case OBOBJ_METHOD: {
     ob_ObjMethod *data = obobj_get_data(invoked);
-    ob_ObjActivation *act = obobj_get_data(ctx->activation);
+    ob_ObjActivation *act = obobj_get_data(ctx->this_activation);
     ob_ObjSlots *env = obobj_get_data(act->env);
 
     size_t length = obarr_length(&data->parameters, sizeof(ob_Str));

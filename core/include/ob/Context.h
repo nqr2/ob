@@ -31,9 +31,11 @@ typedef struct Context {
         lightcmethod, cmethod, lightcdata, cdata, activation;
   } proto;
 
-  ob_Obj shell;
+  struct {
+    ob_Obj shell, o_true, o_false;
+  } known;
 
-  ob_Obj activation;
+  ob_Obj this_activation;
 
   ob_Array string_data;
   ob_Array string_available;

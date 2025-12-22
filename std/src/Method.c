@@ -1,12 +1,10 @@
-#include "ob/Array.h"
-#include "ob/Bytecode.h"
-#include "ob/Object.h"
+#include <ob/Bytecode.h>
 #include <ob/Context.h>
 #include <ob/bits/AddMethods.h>
 #include <ob/lib/Method.h>
 
 static bool method_call(ob_Context ctx) {
-  ob_ObjActivation *activation = obobj_get_data(ctx->activation);
+  ob_ObjActivation *activation = obobj_get_data(ctx->this_activation);
   auto receiver = activation->receiver;
   auto operand = obctx_pop(ctx);
 
@@ -17,7 +15,7 @@ static bool method_call(ob_Context ctx) {
 
   obctx_enter_activation(ctx, receiver, receiver);
 
-  activation = obobj_get_data(ctx->activation);
+  activation = obobj_get_data(ctx->this_activation);
   ob_ObjSlots *env = obobj_get_data(activation->env);
 
   for (size_t i = 0; i < length; i++) {

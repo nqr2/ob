@@ -3,7 +3,7 @@
 #include <ob/lib/String.h>
 
 static bool str_intern(ob_Context ctx) {
-  ob_ObjActivation *activation = obobj_get_data(ctx->activation);
+  ob_ObjActivation *activation = obobj_get_data(ctx->this_activation);
   auto receiver = activation->receiver;
 
   auto str = (ob_Str *)obobj_get_data(receiver);
@@ -15,7 +15,7 @@ static bool str_intern(ob_Context ctx) {
 }
 
 static bool str_length(ob_Context ctx) {
-  ob_ObjActivation *activation = obobj_get_data(ctx->activation);
+  ob_ObjActivation *activation = obobj_get_data(ctx->this_activation);
   auto receiver = activation->receiver;
 
   auto str = (ob_Str *)obobj_get_data(receiver);
@@ -28,7 +28,7 @@ static bool str_length(ob_Context ctx) {
 }
 
 static bool str_concat(ob_Context ctx) {
-  ob_ObjActivation *activation = obobj_get_data(ctx->activation);
+  ob_ObjActivation *activation = obobj_get_data(ctx->this_activation);
   auto receiver = activation->receiver;
   auto operand = obctx_pop(ctx);
 
