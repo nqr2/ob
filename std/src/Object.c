@@ -85,9 +85,7 @@ void obj_print(ob_Context ctx, ob_Obj receiver) {
 }
 
 bool o__print(ob_Context ctx) {
-  ob_ObjActivation *activation = obobj_get_data(ctx->this_activation);
-
-  auto receiver = activation->receiver;
+  auto receiver = obctx_get_receiver(ctx);
   obj_print(ctx, receiver);
 
   putchar('\n');

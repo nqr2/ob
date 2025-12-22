@@ -25,7 +25,8 @@ void dofile(const char *input_path, const char *output_path,
   unsigned char *data = calloc(length, sizeof(char));
   fread(data, sizeof(char), length, input_file);
 
-  fprintf(output_file, "const unsigned long LENGTH_%s = %lu\n", symbol, length);
+  fprintf(output_file, "const unsigned long LENGTH_%s = %lu;\n", symbol,
+          length);
   fprintf(output_file, "const char* DATA_%s = \"", symbol);
 
   for (size_t i = 0; i < length; i++) {

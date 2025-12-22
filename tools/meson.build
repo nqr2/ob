@@ -18,6 +18,6 @@ xxdi_exe = executable(
 
 xxdi = generator(
   xxdi_exe,
-  arguments: ['@INPUT0@', '@OUTPUT0@', '@INPUT1@'],
+  arguments: ['@INPUT@', '@OUTPUT@', '@BASENAME@'],
   output: ['@BASENAME@.h']
 )

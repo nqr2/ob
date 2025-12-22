@@ -519,3 +519,12 @@ ob_Exncode obctx_pcall(ob_Context ctx,
 
   return OB_OK;
 }
+
+ob_Obj obctx_get_receiver(ob_Context ctx) {
+  if (ctx->this_activation == NULL) {
+    return NULL;
+  }
+
+  ob_ObjActivation *act = obobj_get_data(ctx->this_activation);
+  return act->receiver;
+}
