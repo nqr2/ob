@@ -27,54 +27,22 @@ void dofile(const char *input_path, const char *output_path,
 
   fprintf(output_file, "const unsigned long LENGTH_%s = %lu;\n", symbol,
           length);
-  fprintf(output_file, "const char* DATA_%s = \"", symbol);
+
+  auto written =
+      fprintf(output_file, "const unsigned char DATA_%s[] = {", symbol);
 
   for (size_t i = 0; i < length; i++) {
     auto chr = data[i];
 
-    if (iscntrl(chr) || chr > 128) {
-      const char *escape = NULL;
-      switch (chr) {
-      case '\n':
-        escape = "\\n";
-        break;
-        break;
-      case '\r':
-        escape = "\\r";
-        break;
-      case '\a':
-        escape = "\\a";
-        break;
-      case '\b':
-        escape = "\\b";
-        break;
-      case '\t':
-        escape = "\\t";
-        break;
-      case '\v':
-        escape = "\\v";
-        break;
-      case 0:
-        escape = "\\0";
-      default:
-        break;
-      }
+    written += fprintf(output_file, "%u, ", chr);
 
-      if (escape != NULL) {
-        fprintf(output_file, "%s", escape);
-      } else {
-        fprintf(output_file, "\\x%02x", chr);
-      }
-    } else {
-      if (chr == '"') {
-        fwrite("\\\"", 1, 4, output_file);
-      } else {
-        fwrite(&chr, 1, 1, output_file);
-      }
+    if (written >= 80) {
+      fprintf(output_file, "\n");
+      written = 0;
     }
   }
 
-  fprintf(output_file, "\";\n");
+  fprintf(output_file, "0};\n");
 
   free(data);
 

@@ -4,7 +4,8 @@
 
 #include "Shell.h"
 
-static void run(ob_Context ctx, unsigned long length, const char *data) {
+static void run(ob_Context ctx, unsigned long length,
+                const unsigned char *data) {
   ob_run(ctx, length, (void *)data);
   obarr_clear(&ctx->stack);
 }

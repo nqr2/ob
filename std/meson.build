@@ -8,6 +8,8 @@ std_c_src = [
   'src/String.c',
   'src/Object.c',
   'src/Method.c',
+  'src/Slots.c',
+
   'src/Shell.c',
 
   _ob_shell_header,

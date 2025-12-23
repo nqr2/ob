@@ -1,1 +1,7 @@
-'Hello, stdlib!' print.
+true at: #print put: {
+  'true' print
+}.
+
+false at: #print put: {
+  'false' print
+}.
