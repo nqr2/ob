@@ -8,6 +8,8 @@
 
 #include "Array.h"
 #include "ContextFwd.h"
+#include "Number.h"
+#include "String.h"
 #include "Table.h"
 
 #include <stdint.h>
@@ -110,6 +112,18 @@ void obobj_mark(ob_Obj obj);
 
 // NOTE: call before destroying an obj
 void obobj_destroy(ob_Obj obj);
+
+ob_Str *ob_cast_symbol(ob_Obj obj);
+ob_Str *ob_cast_string(ob_Obj obj);
+ob_ObjSlots *ob_cast_slots(ob_Obj obj);
+ob_Number *ob_cast_number(ob_Obj obj);
+ob_ArrayT(ob_Obj) * ob_cast_array(ob_Obj obj);
+ob_ObjMethod *ob_cast_method(ob_Obj obj);
+ob_FnCMethod *ob_cast_lightcmethod(ob_Obj obj);
+ob_ObjCMethod *ob_cast_cmethod(ob_Obj obj);
+void **ob_cast_lightcdata(ob_Obj obj);
+ob_ObjCData *ob_cast_cdata(ob_Obj obj);
+ob_ObjActivation *ob_cast_activation(ob_Obj obj);
 
 #define OBOBJ_ISA(Obj, Tag) (obobj_get_tag((Obj)) == (Tag))
 

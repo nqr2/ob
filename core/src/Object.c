@@ -1,4 +1,5 @@
 #include <ob/Array.h>
+#include <ob/Assert.h>
 #include <ob/Object.h>
 #include <ob/String.h>
 #include <ob/Table.h>
@@ -179,4 +180,51 @@ void obobj_visit(ob_Object *obj, ob_VisitFlags flags, ob_FnVisit visit,
   if (flags & VISIT_AFTER) {
     visit(obj, userdata);
   }
+}
+
+static void *cast(ob_Obj obj, ob_ObjectTag tag) {
+  auto got = obobj_get_tag(obj);
+  ASSERT(tag == got, "expected tag %d, got tag %d", tag, got);
+  return obobj_get_data(obj);
+}
+
+ob_Str *ob_cast_symbol(ob_Obj obj) {
+  return (ob_Str *)cast(obj, OBOBJ_SYMBOL);
+}
+
+ob_Str *ob_cast_string(ob_Obj obj) {
+  return (ob_Str *)cast(obj, OBOBJ_STRING);
+}
+
+ob_ObjSlots *ob_cast_slots(ob_Obj obj) {
+  return cast(obj, OBOBJ_SLOTS);
+}
+
+ob_Number *ob_cast_number(ob_Obj obj) {
+  return cast(obj, OBOBJ_NUMBER);
+}
+
+ob_ArrayT(ob_Obj) * ob_cast_array(ob_Obj obj) {
+  return cast(obj, OBOBJ_ARRAY);
+}
+
+ob_ObjMethod *ob_cast_method(ob_Obj obj) {
+  return cast(obj, OBOBJ_METHOD);
+}
+
+ob_FnCMethod *ob_cast_lightcmethod(ob_Obj obj) {
+  return (ob_FnCMethod *)cast(obj, OBOBJ_LIGHTCMETHOD);
+}
+
+ob_ObjCMethod *ob_cast_cmethod(ob_Obj obj) {
+  return cast(obj, OBOBJ_CMETHOD);
+}
+void **ob_cast_lightcdata(ob_Obj obj) {
+  return (void **)cast(obj, OBOBJ_LIGHTCDATA);
+}
+ob_ObjCData *ob_cast_cdata(ob_Obj obj) {
+  return cast(obj, OBOBJ_CDATA);
+}
+ob_ObjActivation *ob_cast_activation(ob_Obj obj) {
+  return cast(obj, OBOBJ_ACTIVATION);
 }
