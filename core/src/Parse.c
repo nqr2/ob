@@ -179,7 +179,7 @@ static void p_method(Reader *rdr) {
   auto original = rdr->output;
 
   auto new = obctx_alloc_method(rdr->context);
-  ob_ObjMethod *method = obobj_get_data(new);
+  auto method = ob_cast_method(new);
 
   rdr->output = method;
 
@@ -522,7 +522,7 @@ ob_Obj ob_load(ob_Context ctx, size_t length, const char *text) {
   }
 
   ob_Obj closure = obctx_alloc_method(ctx);
-  ob_ObjMethod *clos = obobj_get_data(closure);
+  auto clos = ob_cast_method(closure);
 
   auto reader = rdr_new(ctx, clos, length, text);
 
@@ -544,7 +544,7 @@ ob_Obj ob_load(ob_Context ctx, size_t length, const char *text) {
 
 void ob_run(ob_Context ctx, size_t length, const char *text) {
   auto chunk = ob_load(ctx, length, text);
-  ob_ObjMethod *method = obobj_get_data(chunk);
+  auto method = ob_cast_method(chunk);
 
   obctx_enter_activation(ctx, chunk, ctx->known.shell);
 

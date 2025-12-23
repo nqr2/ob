@@ -33,8 +33,8 @@ void obbc_run(ob_Context ctx, size_t len, const uint8_t *code) {
 
     auto this_index = (index << 4) | data;
 
-    ob_ObjActivation *act = obobj_get_data(ctx->this_activation);
-    ob_ObjMethod *method = obobj_get_data(act->method);
+    auto act = ob_cast_activation(ctx->this_activation);
+    auto method = ob_cast_method(act->method);
 
     ob_Obj literal = ((ob_Obj *)method->literals.data)[this_index];
 
@@ -45,7 +45,7 @@ void obbc_run(ob_Context ctx, size_t len, const uint8_t *code) {
     }; break;
 
     case OBBC_SEND: {
-      auto selector = *(ob_Str *)obobj_get_data(literal);
+      auto selector = *ob_cast_symbol(literal);
       auto nargs = nargs_for_sel(ctx, selector);
 
       auto stack_len = obarr_length(&ctx->stack, sizeof(ob_Obj));
@@ -59,7 +59,7 @@ void obbc_run(ob_Context ctx, size_t len, const uint8_t *code) {
     }; break;
 
     case OBBC_IMPLICIT_SEND: {
-      auto selector = *(ob_Str *)obobj_get_data(literal);
+      auto selector = *ob_cast_symbol(literal);
 
       obctx_send(ctx, ctx->this_activation, selector);
     }; break;
@@ -77,7 +77,7 @@ void obbc_run(ob_Context ctx, size_t len, const uint8_t *code) {
 
     case OBBC_ARRAY: {
       auto obj = obctx_alloc_array(ctx);
-      ob_Array *arr = obobj_get_data(obj);
+      auto arr = ob_cast_array(obj);
 
       obarr_reserve(arr, this_index * sizeof(ob_Obj));
 

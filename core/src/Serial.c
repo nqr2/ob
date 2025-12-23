@@ -90,9 +90,17 @@ static void write_obj(ob_Obj object, void *userdata) {
     break;
 
   case OBOBJ_SYMBOL: // <length> <characters>
+  {
+    auto str = ob_cast_symbol(object);
+    auto length = obstr_get_length(*str);
+    auto data = obstr_get_data(srl->ctx, *str);
+
+    write_int(srl, length);
+    obarr_push(&srl->buffer, length, data);
+  } break;
   case OBOBJ_STRING: // same
   {
-    ob_Str *str = (ob_Str *)obobj_get_data(object);
+    auto str = ob_cast_string(object);
     auto length = obstr_get_length(*str);
     auto data = obstr_get_data(srl->ctx, *str);
 
@@ -101,13 +109,13 @@ static void write_obj(ob_Obj object, void *userdata) {
   } break;
   case OBOBJ_NUMBER: // the number
   {
-    ob_Number *num = obobj_get_data(object);
+    auto num = ob_cast_number(object);
     // TODO: something actually portable
     obarr_push(&srl->buffer, sizeof(ob_Number), num);
   } break;
 
   case OBOBJ_METHOD: {
-    ob_ObjMethod *data = obobj_get_data(object);
+    auto data = ob_cast_method(object);
 
     write_ref(data->env, srl);
 
@@ -181,7 +189,16 @@ ob_Obj obsrl_read(ob_Serial *srl) {
       result = NULL;
       break;
 
-    case OBOBJ_SYMBOL:
+    case OBOBJ_SYMBOL: {
+      uint64_t length = 0;
+      head = read_int(head, &length);
+
+      auto str = obstr_create(srl->ctx, length, (const char *)head);
+      head += length;
+
+      result = obctx_alloc_symbol(srl->ctx, str);
+    } break;
+
     case OBOBJ_STRING: {
       uint64_t length = 0;
       head = read_int(head, &length);
@@ -205,7 +222,7 @@ ob_Obj obsrl_read(ob_Serial *srl) {
       uint64_t length = 0;
 
       result = obctx_alloc_method(srl->ctx);
-      ob_ObjMethod *method = obobj_get_data(result);
+      auto method = ob_cast_method(result);
 
       // method->env
       head = read_int(head, &ident);
