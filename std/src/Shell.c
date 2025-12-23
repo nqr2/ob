@@ -14,7 +14,7 @@ static void run(ob_Context ctx, unsigned long length, const char *data) {
 void oblib_load_shell(ob_Context ctx) {
   (void)ctx;
 
-  ob_ObjSlots *shell = obobj_get_data(ctx->known.shell);
+  auto shell = ob_cast_slots(ctx->known.shell);
 
   auto sym_true = obstr_create_literal(ctx, "true");
   obtbl_set(&shell->slots, obstr_get_hash(ctx, sym_true), ctx->known.o_true);

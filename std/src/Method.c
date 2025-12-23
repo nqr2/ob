@@ -1,22 +1,23 @@
-#include <ob/Bytecode.h>
-#include <ob/Context.h>
 #include <ob/bits/AddMethods.h>
 #include <ob/lib/Method.h>
 
+#include <ob/Bytecode.h>
+#include <ob/Context.h>
+
 static bool method_call(ob_Context ctx) {
-  ob_ObjActivation *activation = obobj_get_data(ctx->this_activation);
+  auto activation = ob_cast_activation(ctx->this_activation);
   auto receiver = activation->receiver;
   auto operand = obctx_pop(ctx);
 
-  ob_Array *args = obobj_get_data(operand);
-  ob_ObjMethod *method = obobj_get_data(receiver);
+  auto args = ob_cast_array(operand);
+  auto method = ob_cast_method(receiver);
 
   size_t length = obarr_length(args, sizeof(ob_Str));
 
   obctx_enter_activation(ctx, receiver, receiver);
 
-  activation = obobj_get_data(ctx->this_activation);
-  ob_ObjSlots *env = obobj_get_data(activation->env);
+  activation = ob_cast_activation(ctx->this_activation);
+  auto env = ob_cast_slots(activation->env);
 
   for (size_t i = 0; i < length; i++) {
     auto param = (ob_Str *)obarr_at(&method->parameters, sizeof(ob_Str), i);

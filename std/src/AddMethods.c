@@ -10,7 +10,7 @@ static void add_method(ob_Context ctx, ob_Obj target, const char *name,
                        ob_FnCMethod method) {
   ASSERT(obobj_get_tag(target) == OBOBJ_SLOTS, "expected a slots object");
 
-  ob_ObjSlots *slots = obobj_get_data(target);
+  auto slots = ob_cast_slots(target);
 
   auto obj = obctx_alloc_lightcmethod(ctx, method);
   auto hash = obhash_start(strlen(name), name);

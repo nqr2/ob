@@ -1,3 +1,4 @@
+#include "ob/Object.h"
 #include <ob/bits/AddMethods.h>
 #include <ob/lib/Object.h>
 
@@ -14,12 +15,12 @@ void obj_print(ob_Context ctx, ob_Obj receiver) {
     break;
 
   case OBOBJ_SYMBOL: {
-    auto str = (ob_Str *)obobj_get_data(receiver);
+    auto str = ob_cast_symbol(receiver);
     printf("#'%.*s'", (int)obstr_get_length(*str), obstr_get_data(ctx, *str));
   } break;
 
   case OBOBJ_STRING: {
-    auto str = (ob_Str *)obobj_get_data(receiver);
+    auto str = ob_cast_string(receiver);
     printf("'%.*s'", (int)obstr_get_length(*str), obstr_get_data(ctx, *str));
   } break;
 
@@ -28,7 +29,7 @@ void obj_print(ob_Context ctx, ob_Obj receiver) {
     break;
 
   case OBOBJ_NUMBER: {
-    ob_Number *num = obobj_get_data(receiver);
+    auto num = ob_cast_number(receiver);
 
     if (obnum_is_int(*num)) {
       printf("%ld", obnum_to_int(*num));
@@ -42,7 +43,7 @@ void obj_print(ob_Context ctx, ob_Obj receiver) {
   case OBOBJ_ARRAY: {
     printf("[");
 
-    ob_Array *arr = obobj_get_data(receiver);
+    auto arr = ob_cast_array(receiver);
     auto size = arr->size / sizeof(ob_Obj);
 
     auto items = (ob_Obj *)arr->data;
@@ -63,14 +64,14 @@ void obj_print(ob_Context ctx, ob_Obj receiver) {
     break;
 
   case OBOBJ_LIGHTCMETHOD: {
-    auto method = (ob_FnCMethod *)obobj_get_data(receiver);
+    auto method = ob_cast_lightcmethod(receiver);
     void *ptr = NULL;
     memcpy((void *)&ptr, (void *)method, sizeof(void *));
     printf("#<cmethod:%p>", ptr);
   } break;
 
   case OBOBJ_LIGHTCDATA: {
-    auto data = (void **)obobj_get_data(receiver);
+    auto data = ob_cast_lightcdata(receiver);
     printf("#<cdata:%p>", *data);
   } break;
 
