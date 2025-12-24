@@ -5,6 +5,8 @@ Checks:
   - bugprone-*
   - readability-*
   - -bugprone-easily-swappable-parameters
+  - -readability-magic-numbers
+  - -readability-implicit-bool-conversion
 WarningsAsErrors: ''
 HeaderFileExtensions:
   - ''
