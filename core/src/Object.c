@@ -4,15 +4,15 @@
 #include <ob/String.h>
 #include <ob/Table.h>
 
-ob_ObjectTag obobj_get_tag(ob_Obj obj) {
+ob_ObjectTag ob_get_tag(ob_Obj obj) {
   if (obj == NULL) {
-    return OBOBJ_NIL;
+    return OB_NIL;
   }
 
   return obj->header.tag;
 }
 
-void *obobj_get_data(ob_Obj obj) {
+void *ob_get_payload(ob_Obj obj) {
   auto bytes = (uint8_t *)obj;
   return bytes + sizeof(ob_Object);
 }
@@ -30,7 +30,7 @@ static void mark_inner(ob_Obj obj, void *unused) {
 
   obj->header.mark = true;
 
-  obobj_mark(obj);
+  ob_mark(obj);
 }
 
 static bool mark_pred(ob_Obj obj, void *unused) {
@@ -39,20 +39,20 @@ static bool mark_pred(ob_Obj obj, void *unused) {
   return obj->header.mark;
 }
 
-void obobj_mark(ob_Obj obj) {
+void ob_mark(ob_Obj obj) {
   if (obj == NULL) {
     return;
   }
 
   switch (obj->header.tag) {
-  case OBOBJ_STRING:
-  case OBOBJ_SYMBOL: {
-    auto str = (ob_Str *)obobj_get_data(obj);
+  case OB_STRING:
+  case OB_SYMBOL: {
+    auto str = (ob_Str *)ob_get_payload(obj);
     obstr_mark(*str);
   } break;
 
-  case OBOBJ_METHOD: {
-    ob_ObjMethod *method = obobj_get_data(obj);
+  case OB_METHOD: {
+    ob_ObjMethod *method = ob_get_payload(obj);
     auto len = obarr_length(&method->parameters, sizeof(ob_Str));
 
     for (size_t i = 0; i < len; i++) {
@@ -61,8 +61,8 @@ void obobj_mark(ob_Obj obj) {
     }
   }; break;
 
-  case OBOBJ_CMETHOD: {
-    ob_ObjCMethod *method = obobj_get_data(obj);
+  case OB_CMETHOD: {
+    ob_ObjCMethod *method = ob_get_payload(obj);
     auto len = obarr_length(&method->parameters, sizeof(ob_Str));
 
     for (size_t i = 0; i < len; i++) {
@@ -75,30 +75,30 @@ void obobj_mark(ob_Obj obj) {
     break;
   }
 
-  obobj_visit(obj, VISIT_AFTER, mark_inner, mark_pred, NULL);
+  ob_visit(obj, OB_VISIT_AFTER, mark_inner, mark_pred, NULL);
 }
 
 void obobj_destroy(ob_Obj obj) {
-  switch (obobj_get_tag(obj)) {
-  case OBOBJ_SLOTS: {
-    ob_ObjSlots *data = obobj_get_data(obj);
+  switch (ob_get_tag(obj)) {
+  case OB_SLOTS: {
+    ob_ObjSlots *data = ob_get_payload(obj);
     obtbl_free(&data->slots);
   } break;
 
-  case OBOBJ_ARRAY: {
-    ob_Array *data = obobj_get_data(obj);
+  case OB_ARRAY: {
+    ob_Array *data = ob_get_payload(obj);
     obarr_free(data);
   } break;
 
-  case OBOBJ_METHOD: {
-    ob_ObjMethod *data = obobj_get_data(obj);
+  case OB_METHOD: {
+    ob_ObjMethod *data = ob_get_payload(obj);
     obarr_free(&data->parameters);
     obarr_free(&data->literals);
     obarr_free(&data->bytecode);
   } break;
 
-  case OBOBJ_CDATA: {
-    ob_ObjCData *data = obobj_get_data(obj);
+  case OB_CDATA: {
+    ob_ObjCData *data = ob_get_payload(obj);
     data->destroy(obj);
   };
 
@@ -109,7 +109,7 @@ void obobj_destroy(ob_Obj obj) {
   }
 }
 
-void obobj_visit(ob_Object *obj, ob_VisitFlags flags, ob_FnVisit visit,
+void ob_visit(ob_Object *obj, ob_VisitFlags flags, ob_FnVisit visit,
                  ob_FnVisitPredicate predicate, void *userdata) {
   if (obj == NULL) {
     return;
@@ -119,57 +119,57 @@ void obobj_visit(ob_Object *obj, ob_VisitFlags flags, ob_FnVisit visit,
     return;
   }
 
-  if (flags & VISIT_BEFORE) {
+  if (flags & OB_VISIT_BEFORE) {
     visit(obj, userdata);
   }
 
   switch (obj->header.tag) {
-  case OBOBJ_SLOTS: {
-    ob_ObjSlots *data = obobj_get_data(obj);
+  case OB_SLOTS: {
+    ob_ObjSlots *data = ob_get_payload(obj);
 
     ob_Obj ref = NULL;
     uint64_t index = 0;
 
     while (obtbl_iterate(&data->slots, &index, NULL, (void **)&ref)) {
-      obobj_visit(ref, flags, visit, predicate, userdata);
+      ob_visit(ref, flags, visit, predicate, userdata);
     }
 
-    obobj_visit(data->prototype, flags, visit, predicate, userdata);
+    ob_visit(data->prototype, flags, visit, predicate, userdata);
   } break;
 
-  case OBOBJ_ARRAY: {
-    ob_Array *data = obobj_get_data(obj);
+  case OB_ARRAY: {
+    ob_Array *data = ob_get_payload(obj);
 
     auto length = data->size / sizeof(ob_Obj);
     for (size_t i = 0; i < length; i++) {
       auto item = obarr_at(data, sizeof(ob_Obj), i);
-      obobj_visit(item, flags, visit, predicate, userdata);
+      ob_visit(item, flags, visit, predicate, userdata);
     }
   } break;
 
-  case OBOBJ_METHOD: {
-    ob_ObjMethod *data = obobj_get_data(obj);
+  case OB_METHOD: {
+    ob_ObjMethod *data = ob_get_payload(obj);
 
     for (size_t i = 0; i < data->literals.size / sizeof(ob_Obj); i++) {
       ob_Obj item = ((ob_Obj *)data->literals.data)[i];
 
-      obobj_visit(item, flags, visit, predicate, userdata);
+      ob_visit(item, flags, visit, predicate, userdata);
     }
 
-    obobj_visit(data->env, flags, visit, predicate, userdata);
+    ob_visit(data->env, flags, visit, predicate, userdata);
   }; break;
 
-  case OBOBJ_ACTIVATION: {
-    ob_ObjActivation *data = obobj_get_data(obj);
-    obobj_visit(data->parent, flags, visit, predicate, userdata);
-    obobj_visit(data->method, flags, visit, predicate, userdata);
-    obobj_visit(data->receiver, flags, visit, predicate, userdata);
-    obobj_visit(data->env, flags, visit, predicate, userdata);
+  case OB_ACTIVATION: {
+    ob_ObjActivation *data = ob_get_payload(obj);
+    ob_visit(data->parent, flags, visit, predicate, userdata);
+    ob_visit(data->method, flags, visit, predicate, userdata);
+    ob_visit(data->receiver, flags, visit, predicate, userdata);
+    ob_visit(data->env, flags, visit, predicate, userdata);
   }; break;
 
-  case OBOBJ_CDATA: {
-    ob_ObjCData *data = obobj_get_data(obj);
-    obobj_visit(data->prototype, flags, visit, predicate, userdata);
+  case OB_CDATA: {
+    ob_ObjCData *data = ob_get_payload(obj);
+    ob_visit(data->prototype, flags, visit, predicate, userdata);
     data->visit(obj, data->data);
   }; break;
 
@@ -177,54 +177,54 @@ void obobj_visit(ob_Object *obj, ob_VisitFlags flags, ob_FnVisit visit,
     break;
   }
 
-  if (flags & VISIT_AFTER) {
+  if (flags & OB_VISIT_AFTER) {
     visit(obj, userdata);
   }
 }
 
 static void *cast(ob_Obj obj, ob_ObjectTag tag) {
-  auto got = obobj_get_tag(obj);
+  auto got = ob_get_tag(obj);
   ASSERT(tag == got, "expected tag %d, got tag %d", tag, got);
-  return obobj_get_data(obj);
+  return ob_get_payload(obj);
 }
 
 ob_Str *ob_cast_symbol(ob_Obj obj) {
-  return (ob_Str *)cast(obj, OBOBJ_SYMBOL);
+  return (ob_Str *)cast(obj, OB_SYMBOL);
 }
 
 ob_Str *ob_cast_string(ob_Obj obj) {
-  return (ob_Str *)cast(obj, OBOBJ_STRING);
+  return (ob_Str *)cast(obj, OB_STRING);
 }
 
 ob_ObjSlots *ob_cast_slots(ob_Obj obj) {
-  return cast(obj, OBOBJ_SLOTS);
+  return cast(obj, OB_SLOTS);
 }
 
 ob_Number *ob_cast_number(ob_Obj obj) {
-  return cast(obj, OBOBJ_NUMBER);
+  return cast(obj, OB_NUMBER);
 }
 
 ob_ArrayT(ob_Obj) * ob_cast_array(ob_Obj obj) {
-  return cast(obj, OBOBJ_ARRAY);
+  return cast(obj, OB_ARRAY);
 }
 
 ob_ObjMethod *ob_cast_method(ob_Obj obj) {
-  return cast(obj, OBOBJ_METHOD);
+  return cast(obj, OB_METHOD);
 }
 
 ob_FnCMethod *ob_cast_lightcmethod(ob_Obj obj) {
-  return (ob_FnCMethod *)cast(obj, OBOBJ_LIGHTCMETHOD);
+  return (ob_FnCMethod *)cast(obj, OB_LIGHTCMETHOD);
 }
 
 ob_ObjCMethod *ob_cast_cmethod(ob_Obj obj) {
-  return cast(obj, OBOBJ_CMETHOD);
+  return cast(obj, OB_CMETHOD);
 }
 void **ob_cast_lightcdata(ob_Obj obj) {
-  return (void **)cast(obj, OBOBJ_LIGHTCDATA);
+  return (void **)cast(obj, OB_LIGHTCDATA);
 }
 ob_ObjCData *ob_cast_cdata(ob_Obj obj) {
-  return cast(obj, OBOBJ_CDATA);
+  return cast(obj, OB_CDATA);
 }
 ob_ObjActivation *ob_cast_activation(ob_Obj obj) {
-  return cast(obj, OBOBJ_ACTIVATION);
+  return cast(obj, OB_ACTIVATION);
 }

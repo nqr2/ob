@@ -40,15 +40,15 @@ typedef enum {
   /// Construct an @c Array from @c index items in the stack.
   OBBC_ARRAY = 6,
 
-  OP_R7 = 7,
-  OP_R8 = 8,
-  OP_R9 = 9,
-  OP_Ra = 10,
-  OP_Rb = 11,
-  OP_Rc = 12,
-  OP_Rd = 13,
-  OP_Re = 14,
-  OP_Rf = 15,
+  OBBC_RESERVED_7 = 7,
+  OBBC_RESERVED_8 = 8,
+  OBBC_RESERVED_9 = 9,
+  OBBC_RESERVED_a = 10,
+  OBBC_RESERVED_b = 11,
+  OBBC_RESERVED_c = 12,
+  OBBC_RESERVED_d = 13,
+  OBBC_RESERVED_e = 14,
+  OBBC_RESERVED_f = 15,
 } ob_Opcode;
 
 void obbc_run(ob_Context ctx, size_t len, const uint8_t *code);

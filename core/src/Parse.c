@@ -178,7 +178,7 @@ static void p_method(Reader *rdr) {
 
   auto original = rdr->output;
 
-  auto new = obctx_alloc_method(rdr->context);
+  auto new = ob_create_method(rdr->context);
   auto method = ob_cast_method(new);
 
   rdr->output = method;
@@ -288,7 +288,7 @@ static ob_Str p_string_inner(Reader *rdr) {
 
 static void p_string(Reader *rdr) {
   auto str = p_string_inner(rdr);
-  auto obj = obctx_alloc_string(rdr->context, str);
+  auto obj = ob_create_string(rdr->context, str);
 
   push_literal(rdr, obj);
 }
@@ -330,7 +330,7 @@ static void p_symbol(Reader *rdr) {
   sel = obstr_create(rdr->context, sym.size, sym.data);
 
 after_str:
-  auto objsel = obctx_alloc_symbol(rdr->context, sel);
+  auto objsel = ob_create_symbol(rdr->context, sel);
 
   push_literal(rdr, objsel);
   obarr_free(&sym);
@@ -362,7 +362,7 @@ static bool p_primary(Reader *rdr) {
     // TODO: arbitrary radix literals (16r, 8r, 2r, etc)
     // TODO: float literals (NOTE: always has a decimal digit, so 1. =/= 1.0)
 
-    auto obj = obctx_alloc_integer(rdr->context, num);
+    auto obj = ob_create_integer(rdr->context, num);
     (void)fnum;
 
     push_literal(rdr, obj);
@@ -440,7 +440,7 @@ static void p_message(Reader *rdr, bool explicitp) {
       }
 
       auto sel = obstr_create(rdr->context, msg.size, msg.data);
-      auto objsel = obctx_alloc_symbol(rdr->context, sel);
+      auto objsel = ob_create_symbol(rdr->context, sel);
 
       auto index = obarr_length(&rdr->output->literals, sizeof(ob_Obj));
       obarr_push(&rdr->output->literals, sizeof(ob_Obj), (const void *)&objsel);
@@ -464,7 +464,7 @@ static void p_message(Reader *rdr, bool explicitp) {
       rdr_takewhile(rdr, is_operator);
 
       auto sel = obstr_create(rdr->context, rdr->head - begin, begin);
-      auto objsel = obctx_alloc_symbol(rdr->context, sel);
+      auto objsel = ob_create_symbol(rdr->context, sel);
 
       p_expression(rdr);
 
@@ -521,7 +521,7 @@ ob_Obj ob_load(ob_Context ctx, size_t length, const char *text) {
     return obj;
   }
 
-  ob_Obj closure = obctx_alloc_method(ctx);
+  ob_Obj closure = ob_create_method(ctx);
   auto clos = ob_cast_method(closure);
 
   auto reader = rdr_new(ctx, clos, length, text);

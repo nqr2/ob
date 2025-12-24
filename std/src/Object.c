@@ -8,27 +8,27 @@
 #include <string.h>
 
 void obj_print(ob_Context ctx, ob_Obj receiver) {
-  auto tag = obobj_get_tag(receiver);
+  auto tag = ob_get_tag(receiver);
   switch (tag) {
-  case OBOBJ_NIL:
+  case OB_NIL:
     printf("nil");
     break;
 
-  case OBOBJ_SYMBOL: {
+  case OB_SYMBOL: {
     auto str = ob_cast_symbol(receiver);
     printf("#'%.*s'", (int)obstr_get_length(*str), obstr_get_data(ctx, *str));
   } break;
 
-  case OBOBJ_STRING: {
+  case OB_STRING: {
     auto str = ob_cast_string(receiver);
     printf("'%.*s'", (int)obstr_get_length(*str), obstr_get_data(ctx, *str));
   } break;
 
-  case OBOBJ_SLOTS:
+  case OB_SLOTS:
     printf("#<slots:%p>", (void *)receiver);
     break;
 
-  case OBOBJ_NUMBER: {
+  case OB_NUMBER: {
     auto num = ob_cast_number(receiver);
 
     if (obnum_is_int(*num)) {
@@ -40,7 +40,7 @@ void obj_print(ob_Context ctx, ob_Obj receiver) {
 
     // NUMBER
 
-  case OBOBJ_ARRAY: {
+  case OB_ARRAY: {
     printf("[");
 
     auto arr = ob_cast_array(receiver);
@@ -59,23 +59,23 @@ void obj_print(ob_Context ctx, ob_Obj receiver) {
     printf("]");
   }; break;
 
-  case OBOBJ_METHOD:
+  case OB_METHOD:
     printf("#<method:%p>", (void *)receiver);
     break;
 
-  case OBOBJ_LIGHTCMETHOD: {
+  case OB_LIGHTCMETHOD: {
     auto method = ob_cast_lightcmethod(receiver);
     void *ptr = NULL;
     memcpy((void *)&ptr, (void *)method, sizeof(void *));
     printf("#<cmethod:%p>", ptr);
   } break;
 
-  case OBOBJ_LIGHTCDATA: {
+  case OB_LIGHTCDATA: {
     auto data = ob_cast_lightcdata(receiver);
     printf("#<cdata:%p>", *data);
   } break;
 
-  case OBOBJ_ACTIVATION:
+  case OB_ACTIVATION:
     printf("#<activation:%p>", (void *)receiver);
     break;
 
@@ -86,7 +86,7 @@ void obj_print(ob_Context ctx, ob_Obj receiver) {
 }
 
 bool o__print(ob_Context ctx) {
-  auto receiver = obctx_get_receiver(ctx);
+  auto receiver = ob_get_receiver(ctx);
   obj_print(ctx, receiver);
 
   putchar('\n');
@@ -95,11 +95,11 @@ bool o__print(ob_Context ctx) {
 }
 
 static bool o__share(ob_Context ctx) {
-  auto receiver = obctx_get_receiver(ctx);
-  auto operand = obctx_pop(ctx);
+  auto receiver = ob_get_receiver(ctx);
+  auto operand = ob_pop(ctx);
 
   auto result = OB_BOOL_CAST(ctx, (receiver == operand));
-  obctx_push(ctx, result);
+  ob_push(ctx, result);
 
   return true;
 }

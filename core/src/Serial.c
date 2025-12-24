@@ -81,15 +81,15 @@ static void write_obj(ob_Obj object, void *userdata) {
   ident = srl->buffer.size;
   obtbl_set(&srl->identifiers, (uint64_t)object, (void *)ident);
 
-  uint8_t tag = obobj_get_tag(object);
+  uint8_t tag = ob_get_tag(object);
   obarr_push(&srl->buffer, sizeof(tag), &tag);
 
   // data
   switch (tag) {
-  case OBOBJ_NIL: // nothing here
+  case OB_NIL: // nothing here
     break;
 
-  case OBOBJ_SYMBOL: // <length> <characters>
+  case OB_SYMBOL: // <length> <characters>
   {
     auto str = ob_cast_symbol(object);
     auto length = obstr_get_length(*str);
@@ -98,7 +98,7 @@ static void write_obj(ob_Obj object, void *userdata) {
     write_int(srl, length);
     obarr_push(&srl->buffer, length, data);
   } break;
-  case OBOBJ_STRING: // same
+  case OB_STRING: // same
   {
     auto str = ob_cast_string(object);
     auto length = obstr_get_length(*str);
@@ -107,14 +107,14 @@ static void write_obj(ob_Obj object, void *userdata) {
     write_int(srl, length);
     obarr_push(&srl->buffer, length, data);
   } break;
-  case OBOBJ_NUMBER: // the number
+  case OB_NUMBER: // the number
   {
     auto num = ob_cast_number(object);
     // TODO: something actually portable
     obarr_push(&srl->buffer, sizeof(ob_Number), num);
   } break;
 
-  case OBOBJ_METHOD: {
+  case OB_METHOD: {
     auto data = ob_cast_method(object);
 
     write_ref(data->env, srl);
@@ -143,7 +143,7 @@ void obsrl_write(ob_Serial *srl, ob_Obj object) {
 
   obarr_push(&srl->buffer, sizeof(OB_SERIAL_HEADER), OB_SERIAL_HEADER);
 
-  obobj_visit(object, VISIT_AFTER, write_obj, NULL, srl);
+  ob_visit(object, OB_VISIT_AFTER, write_obj, NULL, srl);
 }
 
 static bool string_equal(size_t n, void *left, void *right) {
@@ -185,43 +185,43 @@ ob_Obj obsrl_read(ob_Serial *srl) {
     head++;
 
     switch (tag) {
-    case OBOBJ_NIL:
+    case OB_NIL:
       result = NULL;
       break;
 
-    case OBOBJ_SYMBOL: {
+    case OB_SYMBOL: {
       uint64_t length = 0;
       head = read_int(head, &length);
 
       auto str = obstr_create(srl->ctx, length, (const char *)head);
       head += length;
 
-      result = obctx_alloc_symbol(srl->ctx, str);
+      result = ob_create_symbol(srl->ctx, str);
     } break;
 
-    case OBOBJ_STRING: {
+    case OB_STRING: {
       uint64_t length = 0;
       head = read_int(head, &length);
 
       auto str = obstr_create(srl->ctx, length, (const char *)head);
       head += length;
 
-      result = obctx_alloc_string(srl->ctx, str);
+      result = ob_create_string(srl->ctx, str);
     } break;
 
-    case OBOBJ_NUMBER: {
+    case OB_NUMBER: {
       auto num = (ob_Number){};
       memcpy(&num, head, sizeof(ob_Number));
       head += sizeof(ob_Number);
 
-      result = obctx_alloc_number(srl->ctx, num);
+      result = ob_create_number(srl->ctx, num);
     } break;
 
-    case OBOBJ_METHOD: {
+    case OB_METHOD: {
       uint64_t ident = 0;
       uint64_t length = 0;
 
-      result = obctx_alloc_method(srl->ctx);
+      result = ob_create_method(srl->ctx);
       auto method = ob_cast_method(result);
 
       // method->env

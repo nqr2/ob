@@ -8,11 +8,11 @@
 
 static void add_method(ob_Context ctx, ob_Obj target, const char *name,
                        ob_FnCMethod method) {
-  ASSERT(obobj_get_tag(target) == OBOBJ_SLOTS, "expected a slots object");
+  ASSERT(ob_get_tag(target) == OB_SLOTS, "expected a slots object");
 
   auto slots = ob_cast_slots(target);
 
-  auto obj = obctx_alloc_lightcmethod(ctx, method);
+  auto obj = ob_create_lightcmethod(ctx, method);
   auto hash = obhash_start(strlen(name), name);
 
   obtbl_set(&slots->slots, hash, (void *)obj);

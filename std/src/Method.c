@@ -7,7 +7,7 @@
 static bool method_call(ob_Context ctx) {
   auto activation = ob_cast_activation(ctx->this_activation);
   auto receiver = activation->receiver;
-  auto operand = obctx_pop(ctx);
+  auto operand = ob_pop(ctx);
 
   auto args = ob_cast_array(operand);
   auto method = ob_cast_method(receiver);

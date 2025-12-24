@@ -82,7 +82,7 @@ void repl(ob_Context ctx) {
       putchar('=');
       putchar('\t');
 
-      auto obj = obctx_pop(ctx);
+      auto obj = ob_pop(ctx);
       obj_print(ctx, obj);
 
       putchar('\n');

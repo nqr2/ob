@@ -15,22 +15,22 @@
 #include <stdint.h>
 
 typedef enum Tag : uint8_t {
-  OBOBJ_NIL = 0,          // the nil object
-  OBOBJ_SYMBOL = 1,       // #... / #a:b:...y:z: / #'...' / #+...-
-  OBOBJ_STRING = 2,       // '...'
-  OBOBJ_SLOTS = 3,        // slot objects
-  OBOBJ_NUMBER = 4,       // numbers
-  OBOBJ_ARRAY = 5,        // [ ... ]
-  OBOBJ_METHOD = 6,       // closures
-  OBOBJ_LIGHTCMETHOD = 7, // functions from C
-  OBOBJ_CMETHOD = 8,      // annotated cmethod
-  OBOBJ_LIGHTCDATA = 9,   // data from C
-  OBOBJ_CDATA = 10,       // annotated cdata
-  OBOBJ_ACTIVATION = 11,  // call stack entry
-  OT_Rc = 12,
-  OT_Rd = 13,
-  OT_Re = 14,
-  OT_Rf = 15,
+  OB_NIL = 0,          // the nil object
+  OB_SYMBOL = 1,       // #... / #a:b:...y:z: / #'...' / #+...-
+  OB_STRING = 2,       // '...'
+  OB_SLOTS = 3,        // slot objects
+  OB_NUMBER = 4,       // numbers
+  OB_ARRAY = 5,        // [ ... ]
+  OB_METHOD = 6,       // closures
+  OB_LIGHTCMETHOD = 7, // functions from C
+  OB_CMETHOD = 8,      // annotated cmethod
+  OB_LIGHTCDATA = 9,   // data from C
+  OB_CDATA = 10,       // annotated cdata
+  OB_ACTIVATION = 11,  // call stack entry
+  OB_RESERVED_c = 12,
+  OB_RESERVED_d = 13,
+  OB_RESERVED_e = 14,
+  OB_RESERVED_f = 15,
 } ob_ObjectTag;
 
 typedef struct Object {
@@ -89,26 +89,26 @@ typedef struct {
 typedef bool (*ob_FnVisitPredicate)(ob_Obj obj, void *userdata);
 
 typedef enum : uint8_t {
-  VISIT_NONE = 0,
-  VISIT_AFTER = 1,
-  VISIT_BEFORE = 2,
+  OB_VISIT_NONE = 0,
+  OB_VISIT_AFTER = 1,
+  OB_VISIT_BEFORE = 2,
 } ob_VisitFlags;
 
 // NOTE: this also invokes visit on the obj in question
-void obobj_visit(ob_Obj obj, ob_VisitFlags flags, ob_FnVisit visit,
-                 ob_FnVisitPredicate predicate, void *userdata);
+void ob_visit(ob_Obj obj, ob_VisitFlags flags, ob_FnVisit visit,
+              ob_FnVisitPredicate predicate, void *userdata);
 
-#define obobj_visit_before(Obj, Visit, Userdata)                               \
-  obobj_visit((Obj), VISIT_BEFORE, (Visit), (Userdata))
+#define ob_visit_before(Obj, Visit, Userdata)                                  \
+  ob_visit((Obj), OB_VISIT_BEFORE, (Visit), (Userdata))
 
-#define obobj_visit_after(Obj, Visit, Userdata)                                \
-  obobj_visit((Obj), VISIT_AFTER, (Visit), (Userdata))
+#define ob_visit_after(Obj, Visit, Userdata)                                   \
+  ob_visit((Obj), OB_VISIT_AFTER, (Visit), (Userdata))
 
-ob_ObjectTag obobj_get_tag(ob_Obj obj);
-void *obobj_get_data(ob_Obj obj);
+ob_ObjectTag ob_get_tag(ob_Obj obj);
+void *ob_get_payload(ob_Obj obj);
 bool obobj_get_mark(ob_Obj obj);
 
-void obobj_mark(ob_Obj obj);
+void ob_mark(ob_Obj obj);
 
 // NOTE: call before destroying an obj
 void obobj_destroy(ob_Obj obj);
@@ -125,10 +125,10 @@ void **ob_cast_lightcdata(ob_Obj obj);
 ob_ObjCData *ob_cast_cdata(ob_Obj obj);
 ob_ObjActivation *ob_cast_activation(ob_Obj obj);
 
-#define OBOBJ_ISA(Obj, Tag) (obobj_get_tag((Obj)) == (Tag))
+#define OB_ISA(Obj, Tag) (ob_get_tag((Obj)) == (Tag))
 
-#define OBOBJ_IS_INVOCABLE(Obj)                                                \
-  (OBOBJ_ISA((Obj), OBOBJ_METHOD) || OBOBJ_ISA((Obj), OBOBJ_LIGHTCMETHOD) ||   \
-   OBOBJ_ISA((Obj), OBOBJ_CMETHOD))
+#define OB_IS_INVOCABLE(Obj)                                                   \
+  (OB_ISA((Obj), OB_METHOD) || OB_ISA((Obj), OB_LIGHTCMETHOD) ||               \
+   OB_ISA((Obj), OB_CMETHOD))
 
 #endif
