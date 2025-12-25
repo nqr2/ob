@@ -5,8 +5,8 @@
 
 static bool slots_at_put(ob_Context ctx) {
   auto receiver = ob_get_receiver(ctx);
-  auto key = ob_pop(ctx);
   auto value = ob_pop(ctx);
+  auto key = ob_pop(ctx);
 
   auto sym = ob_cast_symbol(key);
   auto slots = ob_cast_slots(receiver);

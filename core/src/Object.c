@@ -110,7 +110,7 @@ void obobj_destroy(ob_Obj obj) {
 }
 
 void ob_visit(ob_Object *obj, ob_VisitFlags flags, ob_FnVisit visit,
-                 ob_FnVisitPredicate predicate, void *userdata) {
+              ob_FnVisitPredicate predicate, void *userdata) {
   if (obj == NULL) {
     return;
   }

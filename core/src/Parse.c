@@ -99,7 +99,11 @@ static void p_skip_blank(Reader *rdr) {
       while (isspace(*rdr->head)) {
         rdr_next(rdr);
       }
-    } else if (*rdr->head == '"') {
+
+      continue;
+    }
+
+    if (*rdr->head == '"') {
       rdr_next(rdr);
 
       while (*rdr->head != '"') {
@@ -107,9 +111,11 @@ static void p_skip_blank(Reader *rdr) {
       }
 
       rdr_next(rdr);
-    } else {
-      break;
+
+      continue;
     }
+
+    break;
   }
 }
 
@@ -163,12 +169,11 @@ static void p_array(Reader *rdr) {
     }
   }
 
-  ASSERT(*rdr->head == ']', "expected a closing ], got a %c", *rdr->head);
+  ASSERT(*rdr->head == ']', "expected a closing `]`, got a %c", *rdr->head);
+  rdr_next(rdr);
 
   items = obbc_append_index(&rdr->output->bytecode, items);
   obbc_append_insn(&rdr->output->bytecode, OBBC_MAKE(OBBC_ARRAY, items));
-
-  rdr_next(rdr);
 }
 
 static void p_method(Reader *rdr) {
@@ -234,7 +239,10 @@ static void p_method(Reader *rdr) {
 
   push_literal(rdr, new);
 
-  ASSERT(*rdr->head == '}', "expected a closing }, got a %c", *rdr->head);
+  p_skip_blank(rdr);
+  p_skip_blank(rdr);
+
+  ASSERT(*rdr->head == '}', "expected a closing `}`, got a `%s`", rdr->head);
 
   rdr_next(rdr);
 }
@@ -278,6 +286,7 @@ static ob_Str p_string_inner(Reader *rdr) {
 
   obarr_push(&buf, sizeof(char) * (rdr->head - begin), begin);
 
+  ASSERT(*rdr->head == '\'', "expected a `'`, got a %s", rdr->head);
   rdr_next(rdr);
 
   auto str = obstr_create(rdr->context, buf.size, buf.data);
@@ -404,85 +413,134 @@ static void emit_send(Reader *rdr, size_t index, bool explicitp) {
       OBBC_MAKE((explicitp ? OBBC_SEND : OBBC_IMPLICIT_SEND), index));
 }
 
-static void p_message(Reader *rdr, bool explicitp) {
-  auto msg = (ob_Array){};
-  obarr_init(&msg, rdr->context->allocator);
-
+// primary . {unary-message}
+// if we found a keyword instead, backtrack
+static bool p_unary_send(Reader *rdr, bool explicitp) {
   while (true) {
-    obarr_clear(&msg);
     p_skip_blank(rdr);
 
     if (is_word_start(*rdr->head)) {
-      auto is_keyword = false;
-      // if we have an alphanumeric, it may be either a unary or keyword
-      // message.
+      auto here = rdr->head;
+      auto rem = rdr->remaining;
 
-      auto begin = rdr->head;
-      rdr_takewhile(rdr, is_word_tail);
-
-      obarr_push(&msg, sizeof(char) * (rdr->head - begin), begin);
-
-      // if this is a : then
-      // keyword:   word { : word }
-      while (*rdr->head == ':') {
-        is_keyword = true;
-        obarr_push(&msg, sizeof(char), rdr->head);
+      while (is_word_tail(*rdr->head)) {
         rdr_next(rdr);
-
-        p_expression(rdr);
-
-        p_skip_blank(rdr);
-
-        begin = rdr->head;
-        rdr_takewhile(rdr, is_word_tail);
-
-        obarr_push(&msg, sizeof(char) * (rdr->head - begin), begin);
       }
 
-      auto sel = obstr_create(rdr->context, msg.size, msg.data);
-      auto objsel = ob_create_symbol(rdr->context, sel);
-
-      auto index = obarr_length(&rdr->output->literals, sizeof(ob_Obj));
-      obarr_push(&rdr->output->literals, sizeof(ob_Obj), (const void *)&objsel);
-
-      if (is_keyword) {
-        obarr_free(&msg);
-        emit_send(rdr, index, explicitp);
-        return;
+      if (*rdr->head == ':') {
+        rdr->head = here;
+        rdr->remaining = rem;
+        return explicitp;
       }
 
-      obarr_free(&msg);
-      emit_send(rdr, index, explicitp);
-      p_message(rdr, true);
-      return;
-    }
-
-    if (is_operator(*rdr->head)) {
-      // if ... punctuation, it is a binary message
-
-      auto begin = rdr->head;
-      rdr_takewhile(rdr, is_operator);
-
-      auto sel = obstr_create(rdr->context, rdr->head - begin, begin);
+      auto sel = obstr_create(rdr->context, (rdr->head - here), here);
       auto objsel = ob_create_symbol(rdr->context, sel);
-
-      p_expression(rdr);
 
       auto index = obarr_length(&rdr->output->literals, sizeof(ob_Obj));
       obarr_push(&rdr->output->literals, sizeof(ob_Obj), (const void *)&objsel);
 
       emit_send(rdr, index, explicitp);
 
-      obarr_free(&msg);
-      p_message(rdr, true);
-      return;
+      // recv of next message is already in stack
+      explicitp = true;
+      continue;
     }
 
     break;
   }
 
-  // else, there was no message.
-  obarr_free(&msg);
+  return explicitp;
+}
+
+// primary [unary-send]
+static bool p_unary(Reader *rdr) {
+  auto explicitp = p_primary(rdr);
+  return p_unary_send(rdr, explicitp);
+}
+
+// unary-send . { operator unary-send }
+static bool p_binary_send(Reader *rdr, bool explicitp) {
+  while (true) {
+    p_skip_blank(rdr);
+    auto here = rdr->head;
+
+    if (is_operator(*rdr->head)) {
+      while (is_operator(*rdr->head)) {
+        rdr_next(rdr);
+      }
+
+      p_unary(rdr);
+
+      auto sel = obstr_create(rdr->context, (rdr->head - here), here);
+      auto objsel = ob_create_symbol(rdr->context, sel);
+
+      auto index = obarr_length(&rdr->output->literals, sizeof(ob_Obj));
+      obarr_push(&rdr->output->literals, sizeof(ob_Obj), (const void *)&objsel);
+
+      emit_send(rdr, index, explicitp);
+
+      explicitp = true;
+      continue;
+    }
+
+    break;
+  }
+
+  return explicitp;
+}
+
+static bool p_binary(Reader *rdr) {
+  auto explicitp = p_unary(rdr);
+  return p_binary_send(rdr, explicitp);
+}
+
+static bool p_keyword_send(Reader *rdr, bool explicitp) {
+  auto message = (ob_Array){};
+  obarr_init(&message, rdr->context->allocator);
+
+  while (true) {
+    p_skip_blank(rdr);
+
+    // we know that if this is not a word it cannot be a kw
+    if (is_word_start(*rdr->head)) {
+      auto here = rdr->head;
+
+      while (is_word_tail(*rdr->head)) {
+        rdr_next(rdr);
+      }
+
+      // this char can only be :
+      ASSERT(*rdr->head == ':', "expected a `:`, got a %c", *rdr->head);
+      rdr_next(rdr);
+
+      obarr_push(&message, (rdr->head - here), here);
+
+      (void)p_binary(rdr);
+
+      continue;
+    }
+
+    break;
+  }
+
+  if (message.size != 0) {
+    auto sel = obstr_create(rdr->context, message.size, message.data);
+    auto objsel = ob_create_symbol(rdr->context, sel);
+
+    auto index = obarr_length(&rdr->output->literals, sizeof(ob_Obj));
+    obarr_push(&rdr->output->literals, sizeof(ob_Obj), (const void *)&objsel);
+
+    emit_send(rdr, index, explicitp);
+  }
+
+  obarr_free(&message);
+  return explicitp;
+}
+
+// binary . { keyword binary }
+static bool p_keyword(Reader *rdr) {
+  auto explicitp = p_binary(rdr);
+  return p_keyword_send(rdr, explicitp);
 }
 
 static void p_expression(Reader *rdr) {
@@ -496,15 +554,14 @@ static void p_expression(Reader *rdr) {
     return;
   }
 
-  auto explicit_receiver = p_primary(rdr);
-  p_message(rdr, explicit_receiver);
+  (void)p_keyword(rdr);
 }
 
 static void p_toplevel(Reader *rdr) {
   p_expression(rdr);
   p_skip_blank(rdr);
 
-  ASSERT(*rdr->head == '.', "expected a `.`, got a `%c`", *rdr->head);
+  ASSERT(*rdr->head == '.', "expected a `.`, got a `%s`", rdr->head);
   rdr_next(rdr);
 }
 
