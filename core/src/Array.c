@@ -1,4 +1,5 @@
 #include <ob/Array.h>
+#include <ob/Assert.h>
 
 #include <stdbit.h>
 #include <string.h>
@@ -59,6 +60,9 @@ void obarr_remove(ob_Array *arr, size_t size, size_t offset) {
   auto length = arr->size / size;
 
   if (offset != length - 1) {
+    ASSERT(offset < length, "index out of bounds (%lu > %lu size)", offset,
+           length);
+
     memmove(bytes + (offset * size), bytes + (offset + 1) * size,
             (length - offset - 1) * size);
   }
@@ -72,10 +76,17 @@ size_t obarr_length(ob_Array *arr, size_t size) {
 
 void *obarr_at(ob_Array *arr, size_t size, size_t index) {
   uint8_t *bytes = arr->data;
+  auto length = obarr_length(arr, size);
+
+  ASSERT(index < length, "index out of bounds (%lu > %lu size)", index, length);
 
   return bytes + (index * size);
 }
 
 void *obarr_last(ob_Array *arr, size_t size) {
-  return obarr_at(arr, size, obarr_length(arr, size) - 1);
+  auto length = obarr_length(arr, size);
+
+  ASSERT(arr->size > 0, "cannot take last item of an empty array");
+
+  return obarr_at(arr, size, length - 1);
 }

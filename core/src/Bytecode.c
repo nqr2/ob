@@ -36,7 +36,8 @@ void obbc_run(ob_Context ctx, size_t len, const uint8_t *code) {
     auto act = ob_cast_activation(ctx->this_activation);
     auto method = ob_cast_method(act->method);
 
-    ob_Obj literal = ((ob_Obj *)method->literals.data)[this_index];
+    ob_Obj literal =
+        *(ob_Obj *)obarr_at(&method->literals, sizeof(ob_Obj), this_index);
 
     switch (opcode) {
     case OBBC_PUSH_LITERAL: {
