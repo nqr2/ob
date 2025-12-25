@@ -1,0 +1,13 @@
+true at: #print put: {
+  'true' print
+}.
+
+true at: #if: put: {|body| body call: [] }.
+true at: #else: put: {|body| self}.
+
+false at: #print put: {
+  'false' print
+}.
+
+false at: #if: put: {|body| self}.
+false at: #else: put: {|body| body call: [] }.

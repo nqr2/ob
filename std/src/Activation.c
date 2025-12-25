@@ -1,3 +1,4 @@
+#include "ob/Object.h"
 #include <ob/bits/AddMethods.h>
 #include <ob/lib/Activation.h>
 
@@ -19,7 +20,16 @@ static bool act__var(ob_Context ctx) {
   return false;
 }
 
+static bool act__self(ob_Context ctx) {
+  auto receiver = ob_get_receiver(ctx);
+  auto act = ob_cast_activation(receiver);
+  ob_push(ctx, act->receiver);
+  return true;
+}
+
 void oblib_load_activation(ob_Context ctx) {
   ob_add_methods(ctx, ctx->proto.slots,
-                 (ob_MethodEntry[]){{"var:is:", act__var}, OB_METHODS_END});
+                 (ob_MethodEntry[]){{"var:is:", act__var},
+                                    {"self", act__self},
+                                    OB_METHODS_END});
 }

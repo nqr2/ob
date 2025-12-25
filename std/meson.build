@@ -1,5 +1,16 @@
-_ob_shell = obc.process('lib/Shell.ob')
-_ob_shell_header = xxdi.process(_ob_shell)
+_std_headers = []
+
+foreach one : [
+  'Boolean',
+  'Shell',
+]
+  path = 'lib' / (one + '.ob')
+
+  bc = obc.process(path)
+  header = xxdi.process(bc)
+
+  _std_headers += header
+endforeach
 
 std_c_src = [
   'src/Std.c',
@@ -13,9 +24,7 @@ std_c_src = [
   'src/Shell.c',
 
   'src/World.c',
-
-  _ob_shell_header,
-]
+] + _std_headers
 
 libObStd = static_library(
   'ob_std',

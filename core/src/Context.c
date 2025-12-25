@@ -383,9 +383,9 @@ ob_Obj ob_get_prototype(ob_Context ctx, ob_Obj obj) {
 }
 
 bool ob_get_slot(ob_Context ctx, ob_Obj *slot, ob_Obj obj, ob_Str selector) {
-  while (obj != NULL) {
+  while (obj != ctx->proto.object) {
     if (OB_ISA(obj, OB_SLOTS)) {
-      ob_ObjSlots *data = ob_get_payload(obj);
+      auto data = ob_cast_slots(obj);
 
       auto str = obstr_get_data(ctx, selector);
       auto hash = obhash_start(selector->length, str);
@@ -400,7 +400,7 @@ bool ob_get_slot(ob_Context ctx, ob_Obj *slot, ob_Obj obj, ob_Str selector) {
     }
 
     if (OB_ISA(obj, OB_ACTIVATION)) {
-      ob_ObjActivation *act = ob_get_payload(obj);
+      auto act = ob_cast_activation(obj);
 
       if (ob_get_slot(ctx, slot, act->env, selector)) {
         return true;
@@ -418,6 +418,15 @@ bool ob_get_slot(ob_Context ctx, ob_Obj *slot, ob_Obj obj, ob_Str selector) {
     } else {
       break;
     }
+  }
+
+  if (obj == ctx->proto.object) {
+    auto data = ob_cast_slots(obj);
+
+    auto str = obstr_get_data(ctx, selector);
+    auto hash = obhash_start(selector->length, str);
+
+    return obtbl_get(&data->slots, hash, (void **)&obj);
   }
 
   return false;

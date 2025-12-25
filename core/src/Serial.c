@@ -74,15 +74,14 @@ static void write_obj(ob_Obj object, void *userdata) {
   ob_Serial *srl = userdata;
   uint64_t ident = 0;
 
-  if (obtbl_get(&srl->identifiers, (uint64_t)object, (void **)&ident)) {
-    return;
-  }
-
   ident = srl->buffer.size;
   obtbl_set(&srl->identifiers, (uint64_t)object, (void *)ident);
 
   uint8_t tag = ob_get_tag(object);
-  obarr_push(&srl->buffer, sizeof(tag), &tag);
+
+  if (tag != OB_NIL) {
+    obarr_push(&srl->buffer, sizeof(tag), &tag);
+  }
 
   // data
   switch (tag) {
@@ -138,12 +137,17 @@ static void write_obj(ob_Obj object, void *userdata) {
   }
 }
 
+static bool write_pred(ob_Obj obj, void *udata) {
+  ob_Serial *srl = udata;
+  return obtbl_get(&srl->identifiers, (uint64_t)obj, NULL);
+}
+
 void obsrl_write(ob_Serial *srl, ob_Obj object) {
   obtbl_clear(&srl->identifiers);
 
   obarr_push(&srl->buffer, sizeof(OB_SERIAL_HEADER), OB_SERIAL_HEADER);
 
-  ob_visit(object, OB_VISIT_AFTER, write_obj, NULL, srl);
+  ob_visit(object, OB_VISIT_AFTER, write_obj, write_pred, srl);
 }
 
 static bool string_equal(size_t n, void *left, void *right) {
