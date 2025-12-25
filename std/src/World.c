@@ -1,0 +1,19 @@
+#include <ob/bits/AddMethods.h>
+#include <ob/lib/World.h>
+
+#include <ob/Context.h>
+#include <ob/Parse.h>
+
+#include "Shell.h"
+
+static void run(ob_Context ctx, unsigned long length,
+                const unsigned char *data) {
+  ob_run(ctx, length, (void *)data);
+  obarr_clear(&ctx->stack);
+}
+
+#define RUN(C, M) run((C), LENGTH_##M, DATA_##M)
+
+void oblib_load_world(ob_Context ctx) {
+  RUN(ctx, Shell);
+}

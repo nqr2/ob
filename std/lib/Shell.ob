@@ -5,3 +5,5 @@ true at: #print put: {
 false at: #print put: {
   'false' print
 }.
+
+var: #String is: ('' prototype).

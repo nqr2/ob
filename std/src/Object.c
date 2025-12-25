@@ -104,9 +104,23 @@ static bool o__share(ob_Context ctx) {
   return true;
 }
 
+static bool o__prototype(ob_Context ctx) {
+  auto receiver = ob_get_receiver(ctx);
+  ob_push(ctx, ob_get_prototype(ctx, receiver));
+  return true;
+}
+
+static bool o__self(ob_Context ctx) {
+  auto receiver = ob_get_receiver(ctx);
+  ob_push(ctx, receiver);
+  return true;
+}
+
 void oblib_load_object(ob_Context ctx) {
   ob_add_methods(ctx, ctx->proto.object,
                  (ob_MethodEntry[]){{"print", o__print},
                                     {"sharesAddressWith:", o__share},
+                                    {"prototype", o__prototype},
+                                    {"self", o__self},
                                     OB_METHODS_END});
 }

@@ -5,12 +5,14 @@ std_c_src = [
   'src/Std.c',
 
   'src/AddMethods.c',
+  'src/Activation.c',
   'src/String.c',
   'src/Object.c',
   'src/Method.c',
   'src/Slots.c',
-
   'src/Shell.c',
+
+  'src/World.c',
 
   _ob_shell_header,
 ]
