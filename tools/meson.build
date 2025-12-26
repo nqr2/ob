@@ -21,3 +21,9 @@ xxdi = generator(
   arguments: ['@INPUT@', '@OUTPUT@', '@BASENAME@'],
   output: ['@BASENAME@.h']
 )
+
+dis_exe = executable(
+  'dis',
+  'src/dis.c',
+  dependencies: [obCore]
+)
