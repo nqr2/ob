@@ -1,5 +1,6 @@
 #include <ob/Array.h>
 #include <ob/Context.h>
+#include <ob/Log.h>
 #include <ob/Parse.h>
 #include <ob/Serial.h>
 
@@ -45,6 +46,10 @@ void dofile(ob_Context ctx, const char *path) {
 }
 
 int main(int argn, char *argv[]) {
+  auto log = oblog_create_handler();
+  oblog_set_handler(&log);
+  oblog_set_level(OB_LOG_DEBUG);
+
   auto alloc = oballoc_create();
 
   auto ctx = obctx_create(&alloc);

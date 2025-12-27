@@ -7,6 +7,9 @@
 #include <ob/Serial.h>
 #include <ob/String.h>
 
+#define OB_LOG_MODULE "Parse"
+#include <ob/Log.h>
+
 #include <ctype.h>
 #include <stdint.h>
 #include <string.h>
@@ -72,6 +75,8 @@ void rdr_takewhile(Reader *rdr, bool (*pred)(char)) {
 static void push_literal(Reader *rdr, ob_Obj obj) {
   auto index = obarr_length(&rdr->output->literals, sizeof(ob_Obj));
   obarr_push(&rdr->output->literals, sizeof(ob_Obj), (const void *)&obj);
+
+  OB_DEBUG("push literal: %zu", index);
 
   index = obbc_append_index(&rdr->output->bytecode, index);
   obbc_append_insn(&rdr->output->bytecode, OBBC_MAKE(OBBC_PUSH_LITERAL, index));

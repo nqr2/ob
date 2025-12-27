@@ -41,13 +41,13 @@ void dofile(const char *input_path, ob_Serial *srl) {
       auto method = ob_cast_method(obj);
       auto len = method->bytecode.size;
 
+      size_t data = 0;
       for (size_t i = 0; i < len; i++) {
         auto insn = ((uint8_t *)method->bytecode.data)[i];
 
-        printf("  %03zx : %02x", i, insn);
-
         auto opcode = OBBC_GET_OPCODE(insn);
-        auto data = OBBC_GET_DATA(insn);
+        data <<= 4;
+        data |= OBBC_GET_DATA(insn);
 
         const char *name = "???";
 
@@ -62,8 +62,9 @@ void dofile(const char *input_path, ob_Serial *srl) {
           name = "IMP";
           break;
         case OBBC_EXTEND:
-          name = "EXT";
-          break;
+          continue;
+          // name = "EXT";
+          // break;
         case OBBC_RETURN:
           name = "RET";
           break;
@@ -77,7 +78,10 @@ void dofile(const char *input_path, ob_Serial *srl) {
           break;
         }
 
+        printf("  %03zx : %02x", i, insn);
         printf("\t%s %d", name, data);
+
+        data = 0;
 
         putchar('\n');
       }

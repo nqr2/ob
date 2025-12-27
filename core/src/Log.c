@@ -29,12 +29,14 @@ static void dflt_handle(void *userdata, ob_LogData *data) {
     break;
   }
 
-  strftime(buffer, sizeof(buffer), "", localtime(&data->time));
+  strftime(buffer, sizeof(buffer), "%Y/%m/%d %H:%M:%S", localtime(&data->time));
 
-  fprintf(stderr, "[%s] %s:%d (%s) %s:", buffer, data->file, data->line,
+  fprintf(stderr, "[%s] %s:%d (%s) %s : ", buffer, data->file, data->line,
           data->function, level_name);
 
   vfprintf(stderr, data->message, *data->arguments);
+
+  fputc('\n', stderr);
 }
 
 ob_LogHandler oblog_create_handler() {
