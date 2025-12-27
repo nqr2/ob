@@ -1,16 +1,9 @@
 #include <ob/Argparse.h>
-#include <ob/Array.h>
-#include <ob/Assert.h>
 #include <ob/Context.h>
-#include <ob/Hash.h>
 #include <ob/Log.h>
-#include <ob/Number.h>
-#include <ob/Object.h>
 #include <ob/Parse.h>
-#include <ob/String.h>
 
 #include <ob/Std.h>
-#include <ob/bits/AddMethods.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -32,7 +25,7 @@ void dofile(ob_Context ctx, const char *path) {
 
   length = ftell(file);
 
-  rewind(file);
+  fseek(file, 0, SEEK_SET);
 
   obarr_init(&data, ctx->allocator);
   obarr_reserve(&data, length);

@@ -53,8 +53,7 @@ ob_LogHandler oblog_create_handler();
 void oblog_set_handler(ob_LogHandler *handler);
 void oblog_set_level(ob_LogLevel level);
 
-void oblog__handle(const ob_LogLevel level, const char *module,
-                   const char *file, int line, const char *function,
-                   const char *message, ...);
+void oblog__handle(ob_LogLevel level, const char *module, const char *file,
+                   int line, const char *function, const char *message, ...);
 
 #endif
