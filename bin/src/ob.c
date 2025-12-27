@@ -3,6 +3,7 @@
 #include <ob/Assert.h>
 #include <ob/Context.h>
 #include <ob/Hash.h>
+#include <ob/Log.h>
 #include <ob/Number.h>
 #include <ob/Object.h>
 #include <ob/Parse.h>
@@ -93,6 +94,10 @@ void repl(ob_Context ctx) {
 }
 
 int main(int argn, const char *argv[]) {
+  auto log = oblog_create_handler();
+  oblog_set_handler(&log);
+  oblog_set_level(OB_LOG_DEBUG);
+
   bool is_interactive = argn == 1;
   const char *execute = NULL;
 
