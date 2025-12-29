@@ -412,7 +412,7 @@ bool ob_get_slot(ob_Context ctx, ob_Obj *slot, ob_Obj obj, ob_Str selector) {
     auto str = obstr_get_data(ctx, selector);
     auto hash = obhash_start(selector->length, str);
 
-    return obtbl_get(&data->slots, hash, (void **)&obj);
+    return obtbl_get(&data->slots, hash, (void **)slot);
   }
 
   return false;
