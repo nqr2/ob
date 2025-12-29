@@ -25,23 +25,23 @@ static size_t nargs_for_sel(ob_Context ctx, ob_Str selector) {
 }
 
 void obbc_run(ob_Context ctx, size_t len, const uint8_t *code) {
-  uint64_t index = 0;
+  auto start = code;
 
-  for (size_t pc = 0; pc < len; pc++) {
-    auto opcode = OBBC_GET_OPCODE(code[pc]);
-    auto data = OBBC_GET_DATA(code[pc]);
+  while ((size_t)(code - start) < len) {
+    ob_Opcode opcode = 0;
+    size_t data = 0;
 
-    auto this_index = (index << 4) | data;
+    code = obbc_read_insn(code, &opcode, &data);
 
     auto act = ob_cast_activation(ctx->this_activation);
     auto method = ob_cast_method(act->method);
 
     ob_Obj literal =
-        *(ob_Obj *)obarr_at(&method->literals, sizeof(ob_Obj), this_index);
+        *(ob_Obj *)obarr_at(&method->literals, sizeof(ob_Obj), data);
 
     switch (opcode) {
     case OBBC_PUSH_LITERAL: {
-      auto obj = ((ob_Obj *)method->literals.data)[this_index];
+      auto obj = ((ob_Obj *)method->literals.data)[data];
       obarr_push(&ctx->stack, sizeof(ob_Obj), (void *)&obj);
     }; break;
 
@@ -65,10 +65,9 @@ void obbc_run(ob_Context ctx, size_t len, const uint8_t *code) {
       ob_send(ctx, ctx->this_activation, selector);
     }; break;
 
-    case OBBC_EXTEND: {
-      index = this_index;
-      continue;
-    }; break;
+    // already handled by read_insn
+    case OBBC_EXTEND:
+      break;
 
       // TODO: OP_RETURN
 
@@ -80,10 +79,10 @@ void obbc_run(ob_Context ctx, size_t len, const uint8_t *code) {
       auto obj = ob_create_array(ctx);
       auto arr = ob_cast_array(obj);
 
-      obarr_reserve(arr, this_index * sizeof(ob_Obj));
+      obarr_reserve(arr, data * sizeof(ob_Obj));
 
-      obarr_pop(&ctx->stack, this_index * sizeof(ob_Obj), arr->data);
-      arr->size = this_index * sizeof(ob_Obj);
+      obarr_pop(&ctx->stack, data * sizeof(ob_Obj), arr->data);
+      arr->size = data * sizeof(ob_Obj);
 
       ob_push(ctx, obj);
     }; break;
@@ -93,8 +92,6 @@ void obbc_run(ob_Context ctx, size_t len, const uint8_t *code) {
     }
 
     ob_gc(ctx);
-
-    index = 0;
   }
 }
 
@@ -102,7 +99,6 @@ void obbc_append_insn(ob_Array *out, ob_Instruction insn) {
   obarr_push(out, sizeof(ob_Instruction), &insn);
 }
 
-// NOLINTBEGIN
 uint8_t obbc_append_index(ob_Array *out, uint64_t index) {
   while (index > 15) {
     obbc_append_insn(out, OBBC_MAKE(OBBC_EXTEND, index & 0xf));
@@ -111,4 +107,39 @@ uint8_t obbc_append_index(ob_Array *out, uint64_t index) {
 
   return index;
 }
-// NOLINTEND
+
+const uint8_t *obbc_read_insn(const uint8_t *source, ob_Opcode *opcode,
+                              size_t *data) {
+  size_t this_index = 0;
+  size_t shift = 0;
+  ob_Opcode code = 0;
+
+  while (true) {
+    ob_Instruction insn = *source;
+
+    size_t payload = OBBC_GET_DATA(insn);
+    code = OBBC_GET_OPCODE(insn);
+
+    this_index |= (payload << 4 * shift);
+
+    source++;
+    shift++;
+
+    if (code == OBBC_EXTEND) {
+      // this_index <<= 4;
+      continue;
+    }
+
+    break;
+  }
+
+  if (opcode != NULL) {
+    *opcode = code;
+  }
+
+  if (data != NULL) {
+    *data = this_index;
+  }
+
+  return source;
+}

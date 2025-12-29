@@ -56,4 +56,7 @@ void obbc_run(ob_Context ctx, size_t len, const uint8_t *code);
 void obbc_append_insn(ob_Array *out, ob_Instruction insn);
 uint8_t obbc_append_index(ob_Array *out, uint64_t index);
 
+const uint8_t *obbc_read_insn(const uint8_t *source, ob_Opcode *opcode,
+                              size_t *data);
+
 #endif
