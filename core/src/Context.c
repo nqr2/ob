@@ -506,7 +506,9 @@ void ob_send(ob_Context ctx, ob_Obj recv, ob_Str selector) {
   ob_Obj invoked = NULL;
 
   if (!ob_get_slot(ctx, &invoked, recv, selector)) {
-    ASSERT(false, "todo doesNotUnderstand");
+    auto len = obstr_get_length(selector);
+
+    ASSERT(false, "doesNotUnderstand: #'%.*s'", len, sel);
     // TODO: doesNotUnderstand
   }
 
