@@ -1,9 +1,8 @@
-var: #Nil is: () prototype.
-var: #Symbol is: #'' prototype.
-var: #String is: '' prototype.
-var: #Slots is: Nil prototype.
-var: #Number is: 0 prototype.
-var: #Array is: [] prototype.
-var: #Method is: {} prototype.
-
-var: #Object is: Slots prototype.
+at: #Nil    put: () prototype.
+at: #Symbol put: #'' prototype.
+at: #String put: '' prototype.
+at: #Slots  put: Nil prototype.
+at: #Number put: 0 prototype.
+at: #Array  put: [] prototype.
+at: #Method put: {} prototype.
+at: #Object put: Slots prototype.
