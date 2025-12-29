@@ -1,4 +1,5 @@
 #include "ob/Object.h"
+#include "ob/Array.h"
 #include <ob/bits/AddMethods.h>
 #include <ob/lib/Object.h>
 
@@ -116,11 +117,31 @@ static bool o__self(ob_Context ctx) {
   return true;
 }
 
+static bool o__send(ob_Context ctx) {
+  auto receiver = ob_get_receiver(ctx);
+  auto selector = ob_pop(ctx);
+  auto args = ob_pop(ctx);
+
+  auto sel = *ob_cast_string(selector);
+  auto args_data = ob_cast_array(args);
+
+  while (args_data->size > 0) {
+    ob_Obj item = NULL;
+    obarr_pop(args_data, sizeof(ob_Obj), (void *)&item);
+    ob_push(ctx, item);
+  }
+
+  ob_send(ctx, receiver, sel);
+
+  return true;
+}
+
 void oblib_load_object(ob_Context ctx) {
   ob_add_methods(ctx, ctx->proto.object,
                  (ob_MethodEntry[]){{"print", o__print},
                                     {"sharesAddressWith:", o__share},
                                     {"prototype", o__prototype},
                                     {"self", o__self},
+                                    {"send:with:", o__send},
                                     OB_METHODS_END});
 }

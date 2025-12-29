@@ -78,6 +78,13 @@ ob_Obj ob_get_prototype(ob_Context ctx, ob_Obj obj);
 
 bool ob_get_slot(ob_Context ctx, ob_Obj *slot, ob_Obj obj, ob_Str selector);
 
+typedef enum {
+  OB_SEND_DNUW = 0x1, // Dispatch #doesNotUnderstand:with:
+} ob_SendFlags;
+
+void ob_send_ext(ob_Context ctx, ob_Obj recv, ob_Str selector,
+                 ob_SendFlags flags);
+
 void ob_send(ob_Context ctx, ob_Obj recv, ob_Str selector);
 
 ob_Exncode obctx_pcall(ob_Context ctx,

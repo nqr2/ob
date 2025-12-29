@@ -55,11 +55,15 @@ ob_Context obctx_create(ob_Allocator *alloc) {
 
   ctx->gc_state.previous_hs = ctx->allocator->used;
 
+  obctx_enter_activation(ctx, NULL, ctx->known.shell);
+
   return ctx;
 }
 
 void obctx_destroy(ob_Context ctx) {
   auto alloc = ctx->allocator;
+
+  obctx_leave_activation(ctx);
 
   gc_sweep(ctx);
   gc_sweep(ctx);
@@ -291,7 +295,7 @@ void obctx_enter_activation(ob_Context ctx, ob_Obj method, ob_Obj receiver) {
   data->parent = ctx->this_activation;
   data->method = method;
   data->receiver = receiver;
-  data->env = ob_create_slots(ctx, NULL);
+  data->env = ob_create_slots(ctx, receiver);
 
   ctx->this_activation = act;
 }
@@ -399,20 +403,6 @@ bool ob_get_slot(ob_Context ctx, ob_Obj *slot, ob_Obj obj, ob_Str selector) {
       }
     }
 
-    if (OB_ISA(obj, OB_ACTIVATION)) {
-      auto act = ob_cast_activation(obj);
-
-      if (ob_get_slot(ctx, slot, act->env, selector)) {
-        return true;
-      }
-
-      if (ob_get_slot(ctx, slot, act->receiver, selector)) {
-        return true;
-      }
-
-      obj = act->parent;
-    }
-
     if (obj != ctx->proto.object) {
       obj = ob_get_prototype(ctx, obj);
     } else {
@@ -485,20 +475,28 @@ static void invoke(ob_Context ctx, ob_Obj invoked, ob_Obj recv, size_t n_args) {
   }
 }
 
-void ob_send(ob_Context ctx, ob_Obj recv, ob_Str selector) {
+static size_t args_for_sel(size_t len, const char *data) {
   size_t n_args = 0;
 
-  auto sel = obstr_get_data(ctx, selector);
-
-  if (ispunct(sel[0])) {
+  if (ispunct(data[0])) {
     n_args = 1;
   } else {
-    for (size_t i = 0; i < selector->length; i++) {
-      if (sel[i] == ':') {
+    for (size_t i = 0; i < len; i++) {
+      if (data[i] == ':') {
         n_args++;
       }
     }
   }
+
+  return n_args;
+}
+
+void ob_send_ext(ob_Context ctx, ob_Obj recv, ob_Str selector,
+                 ob_SendFlags flags) {
+  auto sel = obstr_get_data(ctx, selector);
+  auto len = obstr_get_length(selector);
+
+  auto n_args = args_for_sel(len, sel);
 
   ASSERT(ob_checkstack(ctx, n_args), "expected to have %lu arguments on stack",
          n_args);
@@ -506,10 +504,27 @@ void ob_send(ob_Context ctx, ob_Obj recv, ob_Str selector) {
   ob_Obj invoked = NULL;
 
   if (!ob_get_slot(ctx, &invoked, recv, selector)) {
-    auto len = obstr_get_length(selector);
+    if (flags & OB_SEND_DNUW) {
+      auto dnuw = obstr_create_literal(ctx, "doesNotUnderstand:with:");
+
+      auto args = ob_create_array(ctx);
+      auto args_data = ob_cast_array(args);
+
+      while (n_args > 0) {
+        ob_Obj obj = NULL;
+        obj = ob_pop(ctx);
+        obarr_push(args_data, sizeof(ob_Obj), (void *)&obj);
+        n_args--;
+      }
+
+      ob_push(ctx, args);
+      ob_push(ctx, ob_create_symbol(ctx, selector));
+
+      ob_send_ext(ctx, recv, dnuw, 0);
+      return;
+    }
 
     ASSERT(false, "doesNotUnderstand: #'%.*s'", len, sel);
-    // TODO: doesNotUnderstand
   }
 
   bool is_invocable = OB_IS_INVOCABLE(invoked);
@@ -527,6 +542,10 @@ void ob_send(ob_Context ctx, ob_Obj recv, ob_Str selector) {
   else {
     ob_push(ctx, invoked);
   }
+}
+
+void ob_send(ob_Context ctx, ob_Obj recv, ob_Str selector) {
+  ob_send_ext(ctx, recv, selector, OB_SEND_DNUW);
 }
 
 ob_Exncode obctx_pcall(ob_Context ctx,

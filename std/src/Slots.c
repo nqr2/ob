@@ -20,5 +20,6 @@ static bool slots_at_put(ob_Context ctx) {
 
 void oblib_load_slots(ob_Context ctx) {
   ob_add_methods(ctx, ctx->proto.slots,
-                 (ob_MethodEntry[]){{"at:put:", slots_at_put}, OB_METHODS_END});
+                 (ob_MethodEntry[]){//{"at:put:", slots_at_put},
+                                    OB_METHODS_END});
 }
