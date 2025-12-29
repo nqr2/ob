@@ -399,10 +399,6 @@ static bool p_primary(Reader *rdr) {
   case '[':
     p_array(rdr);
     break;
-  case '@':
-    rdr_next(rdr);
-    obbc_append_insn(&rdr->output->bytecode, OBBC_SELF);
-    break;
   default:
     return false;
   }

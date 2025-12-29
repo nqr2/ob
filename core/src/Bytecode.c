@@ -80,10 +80,6 @@ void obbc_run(ob_Context ctx, size_t len, const uint8_t *code) {
 
       // TODO: OP_RETURN
 
-    case OBBC_SELF: {
-      obarr_push(&ctx->stack, sizeof(ob_Obj), (void *)act->receiver);
-    }; break;
-
     case OBBC_ARRAY: {
       auto obj = ob_create_array(ctx);
       auto arr = ob_cast_array(obj);

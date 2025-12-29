@@ -34,8 +34,7 @@ typedef enum {
   /// Implements @c ^
   OBBC_RETURN = 4,
 
-  /// Push the explicit receiver
-  OBBC_SELF = 5,
+  OBBC_RESERVED_5 = 5,
 
   /// Construct an @c Array from @c index items in the stack.
   OBBC_ARRAY = 6,

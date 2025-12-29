@@ -79,9 +79,6 @@ void dofile(const char *input_path, ob_Serial *srl) {
         case OBBC_RETURN:
           name = "RET";
           break;
-        case OBBC_SELF:
-          name = "SLF";
-          break;
         case OBBC_ARRAY:
           name = "ARR";
           break;
