@@ -1,3 +1,5 @@
+#include "ob/Array.h"
+#include "ob/Object.h"
 #include <ob/Assert.h>
 #include <ob/Bytecode.h>
 #include <ob/Context.h>
@@ -35,6 +37,14 @@ void dofile(const char *input_path, ob_Serial *srl) {
     printf("\t@ %4lu: %p\n", offset, (void *)obj);
     printf("tag: %d\n", ob_get_tag(obj));
 
+    if (ob_get_tag(obj) == OB_SYMBOL) {
+      auto sym = *ob_cast_symbol(obj);
+      auto data = obstr_get_data(srl->ctx, sym);
+      auto len = obstr_get_length(sym);
+
+      printf("symbol: #'%.*s'\n", len, data);
+    }
+
     if (ob_get_tag(obj) == OB_METHOD) {
       printf("bc:\n");
 
@@ -48,6 +58,7 @@ void dofile(const char *input_path, ob_Serial *srl) {
       auto start = code;
 
       while ((size_t)(code - start) < len) {
+        auto byte = *code;
         auto offset = (size_t)(code - start);
         code = obbc_read_insn(code, &opcode, &data);
 
@@ -78,12 +89,21 @@ void dofile(const char *input_path, ob_Serial *srl) {
           break;
         }
 
-        printf("  %03zx : %02x", offset, opcode);
+        printf("  %03zx : %02x", offset, byte);
         printf("\t%s %zd", name, data);
 
-        data = 0;
-
         putchar('\n');
+      }
+
+      puts("lit:");
+
+      {
+        auto len = obarr_length(&method->literals, sizeof(ob_Obj));
+
+        for (size_t i = 0; i < len; i++) {
+          auto obj = *(ob_Obj *)obarr_at(&method->literals, sizeof(ob_Obj), i);
+          printf("  %zu = %p\n", i, (void *)obj);
+        }
       }
     }
   }

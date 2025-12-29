@@ -1,3 +1,4 @@
+#include "ob/Array.h"
 #include "ob/Object.h"
 #include <ob/bits/AddMethods.h>
 #include <ob/lib/Activation.h>
@@ -34,10 +35,35 @@ static bool act__env(ob_Context ctx) {
   return true;
 }
 
+static void unpack(ob_Context ctx, ob_Obj args) {
+  auto data = ob_cast_array(args);
+
+  auto len = obarr_length(data, sizeof(ob_Obj));
+
+  for (size_t i = 0; i < len; i++) {
+    auto obj = *(ob_Obj *)obarr_at(data, sizeof(ob_Obj), i);
+    ob_push(ctx, obj);
+  }
+}
+
 static bool act__dnuw(ob_Context ctx) {
-  auto receiver = ob_get_receiver(ctx);
-  auto act = ob_cast_activation(receiver);
-  ob_push(ctx, NULL);
+  auto act = ob_cast_activation(ctx->this_activation);
+
+  auto selector = ob_pop(ctx);
+  auto args = ob_pop(ctx);
+
+  auto sel = *ob_cast_symbol(selector);
+
+  if (ob_get_slot(ctx, NULL, act->env, sel)) {
+    unpack(ctx, args);
+    ob_send(ctx, act->env, sel);
+  }
+
+  if (ob_get_slot(ctx, NULL, act->receiver, sel)) {
+    unpack(ctx, args);
+    ob_send(ctx, act->receiver, sel);
+  }
+
   return true;
 }
 

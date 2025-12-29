@@ -55,15 +55,11 @@ ob_Context obctx_create(ob_Allocator *alloc) {
 
   ctx->gc_state.previous_hs = ctx->allocator->used;
 
-  obctx_enter_activation(ctx, NULL, ctx->known.shell);
-
   return ctx;
 }
 
 void obctx_destroy(ob_Context ctx) {
   auto alloc = ctx->allocator;
-
-  obctx_leave_activation(ctx);
 
   gc_sweep(ctx);
   gc_sweep(ctx);

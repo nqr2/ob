@@ -1,8 +1,10 @@
-#include "ob/String.h"
 #include <ob/Array.h>
 #include <ob/Bytecode.h>
 #include <ob/Context.h>
 #include <ob/Object.h>
+
+#define OB_LOG_MODULE "Bytecode"
+#include <ob/Log.h>
 
 #include <ctype.h>
 
@@ -25,12 +27,15 @@ static size_t nargs_for_sel(ob_Context ctx, ob_Str selector) {
 }
 
 void obbc_run(ob_Context ctx, size_t len, const uint8_t *code) {
+  OB_DEBUG("running data from %p, length %zu", code, len);
+
   auto start = code;
 
   while ((size_t)(code - start) < len) {
     ob_Opcode opcode = 0;
     size_t data = 0;
 
+    auto byte = *code;
     code = obbc_read_insn(code, &opcode, &data);
 
     auto act = ob_cast_activation(ctx->this_activation);
@@ -39,9 +44,13 @@ void obbc_run(ob_Context ctx, size_t len, const uint8_t *code) {
     ob_Obj literal =
         *(ob_Obj *)obarr_at(&method->literals, sizeof(ob_Obj), data);
 
+    OB_DEBUG("offset %ld: %02x with literal: %p", (code - start), byte,
+             literal);
+
     switch (opcode) {
     case OBBC_PUSH_LITERAL: {
       auto obj = ((ob_Obj *)method->literals.data)[data];
+      ob_push(ctx, obj);
       obarr_push(&ctx->stack, sizeof(ob_Obj), (void *)&obj);
     }; break;
 
