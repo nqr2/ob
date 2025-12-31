@@ -87,12 +87,9 @@ void repl(ob_Context ctx) {
 }
 
 int main(int argn, const char *argv[]) {
-  auto log = oblog_create_handler();
-  oblog_set_handler(&log);
-  oblog_set_level(OB_LOG_DEBUG);
-
   bool is_interactive = argn == 1;
   const char *execute = NULL;
+  int loglevel = OB_LOG_ERROR;
 
   auto f_interactive =
       obarg_create_flag('i', "interactive", OBARG_FLAG_SET, &is_interactive);
@@ -100,11 +97,19 @@ int main(int argn, const char *argv[]) {
 
   auto f_exec =
       obarg_create_flag('e', NULL, OBARG_FLAG_STRING, (void *)&execute);
+  f_exec.description = "Run a string passed in the command line";
 
-  auto parser =
-      obarg_create_parser((ob_Flag[]){f_interactive, f_exec, OB_FLAGS_END});
+  auto f_log = obarg_create_flag('v', NULL, OBARG_FLAG_INT, (void *)&loglevel);
+  f_log.description = "Set the log level (0 to disable, 4 to allow everything)";
+
+  auto parser = obarg_create_parser(
+      (ob_Flag[]){f_interactive, f_exec, f_log, OB_FLAGS_END});
 
   obarg_parse(&parser, argn, argv);
+
+  auto log = oblog_create_handler();
+  oblog_set_handler(&log);
+  oblog_set_level(loglevel);
 
   auto alloc = oballoc_create();
 

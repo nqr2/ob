@@ -41,10 +41,11 @@
 #define OB_ERROR(M, ...) OB_LOG(OB_LOG_ERROR, M __VA_OPT__(, ) __VA_ARGS__)
 
 typedef enum {
-  OB_LOG_DEBUG,
-  OB_LOG_INFO,
-  OB_LOG_WARN,
-  OB_LOG_ERROR,
+  OB_LOG_DEBUG = 4,
+  OB_LOG_INFO = 3,
+  OB_LOG_WARN = 2,
+  OB_LOG_ERROR = 1,
+  OB_LOG_DISABLE = 0,
 } ob_LogLevel;
 
 typedef struct {

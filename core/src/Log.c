@@ -27,6 +27,8 @@ static void dflt_handle(void *userdata, ob_LogData *data) {
   case OB_LOG_ERROR:
     level_name = "ERROR";
     break;
+  case OB_LOG_DISABLE:
+    return;
   }
 
   strftime(buffer, sizeof(buffer), "%Y/%m/%d %H:%M:%S", localtime(&data->time));
@@ -61,7 +63,7 @@ void oblog__handle(const ob_LogLevel level, const char *module,
     return;
   }
 
-  if (level > cur_level) {
+  if (level >= cur_level) {
     return;
   }
 
