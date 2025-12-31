@@ -52,7 +52,8 @@ typedef enum {
   /// Implements @c ^
   OBBC_RETURN = 4,
 
-  OBBC_RESERVED_5 = 5,
+  /// Implements @c ,
+  OBBC_CASCADE = 5,
 
   /// Construct an @c Array from @c index items in the stack.
   OBBC_ARRAY = 6,
