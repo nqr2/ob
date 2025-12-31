@@ -12,7 +12,7 @@ As of now, `ob` uses the Meson build system, thus building the program
 should be as simple as:
 
 ``` bash
-export $BUILD_DIRECTORY = ".build" # Or another value
+export BUILD_DIRECTORY=".build" # Or another value
 
 git clone --recursive https://github.com/nqr2/ob
 cd ob
