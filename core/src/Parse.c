@@ -48,6 +48,10 @@ typedef struct {
   ob_ObjMethod *output;
   size_t remaining;
   const char *head;
+
+  const char *path;
+  size_t line;
+  size_t column;
 } Reader;
 
 Reader rdr_new(ob_Context context, ob_ObjMethod *output, size_t length,
@@ -57,12 +61,32 @@ Reader rdr_new(ob_Context context, ob_ObjMethod *output, size_t length,
   rdr.output = output;
   rdr.remaining = length;
   rdr.head = text;
+
+  rdr.path = "*unknown*";
+  rdr.line = 0;
+  rdr.column = 0;
+
   return rdr;
 }
 
 void rdr_next(Reader *rdr) {
+  ASSERT(rdr->remaining > 0, "unexpected end of file");
+
+  rdr->column++;
+
+  if (*rdr->head == '\n') {
+    rdr->line++;
+    rdr->column = 0;
+  }
+
   rdr->head++;
   rdr->remaining--;
+}
+
+static void rdr_expect1(Reader *rdr, char chr) {
+  ASSERT(*rdr->head == chr, "at %s %zu:%zu: expected `%c`, got `%c`", rdr->path,
+         rdr->line + 1, rdr->column + 1, chr, *rdr->head);
+  rdr_next(rdr);
 }
 
 // i wish C had lambdas...
@@ -146,9 +170,7 @@ static void p_paren(Reader *rdr) {
     }
   }
 
-  ASSERT(*rdr->head == ')', "expected a closing ), got a %c", *rdr->head);
-
-  rdr_next(rdr);
+  rdr_expect1(rdr, ')');
 }
 
 static void p_array(Reader *rdr) {
@@ -174,8 +196,7 @@ static void p_array(Reader *rdr) {
     }
   }
 
-  ASSERT(*rdr->head == ']', "expected a closing `]`, got a %c", *rdr->head);
-  rdr_next(rdr);
+  rdr_expect1(rdr, ']');
 
   items = obbc_append_index(&rdr->output->bytecode, items);
   obbc_append_insn(&rdr->output->bytecode, OBBC_MAKE(OBBC_ARRAY, items));
@@ -247,9 +268,7 @@ static void p_method(Reader *rdr) {
   p_skip_blank(rdr);
   p_skip_blank(rdr);
 
-  ASSERT(*rdr->head == '}', "expected a closing `}`, got a `%s`", rdr->head);
-
-  rdr_next(rdr);
+  rdr_expect1(rdr, '}');
 }
 
 static ob_Str p_string_inner(Reader *rdr) {
@@ -291,8 +310,7 @@ static ob_Str p_string_inner(Reader *rdr) {
 
   obarr_push(&buf, sizeof(char) * (rdr->head - begin), begin);
 
-  ASSERT(*rdr->head == '\'', "expected a `'`, got a %s", rdr->head);
-  rdr_next(rdr);
+  rdr_expect1(rdr, '\'');
 
   auto str = obstr_create(rdr->context, buf.size, buf.data);
   obarr_free(&buf);
@@ -423,6 +441,8 @@ static bool p_unary_send(Reader *rdr, bool explicitp) {
     if (is_word_start(*rdr->head)) {
       auto here = rdr->head;
       auto rem = rdr->remaining;
+      auto line = rdr->line;
+      auto col = rdr->column;
 
       while (is_word_tail(*rdr->head)) {
         rdr_next(rdr);
@@ -431,6 +451,8 @@ static bool p_unary_send(Reader *rdr, bool explicitp) {
       if (*rdr->head == ':') {
         rdr->head = here;
         rdr->remaining = rem;
+        rdr->line = line;
+        rdr->column = col;
         return explicitp;
       }
 
@@ -511,8 +533,7 @@ static bool p_keyword_send(Reader *rdr, bool explicitp) {
       }
 
       // this char can only be :
-      ASSERT(*rdr->head == ':', "expected a `:`, got a %c", *rdr->head);
-      rdr_next(rdr);
+      rdr_expect1(rdr, ':');
 
       obarr_push(&message, (rdr->head - here), here);
 
@@ -562,8 +583,7 @@ static void p_toplevel(Reader *rdr) {
   p_expression(rdr);
   p_skip_blank(rdr);
 
-  ASSERT(*rdr->head == '.', "expected a `.`, got a `%s`", rdr->head);
-  rdr_next(rdr);
+  rdr_expect1(rdr, '.');
 }
 
 ob_Obj ob_load(ob_Context ctx, size_t length, const char *text) {
