@@ -2,7 +2,7 @@
 #define OB_CORE_SERIAL_H_INCLUDED
 
 /*
- * Copyright (C) 2025 nqr2
+ * Copyright (C) 2025-2026 nqr2
  *
  * This library is free software: you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published by the
