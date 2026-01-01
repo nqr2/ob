@@ -89,6 +89,20 @@ static void rdr_expect1(Reader *rdr, char chr) {
   rdr_next(rdr);
 }
 
+static void rdr_expectn(Reader *rdr, const char *chrs) {
+  while (*chrs != 0) {
+    if (*rdr->head == *chrs) {
+      rdr_next(rdr);
+      return;
+    }
+
+    chrs++;
+  }
+
+  ASSERT(false, "at %s %zu:%zu: expected one of [%s], got `%c`", rdr->path,
+         rdr->line + 1, rdr->column + 1, chrs, *rdr->head);
+}
+
 // i wish C had lambdas...
 void rdr_takewhile(Reader *rdr, bool (*pred)(char)) {
   while (pred(*rdr->head)) {

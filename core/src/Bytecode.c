@@ -78,6 +78,24 @@ void obbc_run(ob_Context ctx, size_t len, const uint8_t *code) {
     case OBBC_EXTEND:
       break;
 
+    case OBBC_CASCADE: {
+      auto selector = *ob_cast_symbol(literal);
+      auto nargs = nargs_for_sel(ctx, selector);
+
+      auto stack_len = obarr_length(&ctx->stack, sizeof(ob_Obj));
+
+      ob_Obj recv = *(ob_Obj *)obarr_at(&ctx->stack, sizeof(ob_Obj),
+                                        stack_len - nargs - 1);
+
+      obarr_remove(&ctx->stack, sizeof(ob_Obj), stack_len - nargs - 1);
+
+      ob_send(ctx, recv, selector);
+
+      (void)ob_pop(ctx);
+
+      ob_push(ctx, recv);
+    }; break;
+
       // TODO: OP_RETURN
 
     case OBBC_ARRAY: {
