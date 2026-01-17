@@ -1,4 +1,5 @@
 #include "ob/Array.h"
+#include "ob/Log.h"
 #include "ob/Object.h"
 #include <ob/Assert.h>
 #include <ob/Bytecode.h>
@@ -9,25 +10,32 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void dofile(const char *input_path, ob_Serial *srl) {
-  auto input_file = fopen(input_path, "rb");
-
-  if (input_file == NULL) {
-    return;
-  }
-
+void dofile(const char *input_path, FILE *input_file, ob_Serial *srl) {
   size_t length = 0;
 
-  fseek(input_file, 0, SEEK_END);
+  auto data = (ob_Array){};
+  obarr_init(&data, srl->ctx->allocator);
 
-  length = ftell(input_file);
+  if (input_file != stdin) {
+    fseek(input_file, 0, SEEK_END);
 
-  rewind(input_file);
+    length = ftell(input_file);
+    fseek(input_file, 0, SEEK_SET);
 
-  unsigned char *data = calloc(length, sizeof(char));
-  fread(data, sizeof(char), length, input_file);
+    obarr_reserve(&data, length * sizeof(char));
+    fread(data.data, sizeof(char), length, input_file);
+  } else {
+    // at least on my machine the above fails, so we check for errors VERY
+    // aggressively here
 
-  obsrl_load(srl, length, data);
+    while (!feof(stdin) && !ferror(stdin)) {
+      char tmp = 0;
+      fread(&tmp, sizeof(char), 1, stdin);
+      obarr_push(&data, sizeof(char), &tmp);
+    }
+  }
+
+  obsrl_load(srl, data.size, data.data);
   (void)obsrl_read(srl);
   uint64_t index = 0;
   uint64_t offset = 0;
@@ -105,15 +113,25 @@ void dofile(const char *input_path, ob_Serial *srl) {
     }
   }
 
-  free(data);
-
-  fclose(input_file);
+  obarr_free(&data);
 }
 
 int main(int argn, char *argv[]) {
-  ASSERT(argn == 2, "expected 1 argument, got %d", argn - 1);
+  auto log = oblog_create_handler();
+  oblog_set_handler(&log);
+  oblog_set_level(OB_LOG_DEBUG);
 
-  auto input = argv[1];
+  auto file = stdin;
+  auto input = "*stdin*";
+
+  if (argn == 2) {
+    input = argv[1];
+    file = fopen(input, "r");
+
+    ASSERT(file != NULL, "could not open file '%s'", input);
+  }
+
+  ASSERT(argn <= 2, "expected 0 or 1 arguments, got %d", argn - 1);
 
   auto alloc = oballoc_create();
   auto ctx = obctx_create(&alloc);
@@ -121,11 +139,15 @@ int main(int argn, char *argv[]) {
   auto srl = (ob_Serial){};
   obsrl_init(&srl, ctx);
 
-  dofile(input, &srl);
+  dofile(input, file, &srl);
 
   obsrl_free(&srl);
 
   obctx_destroy(ctx);
+
+  if (file != stdin) {
+    fclose(file);
+  }
 
   return 0;
 }
