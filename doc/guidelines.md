@@ -56,11 +56,33 @@ then it can be omitted. As an example, for a function like
 `bool string_equal(lhs, rhs)`, there is no need to add something such as
 "Compares two strings, and returns `true` if both are equal".
 
-When documenting the semantics of a function, avoid writing about implementation
-details if unneeded.
+When documenting the semantics of a function, avoid writing about
+implementation details if unneeded.
 
 ## TODO
 - Use vocabulary from RFC 2119?
 - What *else* should go on each section?
 - Add notes on how to @brief and describe files.
 - How to document stuff.
+
+# Commits
+
+## Messages
+
+Commit messages should follow the format `<section>: <action>` where "section"
+refers to the "logical section of code" the commit modifies, and "action"
+being "written as if ordering the repository to change, and not as if
+describing your changes", compare:
+
+- Remove array bounds checks (yes)
+- Remove*d* array bounds checks (no)
+
+As an example, if I were to add a new option to the `tools/obc` binary, I'd
+write `tools/obc: Add a new option (to do this and that and...)`.
+
+I often add `(oops)` to small bugfixes from oversights and the like, this is
+not required.
+
+## Size
+
+I personally prefer small and "atomic" changes (in general).

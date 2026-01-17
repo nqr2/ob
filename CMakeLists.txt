@@ -14,6 +14,7 @@ set(CMAKE_C_EXTENSIONS NO)
 option(BUILD_DOCS "Build the documentation with Doxygen" ON)
 option(BUILD_TESTS "Build the tests" ON)
 option(ENABLE_ASSERTS "Enable the ASSERT macro" ON)
+option(ENABLE_LOG "Enable the LOG macro" ON)
 
 if(BUILD_DOCS)
   add_subdirectory("doc")

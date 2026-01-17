@@ -8,7 +8,7 @@ ease.
 
 ## Building from source
 
-As of now, `ob` uses the Meson build system, thus building the program
+As of now, `ob` uses the CMake build system, so building the program
 should be as simple as:
 
 ``` bash
@@ -17,12 +17,14 @@ export BUILD_DIRECTORY=".build" # Or another value
 git clone --recursive https://github.com/nqr2/ob
 cd ob
 
-meson setup $BUILD_DIRECTORY
-meson compile -C $BUILD_DIRECTORY
+cmake -B "$BUILD_DIRECTORY" # any options here, as -DOPTION=VALUE
+cmake --build "$BUILD_DIRECTORY"
 
-# For building the documentation, after setting up Meson above
-# ninja -C $BUILD_DIRECTORY docs
+# For building the documentation, after setting up CMake above
+# cmake --build "$BUILD_DIRECTORY" --target docs
 ```
 
-While there is a `meson.options` file, the only effect it has is on
-whether the tests are built or not.
+As of now, there are options for building the tests and documentation
+(`BUILD_TESTS` and `BUILD_DOCS` respectively), and for enabling certain
+features (`ENABLE_ASSERT` and `ENABLE_LOG`), though these don't do anything
+for now.
