@@ -3,9 +3,7 @@ pkgs.mkShell {
   buildInputs = with pkgs; [
     gcc
     doxygen
-    meson
     cmake
-    ninja
     gnumake
   ];
 }
