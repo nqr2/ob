@@ -27,6 +27,7 @@ if(BUILD_TESTS)
   add_subdirectory("tap")
 endif()
 
+add_subdirectory("ql")
 add_subdirectory("core")
 add_subdirectory("tools")
 add_subdirectory("std")
