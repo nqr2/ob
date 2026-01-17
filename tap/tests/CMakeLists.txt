@@ -17,6 +17,4 @@ foreach(T ${TAP_TESTS})
     NAME ${T}
     COMMAND "test__tap_${T}"
   )
-
-  message(${T})
 endforeach()
