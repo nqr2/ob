@@ -6,5 +6,6 @@ pkgs.mkShell {
     meson
     cmake
     ninja
+    gnumake
   ];
 }

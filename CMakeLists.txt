@@ -8,8 +8,24 @@ project(
   DESCRIPTION "A pure object-oriented language"
 )
 
-add_subdirectory("doc")
-add_subdirectory("tap")
+set(CMAKE_C_STANDARD 23 REQUIRED)
+set(CMAKE_C_EXTENSIONS NO)
+
+option(BUILD_DOCS "Build the documentation with Doxygen" ON)
+option(BUILD_TESTS "Build the tests" ON)
+option(ENABLE_ASSERTS "Enable the ASSERT macro" ON)
+
+if(BUILD_DOCS)
+  add_subdirectory("doc")
+endif()
+
+if(BUILD_TESTS)
+  include(CTest)
+  enable_testing()
+
+  add_subdirectory("tap")
+endif()
+
 add_subdirectory("core")
 add_subdirectory("tools")
 add_subdirectory("std")
