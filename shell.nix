@@ -4,6 +4,7 @@ pkgs.mkShell {
     gcc
     doxygen
     meson
+    cmake
     ninja
   ];
 }
