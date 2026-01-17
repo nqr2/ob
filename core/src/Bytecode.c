@@ -56,14 +56,18 @@ void obbc_run(ob_Context ctx, size_t len, const uint8_t *code) {
 
     case OBBC_SEND: {
       auto selector = *ob_cast_symbol(literal);
+
+      OB_DEBUG("send: #'%.*s'", obstr_get_length(selector),
+               obstr_get_data(ctx, selector));
+
       auto nargs = nargs_for_sel(ctx, selector);
-
       auto stack_len = obarr_length(&ctx->stack, sizeof(ob_Obj));
+      auto recv_index = stack_len - nargs - 1;
 
-      ob_Obj recv = *(ob_Obj *)obarr_at(&ctx->stack, sizeof(ob_Obj),
-                                        stack_len - nargs - 1);
+      ob_Obj recv =
+          *(ob_Obj *)obarr_at(&ctx->stack, sizeof(ob_Obj), recv_index);
 
-      obarr_remove(&ctx->stack, sizeof(ob_Obj), stack_len - nargs - 1);
+      obarr_remove(&ctx->stack, sizeof(ob_Obj), recv_index);
 
       ob_send(ctx, recv, selector);
     }; break;
