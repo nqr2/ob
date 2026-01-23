@@ -110,7 +110,7 @@ static void write_obj(ob_Obj object, void *userdata) {
   {
     auto num = ob_cast_number(object);
     // TODO: something actually portable
-    ql_array_push(&srl->buffer, sizeof(ob_Number), num);
+    ql_array_push(&srl->buffer, sizeof(ql_Number), num);
   } break;
 
   case OB_METHOD: {
@@ -214,9 +214,9 @@ ob_Obj obsrl_read(ob_Serial *srl) {
     } break;
 
     case OB_NUMBER: {
-      auto num = (ob_Number){};
-      memcpy(&num, head, sizeof(ob_Number));
-      head += sizeof(ob_Number);
+      auto num = (ql_Number){};
+      memcpy(&num, head, sizeof(ql_Number));
+      head += sizeof(ql_Number);
 
       result = ob_create_number(srl->ctx, num);
     } break;

@@ -200,7 +200,7 @@ ob_ObjSlots *ob_cast_slots(ob_Obj obj) {
   return cast(obj, OB_SLOTS);
 }
 
-ob_Number *ob_cast_number(ob_Obj obj) {
+ql_Number *ob_cast_number(ob_Obj obj) {
   return cast(obj, OB_NUMBER);
 }
 

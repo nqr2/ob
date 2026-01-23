@@ -130,21 +130,21 @@ ob_Obj ob_create_slots(ob_Context ctx, ob_Obj prototype) {
   return obj;
 }
 
-ob_Obj ob_create_number(ob_Context ctx, ob_Number number) {
-  auto obj = obctx_allocate(ctx, OB_NUMBER, sizeof(ob_Number));
+ob_Obj ob_create_number(ob_Context ctx, ql_Number number) {
+  auto obj = obctx_allocate(ctx, OB_NUMBER, sizeof(ql_Number));
 
-  ob_Number *num = ob_get_payload(obj);
+  ql_Number *num = ob_get_payload(obj);
   *num = number;
 
   return obj;
 }
 
 ob_Obj ob_create_integer(ob_Context ctx, int64_t number) {
-  return ob_create_number(ctx, obnum_of_int(number));
+  return ob_create_number(ctx, ql_number_of_int(number));
 }
 
 ob_Obj ob_create_real(ob_Context ctx, double number) {
-  return ob_create_number(ctx, obnum_of_float(number));
+  return ob_create_number(ctx, ql_number_of_float(number));
 }
 
 ob_Obj ob_create_array(ob_Context ctx) {

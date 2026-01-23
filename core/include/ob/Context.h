@@ -70,7 +70,7 @@ ob_Obj obctx_allocate(ob_Context ctx, ob_ObjectTag tag, size_t payload_size);
 ob_Obj ob_create_symbol(ob_Context ctx, ob_Str symbol);
 ob_Obj ob_create_string(ob_Context ctx, ob_Str string);
 ob_Obj ob_create_slots(ob_Context ctx, ob_Obj prototype);
-ob_Obj ob_create_number(ob_Context ctx, ob_Number number);
+ob_Obj ob_create_number(ob_Context ctx, ql_Number number);
 ob_Obj ob_create_integer(ob_Context ctx, int64_t number);
 ob_Obj ob_create_real(ob_Context ctx, double number);
 ob_Obj ob_create_array(ob_Context ctx);

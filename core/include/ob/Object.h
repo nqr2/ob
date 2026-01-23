@@ -133,7 +133,7 @@ void obobj_destroy(ob_Obj obj);
 ob_Str *ob_cast_symbol(ob_Obj obj);
 ob_Str *ob_cast_string(ob_Obj obj);
 ob_ObjSlots *ob_cast_slots(ob_Obj obj);
-ob_Number *ob_cast_number(ob_Obj obj);
+ql_Number *ob_cast_number(ob_Obj obj);
 ql_ArrayT(ob_Obj) * ob_cast_array(ob_Obj obj);
 ob_ObjMethod *ob_cast_method(ob_Obj obj);
 ob_FnCMethod *ob_cast_lightcmethod(ob_Obj obj);

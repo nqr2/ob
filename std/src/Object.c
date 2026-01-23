@@ -32,10 +32,10 @@ void obj_print(ob_Context ctx, ob_Obj receiver) {
   case OB_NUMBER: {
     auto num = ob_cast_number(receiver);
 
-    if (obnum_is_int(*num)) {
-      printf("%ld", obnum_to_int(*num));
+    if (ql_number_is_int(*num)) {
+      printf("%ld", ql_number_to_int(*num));
     } else {
-      printf("%f", obnum_to_float(*num));
+      printf("%f", ql_number_to_float(*num));
     }
   }; break;
 

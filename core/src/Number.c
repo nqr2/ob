@@ -1,24 +1,24 @@
 #include <ob/Number.h>
 
-ob_Number obnum_of_int(int64_t num) {
-  ob_Number res = {};
+ql_Number ql_number_of_int(int64_t num) {
+  ql_Number res = {};
   res.as_int = num << 1;
   return res;
 }
 
-ob_Number obnum_of_float(double num) {
-  ob_Number res = {};
+ql_Number ql_number_of_float(double num) {
+  ql_Number res = {};
   res.as_float = num;
   res.as_word |= 1;
   return res;
 }
 
-bool obnum_is_int(ob_Number num) {
+bool ql_number_is_int(ql_Number num) {
   return (num.as_word & 1) == 0;
 }
 
-int64_t obnum_to_int(ob_Number num) {
-  if (obnum_is_int(num)) {
+int64_t ql_number_to_int(ql_Number num) {
+  if (ql_number_is_int(num)) {
     return num.as_int >> 1;
   }
 
@@ -26,8 +26,8 @@ int64_t obnum_to_int(ob_Number num) {
   return (int64_t)num.as_float;
 }
 
-double obnum_to_float(ob_Number num) {
-  if (obnum_is_int(num)) {
+double ql_number_to_float(ql_Number num) {
+  if (ql_number_is_int(num)) {
     return (double)(num.as_int >> 1);
   }
 

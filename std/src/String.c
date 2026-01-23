@@ -19,7 +19,7 @@ static bool str_length(ob_Context ctx) {
 
   auto str = ob_cast_string(receiver);
   auto len = obstr_get_length(*str);
-  auto obj = ob_create_number(ctx, obnum_of_int((int64_t)len));
+  auto obj = ob_create_number(ctx, ql_number_of_int((int64_t)len));
 
   ob_push(ctx, obj);
 

@@ -1,5 +1,5 @@
-#ifndef OB_CORE_NUMBER_H_INCLUDED
-#define OB_CORE_NUMBER_H_INCLUDED
+#ifndef QL_NUMBER_H_INCLUDED
+#define QL_NUMBER_H_INCLUDED
 
 /*
  * Copyright (C) 2025-2026 nqr2
@@ -29,14 +29,14 @@ typedef union {
   uint64_t as_word;
   int64_t as_int;
   double as_float;
-} ob_Number;
+} ql_Number;
 
-ob_Number obnum_of_int(int64_t num);
-ob_Number obnum_of_float(double num);
+ql_Number ql_number_of_int(int64_t num);
+ql_Number ql_number_of_float(double num);
 
-bool obnum_is_int(ob_Number num);
+bool ql_number_is_int(ql_Number num);
 
-int64_t obnum_to_int(ob_Number num);
-double obnum_to_float(ob_Number num);
+int64_t ql_number_to_int(ql_Number num);
+double ql_number_to_float(ql_Number num);
 
 #endif
