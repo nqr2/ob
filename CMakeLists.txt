@@ -25,7 +25,17 @@ if(BUILD_TESTS)
   enable_testing()
 endif()
 
-add_subdirectory("ql")
+include(FetchContent)
+
+FetchContent_Declare(
+  "ql"
+  GIT_REPOSITORY         "https://github.com/nqr2/ql"
+  GIT_TAG                "da8d6e90c4b2ccf3f98299521886a18b6332a59f"
+  GIT_SUBMODULES_RECURSE NO
+)
+
+FetchContent_MakeAvailable("ql")
+
 add_subdirectory("core")
 add_subdirectory("tools")
 add_subdirectory("std")
