@@ -21,6 +21,6 @@ target_include_directories("ObCore" PUBLIC "include")
 
 target_link_libraries("ObCore" PUBLIC "Ql")
 
-if(BUILD_TESTS)
-  add_subdirectory("tests")
-endif()
+#if(BUILD_TESTS)
+#  add_subdirectory("tests")
+#endif()

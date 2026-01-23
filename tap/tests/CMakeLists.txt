@@ -14,7 +14,7 @@ foreach(T ${TAP_TESTS})
   target_link_libraries("test__tap_${T}" PRIVATE "Tap")
 
   add_test(
-    NAME ${T}
+    NAME "tap::${T}"
     COMMAND "test__tap_${T}"
   )
 endforeach()
