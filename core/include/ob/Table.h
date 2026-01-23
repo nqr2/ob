@@ -1,5 +1,5 @@
-#ifndef OB_CORE_TABLE_H_INCLUDED
-#define OB_CORE_TABLE_H_INCLUDED
+#ifndef QL_TABLE_H_INCLUDED
+#define QL_TABLE_H_INCLUDED
 
 /*
  * Copyright (C) 2025-2026 nqr2
@@ -31,24 +31,24 @@ typedef struct {
   ql_Allocator *allocator;
   size_t length, capacity;
   void *data;
-} ob_Table;
+} ql_Table;
 
-void obtbl_init(ob_Table *tbl, ql_Allocator *alloc);
-void obtbl_free(ob_Table *tbl);
+void ql_table_init(ql_Table *tbl, ql_Allocator *alloc);
+void ql_table_free(ql_Table *tbl);
 
-void obtbl_reserve(ob_Table *tbl, size_t newcap);
-void obtbl_clear(ob_Table *tbl);
+void ql_table_reserve(ql_Table *tbl, size_t newcap);
+void ql_table_clear(ql_Table *tbl);
 
 // return true if entry is new
-bool obtbl_set(ob_Table *tbl, uint64_t key, void *value);
+bool ql_table_set(ql_Table *tbl, uint64_t key, void *value);
 
-void obtbl_merge(ob_Table *tbl, ob_Table *from);
+void ql_table_merge(ql_Table *tbl, ql_Table *from);
 
-bool obtbl_get(ob_Table *tbl, uint64_t key, void **value);
+bool ql_table_get(ql_Table *tbl, uint64_t key, void **value);
 
-bool obtbl_remove(ob_Table *table, uint64_t key);
+bool ql_table_remove(ql_Table *table, uint64_t key);
 
-bool obtbl_iterate(ob_Table *table, uint64_t *index, uint64_t *key,
-                   void **value);
+bool ql_table_iterate(ql_Table *table, uint64_t *index, uint64_t *key,
+                      void **value);
 
 #endif

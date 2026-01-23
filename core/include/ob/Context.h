@@ -58,7 +58,7 @@ typedef struct Context {
   ql_Array string_available;
 
   ob_String *strings;
-  ob_Table interned;
+  ql_Table interned;
 
   ob_Exnbuf exnbuf;
 } *ob_Context;

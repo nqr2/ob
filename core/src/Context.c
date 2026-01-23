@@ -49,7 +49,7 @@ ob_Context obctx_create(ql_Allocator *alloc) {
   ctx->known.o_true = ob_create_slots(ctx, NULL);
   ctx->known.o_false = ob_create_slots(ctx, NULL);
 
-  obtbl_init(&ctx->interned, ctx->allocator);
+  ql_table_init(&ctx->interned, ctx->allocator);
 
   obexn_init(&ctx->exnbuf, ctx->allocator);
 
@@ -68,7 +68,7 @@ void obctx_destroy(ob_Context ctx) {
   ql_array_free(&ctx->string_data);
   ql_array_free(&ctx->string_available);
 
-  obtbl_free(&ctx->interned);
+  ql_table_free(&ctx->interned);
 
   obexn_free(&ctx->exnbuf);
 
@@ -96,7 +96,7 @@ ob_Obj ob_create_symbol(ob_Context ctx, ob_Str symbol) {
 
   ob_Obj obj = NULL;
 
-  if (obtbl_get(&ctx->interned, hash, (void **)&obj)) {
+  if (ql_table_get(&ctx->interned, hash, (void **)&obj)) {
     return obj;
   }
 
@@ -105,7 +105,7 @@ ob_Obj ob_create_symbol(ob_Context ctx, ob_Str symbol) {
   auto sym = (ob_Str *)ob_get_payload(obj);
   *sym = symbol;
 
-  obtbl_set(&ctx->interned, hash, (void *)obj);
+  ql_table_set(&ctx->interned, hash, (void *)obj);
 
   return obj;
 }
@@ -124,7 +124,7 @@ ob_Obj ob_create_slots(ob_Context ctx, ob_Obj prototype) {
 
   ob_ObjSlots *slots = ob_get_payload(obj);
 
-  obtbl_init(&slots->slots, ctx->allocator);
+  ql_table_init(&slots->slots, ctx->allocator);
   slots->prototype = prototype;
 
   return obj;
@@ -239,7 +239,7 @@ static void gc_mark(ob_Context ctx) {
   uint64_t index = 0;
   ob_Obj obj = NULL;
 
-  while (obtbl_iterate(&ctx->interned, &index, NULL, (void **)&obj)) {
+  while (ql_table_iterate(&ctx->interned, &index, NULL, (void **)&obj)) {
     ob_mark(obj);
   }
 }
@@ -390,7 +390,7 @@ bool ob_get_slot(ob_Context ctx, ob_Obj *slot, ob_Obj obj, ob_Str selector) {
       auto str = obstr_get_data(ctx, selector);
       auto hash = obhash_start(selector->length, str);
 
-      if (obtbl_get(&data->slots, hash, (void **)&obj)) {
+      if (ql_table_get(&data->slots, hash, (void **)&obj)) {
         if (slot != NULL) {
           *slot = obj;
         }
@@ -412,7 +412,7 @@ bool ob_get_slot(ob_Context ctx, ob_Obj *slot, ob_Obj obj, ob_Str selector) {
     auto str = obstr_get_data(ctx, selector);
     auto hash = obhash_start(selector->length, str);
 
-    return obtbl_get(&data->slots, hash, (void **)slot);
+    return ql_table_get(&data->slots, hash, (void **)slot);
   }
 
   return false;
@@ -461,7 +461,7 @@ static void invoke(ob_Context ctx, ob_Obj invoked, ob_Obj recv, size_t n_args) {
       auto param = (ob_Str *)ql_array_at(&data->parameters, sizeof(ob_Str), i);
       auto item = ob_pop(ctx);
 
-      obtbl_set(&env->slots, obstr_get_hash(ctx, *param), item);
+      ql_table_set(&env->slots, obstr_get_hash(ctx, *param), item);
     }
 
     obbc_run(ctx, data->bytecode.size, data->bytecode.data);

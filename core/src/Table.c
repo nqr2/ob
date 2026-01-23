@@ -16,17 +16,17 @@ typedef struct {
   TableEntryStatus status;
 } TableEntry;
 
-void obtbl_init(ob_Table *tbl, ql_Allocator *alloc) {
+void ql_table_init(ql_Table *tbl, ql_Allocator *alloc) {
   tbl->allocator = alloc;
   tbl->length = 0;
   tbl->capacity = 0;
   tbl->data = NULL;
 }
 
-void obtbl_free(ob_Table *tbl) {
+void ql_table_free(ql_Table *tbl) {
   ql_deallocate(tbl->allocator, tbl->capacity * sizeof(TableEntry), tbl->data);
 
-  obtbl_init(tbl, NULL);
+  ql_table_init(tbl, NULL);
 }
 
 static TableEntry *tbl__find(size_t capacity, TableEntry *entries,
@@ -47,7 +47,7 @@ static TableEntry *tbl__find(size_t capacity, TableEntry *entries,
   return NULL;
 }
 
-void obtbl_reserve(ob_Table *tbl, size_t newcap) {
+void ql_table_reserve(ql_Table *tbl, size_t newcap) {
   newcap = stdc_bit_ceil(newcap);
   auto new_entries =
       (TableEntry *)ql_allocate(tbl->allocator, newcap * sizeof(TableEntry));
@@ -76,18 +76,18 @@ void obtbl_reserve(ob_Table *tbl, size_t newcap) {
   tbl->capacity = newcap;
 }
 
-void obtbl_clear(ob_Table *tbl) {
+void ql_table_clear(ql_Table *tbl) {
   tbl->length = 0;
   memset(tbl->data, 0, sizeof(TableEntry) * tbl->capacity);
 }
 
 // return true if entry is new
-bool obtbl_set(ob_Table *tbl, uint64_t key, void *value) {
+bool ql_table_set(ql_Table *tbl, uint64_t key, void *value) {
   TableEntry *entry = NULL;
   auto is_new = false;
 
   if (2 * (tbl->length + 1) > tbl->capacity) {
-    obtbl_reserve(tbl, tbl->length + 1);
+    ql_table_reserve(tbl, tbl->length + 1);
   }
 
   entry = tbl__find(tbl->capacity, tbl->data, key);
@@ -103,17 +103,17 @@ bool obtbl_set(ob_Table *tbl, uint64_t key, void *value) {
   return is_new;
 }
 
-void obtbl_merge(ob_Table *tbl, ob_Table *from) {
+void ql_table_merge(ql_Table *tbl, ql_Table *from) {
   for (size_t i = 0; i < from->capacity; i++) {
     auto entry = &((TableEntry *)from->data)[i];
 
     if (entry->status != TES_USED) {
-      obtbl_set(tbl, entry->key, entry->value);
+      ql_table_set(tbl, entry->key, entry->value);
     }
   }
 }
 
-bool obtbl_get(ob_Table *tbl, uint64_t key, void **value) {
+bool ql_table_get(ql_Table *tbl, uint64_t key, void **value) {
   if (tbl->length == 0) {
     return false;
   }
@@ -143,7 +143,7 @@ bool obtbl_get(ob_Table *tbl, uint64_t key, void **value) {
   return false;
 }
 
-bool obtbl_remove(ob_Table *table, uint64_t key) {
+bool ql_table_remove(ql_Table *table, uint64_t key) {
   TableEntry *entry = NULL;
 
   if (table->length == 0) {
@@ -160,7 +160,7 @@ bool obtbl_remove(ob_Table *table, uint64_t key) {
   return true;
 }
 
-bool obtbl_iterate(ob_Table *table, uint64_t *index, uint64_t *key,
+bool ql_table_iterate(ql_Table *table, uint64_t *index, uint64_t *key,
                    void **value) {
   uint64_t current_key = *index;
 

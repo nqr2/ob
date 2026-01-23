@@ -69,7 +69,7 @@ typedef ob_Object *ob_Obj;
 
 typedef struct {
   ob_Object *prototype;
-  ob_Table slots;
+  ql_Table slots;
 } ob_ObjSlots;
 
 typedef struct {

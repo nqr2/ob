@@ -41,7 +41,7 @@ void dofile(const char *input_path, FILE *input_file, ob_Serial *srl) {
   uint64_t offset = 0;
   ob_Obj obj = NULL;
 
-  while (obtbl_iterate(&srl->identifiers, &index, &offset, (void **)&obj)) {
+  while (ql_table_iterate(&srl->identifiers, &index, &offset, (void **)&obj)) {
     printf("\t@ %4lu: %p\n", offset, (void *)obj);
     printf("tag: %d\n", ob_get_tag(obj));
 

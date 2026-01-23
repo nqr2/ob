@@ -82,7 +82,7 @@ void obobj_destroy(ob_Obj obj) {
   switch (ob_get_tag(obj)) {
   case OB_SLOTS: {
     ob_ObjSlots *data = ob_get_payload(obj);
-    obtbl_free(&data->slots);
+    ql_table_free(&data->slots);
   } break;
 
   case OB_ARRAY: {
@@ -130,7 +130,7 @@ void ob_visit(ob_Object *obj, ob_VisitFlags flags, ob_FnVisit visit,
     ob_Obj ref = NULL;
     uint64_t index = 0;
 
-    while (obtbl_iterate(&data->slots, &index, NULL, (void **)&ref)) {
+    while (ql_table_iterate(&data->slots, &index, NULL, (void **)&ref)) {
       ob_visit(ref, flags, visit, predicate, userdata);
     }
 

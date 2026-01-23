@@ -45,12 +45,12 @@ static uint8_t *read_int(uint8_t *bytes, uint64_t *result) {
 void obsrl_init(ob_Serial *srl, ob_Context ctx) {
   srl->ctx = ctx;
   ql_array_init(&srl->buffer, ctx->allocator);
-  obtbl_init(&srl->identifiers, ctx->allocator);
+  ql_table_init(&srl->identifiers, ctx->allocator);
 }
 
 void obsrl_free(ob_Serial *srl) {
   ql_array_free(&srl->buffer);
-  obtbl_free(&srl->identifiers);
+  ql_table_free(&srl->identifiers);
 }
 
 static void write_ref(ob_Obj object, ob_Serial *srl) {
@@ -62,7 +62,7 @@ static void write_ref(ob_Obj object, ob_Serial *srl) {
     return;
   }
 
-  if (obtbl_get(&srl->identifiers, (uint64_t)object, (void **)&ident)) {
+  if (ql_table_get(&srl->identifiers, (uint64_t)object, (void **)&ident)) {
     write_int(srl, ident);
     return;
   }
@@ -75,7 +75,7 @@ static void write_obj(ob_Obj object, void *userdata) {
   uint64_t ident = 0;
 
   ident = srl->buffer.size;
-  obtbl_set(&srl->identifiers, (uint64_t)object, (void *)ident);
+  ql_table_set(&srl->identifiers, (uint64_t)object, (void *)ident);
 
   uint8_t tag = ob_get_tag(object);
 
@@ -139,11 +139,11 @@ static void write_obj(ob_Obj object, void *userdata) {
 
 static bool write_pred(ob_Obj obj, void *udata) {
   ob_Serial *srl = udata;
-  return obtbl_get(&srl->identifiers, (uint64_t)obj, NULL);
+  return ql_table_get(&srl->identifiers, (uint64_t)obj, NULL);
 }
 
 void obsrl_write(ob_Serial *srl, ob_Obj object) {
-  obtbl_clear(&srl->identifiers);
+  ql_table_clear(&srl->identifiers);
 
   ql_array_push(&srl->buffer, sizeof(OB_SERIAL_HEADER), OB_SERIAL_HEADER);
 
@@ -161,7 +161,7 @@ ob_Obj read_ref(ob_Serial *srl, uint64_t ident) {
     return NULL;
   }
 
-  if (obtbl_get(&srl->identifiers, ident, (void **)&res)) {
+  if (ql_table_get(&srl->identifiers, ident, (void **)&res)) {
     return res;
   }
 
@@ -170,7 +170,7 @@ ob_Obj read_ref(ob_Serial *srl, uint64_t ident) {
 }
 
 ob_Obj obsrl_read(ob_Serial *srl) {
-  obtbl_clear(&srl->identifiers);
+  ql_table_clear(&srl->identifiers);
 
   ob_Obj result = NULL;
   uint8_t *head = srl->buffer.data;
@@ -253,7 +253,7 @@ ob_Obj obsrl_read(ob_Serial *srl) {
              offset);
     }
 
-    obtbl_set(&srl->identifiers, offset, result);
+    ql_table_set(&srl->identifiers, offset, result);
 
     remaining -= head - here;
   }

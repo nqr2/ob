@@ -13,7 +13,7 @@ static bool slots_at_put(ob_Context ctx) {
 
   auto hash = obstr_get_hash(ctx, *sym);
 
-  obtbl_set(&slots->slots, hash, value);
+  ql_table_set(&slots->slots, hash, value);
 
   return false;
 }

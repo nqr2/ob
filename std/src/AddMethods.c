@@ -15,7 +15,7 @@ static void add_method(ob_Context ctx, ob_Obj target, const char *name,
   auto obj = ob_create_lightcmethod(ctx, method);
   auto hash = obhash_start(strlen(name), name);
 
-  obtbl_set(&slots->slots, hash, (void *)obj);
+  ql_table_set(&slots->slots, hash, (void *)obj);
 }
 
 void ob_add_methods(ob_Context ctx, ob_Obj target,

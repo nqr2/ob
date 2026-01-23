@@ -30,7 +30,7 @@
 typedef struct {
   ob_Context ctx;
   ql_Array buffer;
-  ob_Table identifiers;
+  ql_Table identifiers;
 } ob_Serial;
 
 void obsrl_init(ob_Serial *srl, ob_Context ctx);

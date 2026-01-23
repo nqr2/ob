@@ -23,7 +23,7 @@ static bool method_call(ob_Context ctx) {
     auto param = (ob_Str *)ql_array_at(&method->parameters, sizeof(ob_Str), i);
     auto item = (ob_Obj *)ql_array_at(args, sizeof(ob_Obj), i);
 
-    obtbl_set(&env->slots, obstr_get_hash(ctx, *param), *item);
+    ql_table_set(&env->slots, obstr_get_hash(ctx, *param), *item);
   }
 
   obbc_run(ctx, method->bytecode.size, method->bytecode.data);
