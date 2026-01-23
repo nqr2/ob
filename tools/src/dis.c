@@ -1,10 +1,10 @@
-#include <ob/Assert.h>
 #include <ob/Bytecode.h>
 #include <ob/Context.h>
 #include <ob/Serial.h>
 
 #define QL_LOG_MODULE "dis"
-#include <ob/Log.h>
+#include <ql/Assert.h>
+#include <ql/Log.h>
 
 #include <stdint.h>
 #include <stdio.h>

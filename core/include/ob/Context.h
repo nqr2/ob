@@ -23,12 +23,13 @@
  * @brief The interpreter state.
  */
 
-#include "Allocator.h"
-#include "Array.h"
-#include "Exn.h"
-#include "Number.h"
 #include "Object.h"
 #include "String.h"
+
+#include <ql/Allocator.h>
+#include <ql/Array.h>
+#include <ql/Exn.h>
+#include <ql/Number.h>
 
 typedef struct Context {
   struct {

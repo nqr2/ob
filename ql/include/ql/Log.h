@@ -35,10 +35,10 @@
 #define QL_LOG(Level, Message, ...)
 #endif
 
-#define OB_DEBUG(M, ...) QL_LOG(QL_LOG_DEBUG, M __VA_OPT__(, ) __VA_ARGS__)
-#define OB_INFO(M, ...) QL_LOG(QL_LOG_INFO, M __VA_OPT__(, ) __VA_ARGS__)
-#define OB_WARN(M, ...) QL_LOG(QL_LOG_WARN, M __VA_OPT__(, ) __VA_ARGS__)
-#define OB_ERROR(M, ...) QL_LOG(QL_LOG_ERROR, M __VA_OPT__(, ) __VA_ARGS__)
+#define QL_DEBUG(M, ...) QL_LOG(QL_LOG_DEBUG, M __VA_OPT__(, ) __VA_ARGS__)
+#define QL_INFO(M, ...) QL_LOG(QL_LOG_INFO, M __VA_OPT__(, ) __VA_ARGS__)
+#define QL_WARN(M, ...) QL_LOG(QL_LOG_WARN, M __VA_OPT__(, ) __VA_ARGS__)
+#define QL_ERROR(M, ...) QL_LOG(QL_LOG_ERROR, M __VA_OPT__(, ) __VA_ARGS__)
 
 typedef enum {
   QL_LOG_DEBUG = 4,

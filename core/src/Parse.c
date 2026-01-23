@@ -1,5 +1,3 @@
-#include <ob/Array.h>
-#include <ob/Assert.h>
 #include <ob/Bytecode.h>
 #include <ob/Context.h>
 #include <ob/Object.h>
@@ -8,7 +6,9 @@
 #include <ob/String.h>
 
 #define QL_LOG_MODULE "Parse"
-#include <ob/Log.h>
+#include <ql/Array.h>
+#include <ql/Assert.h>
+#include <ql/Log.h>
 
 #include <ctype.h>
 #include <stdint.h>
@@ -114,7 +114,7 @@ static void push_literal(Reader *rdr, ob_Obj obj) {
   auto index = ql_array_length(&rdr->output->literals, sizeof(ob_Obj));
   ql_array_push(&rdr->output->literals, sizeof(ob_Obj), (const void *)&obj);
 
-  OB_DEBUG("push literal: %zu", index);
+  QL_DEBUG("push literal: %zu", index);
 
   index = obbc_append_index(&rdr->output->bytecode, index);
   obbc_append_insn(&rdr->output->bytecode, OBBC_MAKE(OBBC_PUSH_LITERAL, index));

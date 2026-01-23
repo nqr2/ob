@@ -1,5 +1,4 @@
-#include <ob/Exn.h>
-#include <ob/Exncodes.h>
+#include <ql/Exn.h>
 
 #include <string.h>
 
@@ -44,7 +43,7 @@ ql_Exncode ql_exn_get_code(ql_Exnbuf *buf) {
     return entry->code;
   }
 
-  return OB_OK;
+  return 0;
 }
 
 void ql_exn_throw(ql_Exnbuf *buf, ql_Exncode code, ql_Exndata data) {

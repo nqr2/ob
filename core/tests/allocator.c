@@ -1,7 +1,7 @@
 #include "Tap.h"
 
-#include <ob/Allocator.h>
-#include <ob/Assert.h>
+#include <ql/Allocator.h>
+#include <ql/Assert.h>
 
 void assert_failure() {
   fail_with("assertion failed");

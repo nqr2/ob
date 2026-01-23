@@ -23,8 +23,9 @@
  * @brief Bytecode definitions, and the interpreter.
  */
 
-#include "Array.h"
 #include "ContextFwd.h"
+
+#include <ql/Array.h>
 
 #include <stddef.h>
 #include <stdint.h>

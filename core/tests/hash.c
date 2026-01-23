@@ -1,7 +1,7 @@
 #include "Tap.h"
 
-#include <ob/Assert.h>
-#include <ob/Hash.h>
+#include <ql/Assert.h>
+#include <ql/Hash.h>
 
 #include <inttypes.h>
 

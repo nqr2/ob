@@ -1,5 +1,5 @@
-#include <ob/Array.h>
-#include <ob/Assert.h>
+#include <ql/Array.h>
+#include <ql/Assert.h>
 
 #include <stdbit.h>
 #include <string.h>

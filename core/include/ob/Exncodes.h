@@ -18,10 +18,10 @@
  * along with this library. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "Exn.h"
+#include <ql/Exn.h>
 
 enum : ql_Exncode {
-  OB_OK,
+  OB_OK = 0,
 
   OB_DOES_NOT_UNDERSTAND,
 };

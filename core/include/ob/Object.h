@@ -23,11 +23,12 @@
  * @brief Objects.
  */
 
-#include "Array.h"
 #include "ContextFwd.h"
-#include "Number.h"
 #include "String.h"
-#include "Table.h"
+
+#include <ql/Array.h>
+#include <ql/Number.h>
+#include <ql/Table.h>
 
 #include <stdint.h>
 

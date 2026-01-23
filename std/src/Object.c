@@ -1,7 +1,8 @@
 #include "ob/Object.h"
-#include "ob/Array.h"
 #include <ob/bits/AddMethods.h>
 #include <ob/lib/Object.h>
+
+#include <ql/Array.h>
 
 #include <ob/Context.h>
 

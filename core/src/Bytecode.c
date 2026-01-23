@@ -1,10 +1,10 @@
-#include <ob/Array.h>
 #include <ob/Bytecode.h>
 #include <ob/Context.h>
 #include <ob/Object.h>
 
 #define QL_LOG_MODULE "Bytecode"
-#include <ob/Log.h>
+#include <ql/Array.h>
+#include <ql/Log.h>
 
 #include <ctype.h>
 
@@ -27,7 +27,7 @@ static size_t nargs_for_sel(ob_Context ctx, ob_Str selector) {
 }
 
 void obbc_run(ob_Context ctx, size_t len, const uint8_t *code) {
-  OB_DEBUG("running data from %p, length %zu", code, len);
+  QL_DEBUG("running data from %p, length %zu", code, len);
 
   auto start = code;
 
@@ -44,7 +44,7 @@ void obbc_run(ob_Context ctx, size_t len, const uint8_t *code) {
     ob_Obj literal =
         *(ob_Obj *)ql_array_at(&method->literals, sizeof(ob_Obj), data);
 
-    OB_DEBUG("offset %ld: %02x with literal: %p", (code - start), byte,
+    QL_DEBUG("offset %ld: %02x with literal: %p", (code - start), byte,
              literal);
 
     switch (opcode) {
@@ -57,7 +57,7 @@ void obbc_run(ob_Context ctx, size_t len, const uint8_t *code) {
     case OBBC_SEND: {
       auto selector = *ob_cast_symbol(literal);
 
-      OB_DEBUG("send: #'%.*s'", obstr_get_length(selector),
+      QL_DEBUG("send: #'%.*s'", obstr_get_length(selector),
                obstr_get_data(ctx, selector));
 
       auto nargs = nargs_for_sel(ctx, selector);
