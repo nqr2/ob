@@ -89,7 +89,7 @@ void repl(ob_Context ctx) {
 int main(int argn, const char *argv[]) {
   bool is_interactive = argn == 1;
   const char *execute = NULL;
-  int loglevel = OB_LOG_ERROR;
+  int loglevel = QL_LOG_ERROR;
 
   auto f_interactive =
       obarg_create_flag('i', "interactive", OBARG_FLAG_SET, &is_interactive);
@@ -107,9 +107,9 @@ int main(int argn, const char *argv[]) {
 
   obarg_parse(&parser, argn, argv);
 
-  auto log = oblog_create_handler();
-  oblog_set_handler(&log);
-  oblog_set_level(loglevel);
+  auto log = ql_log_create_handler();
+  ql_log_set_handler(&log);
+  ql_log_set_level(loglevel);
 
   auto alloc = ql_alloc_create();
 

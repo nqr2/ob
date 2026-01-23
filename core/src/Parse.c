@@ -7,7 +7,7 @@
 #include <ob/Serial.h>
 #include <ob/String.h>
 
-#define OB_LOG_MODULE "Parse"
+#define QL_LOG_MODULE "Parse"
 #include <ob/Log.h>
 
 #include <ctype.h>

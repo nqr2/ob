@@ -3,7 +3,7 @@
 #include <ob/Context.h>
 #include <ob/Object.h>
 
-#define OB_LOG_MODULE "Bytecode"
+#define QL_LOG_MODULE "Bytecode"
 #include <ob/Log.h>
 
 #include <ctype.h>

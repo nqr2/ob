@@ -4,10 +4,10 @@
 #include <stdio.h>
 #include <time.h>
 
-static ob_LogHandler *cur_handler = NULL;
-static ob_LogLevel cur_level = OB_LOG_ERROR;
+static ql_LogHandler *cur_handler = NULL;
+static ql_LogLevel cur_level = QL_LOG_ERROR;
 
-static void dflt_handle(void *userdata, ob_LogData *data) {
+static void dflt_handle(void *userdata, ql_LogData *data) {
   (void)userdata;
 
   char buffer[256];
@@ -15,19 +15,19 @@ static void dflt_handle(void *userdata, ob_LogData *data) {
   const char *level_name = "???";
 
   switch (data->level) {
-  case OB_LOG_DEBUG:
+  case QL_LOG_DEBUG:
     level_name = "DEBUG";
     break;
-  case OB_LOG_INFO:
+  case QL_LOG_INFO:
     level_name = "INFO";
     break;
-  case OB_LOG_WARN:
+  case QL_LOG_WARN:
     level_name = "WARN";
     break;
-  case OB_LOG_ERROR:
+  case QL_LOG_ERROR:
     level_name = "ERROR";
     break;
-  case OB_LOG_DISABLE:
+  case QL_LOG_DISABLE:
     return;
   }
 
@@ -41,24 +41,24 @@ static void dflt_handle(void *userdata, ob_LogData *data) {
   fputc('\n', stderr);
 }
 
-ob_LogHandler oblog_create_handler() {
-  return (ob_LogHandler){
+ql_LogHandler ql_log_create_handler() {
+  return (ql_LogHandler){
       .handle = dflt_handle,
       .userdata = NULL,
   };
 }
 
-void oblog_set_handler(ob_LogHandler *handler) {
+void ql_log_set_handler(ql_LogHandler *handler) {
   cur_handler = handler;
 }
 
-void oblog_set_level(ob_LogLevel level) {
+void ql_log_set_level(ql_LogLevel level) {
   cur_level = level;
 }
 
-void oblog__handle(const ob_LogLevel level, const char *module,
-                   const char *file, int line, const char *function,
-                   const char *message, ...) {
+void ql_log__handle(const ql_LogLevel level, const char *module,
+                    const char *file, int line, const char *function,
+                    const char *message, ...) {
   if (cur_handler == NULL) {
     return;
   }
@@ -72,7 +72,7 @@ void oblog__handle(const ob_LogLevel level, const char *module,
 
   auto now = time(NULL);
 
-  auto data = (ob_LogData){
+  auto data = (ql_LogData){
       .level = level,
       .time = now,
       .module = module,

@@ -1,5 +1,5 @@
-#ifndef OB_CORE_LOG_H_INCLUDED
-#define OB_CORE_LOG_H_INCLUDED
+#ifndef QL_LOG_H_INCLUDED
+#define QL_LOG_H_INCLUDED
 
 /*
  * Copyright (C) 2025-2026 nqr2
@@ -21,35 +21,35 @@
 #include <stdarg.h>
 #include <time.h>
 
-#ifndef OB_LOG_MODULE
-#define OB_LOG_MODULE "*unknown*"
+#ifndef QL_LOG_MODULE
+#define QL_LOG_MODULE "*unknown*"
 #endif
 
-#ifndef OB_LOG_DISABLE
-#define OB_LOG(Level, Message, ...)                                            \
+#ifndef QL_LOG_DISABLE
+#define QL_LOG(Level, Message, ...)                                            \
   do {                                                                         \
-    oblog__handle((Level), OB_LOG_MODULE, __FILE__, __LINE__, __func__,        \
-                  Message __VA_OPT__(, ) __VA_ARGS__);                         \
+    ql_log__handle((Level), QL_LOG_MODULE, __FILE__, __LINE__, __func__,       \
+                   Message __VA_OPT__(, ) __VA_ARGS__);                        \
   } while (0)
 #else
-#define OB_LOG(Level, Message, ...)
+#define QL_LOG(Level, Message, ...)
 #endif
 
-#define OB_DEBUG(M, ...) OB_LOG(OB_LOG_DEBUG, M __VA_OPT__(, ) __VA_ARGS__)
-#define OB_INFO(M, ...) OB_LOG(OB_LOG_INFO, M __VA_OPT__(, ) __VA_ARGS__)
-#define OB_WARN(M, ...) OB_LOG(OB_LOG_WARN, M __VA_OPT__(, ) __VA_ARGS__)
-#define OB_ERROR(M, ...) OB_LOG(OB_LOG_ERROR, M __VA_OPT__(, ) __VA_ARGS__)
+#define OB_DEBUG(M, ...) QL_LOG(QL_LOG_DEBUG, M __VA_OPT__(, ) __VA_ARGS__)
+#define OB_INFO(M, ...) QL_LOG(QL_LOG_INFO, M __VA_OPT__(, ) __VA_ARGS__)
+#define OB_WARN(M, ...) QL_LOG(QL_LOG_WARN, M __VA_OPT__(, ) __VA_ARGS__)
+#define OB_ERROR(M, ...) QL_LOG(QL_LOG_ERROR, M __VA_OPT__(, ) __VA_ARGS__)
 
 typedef enum {
-  OB_LOG_DEBUG = 4,
-  OB_LOG_INFO = 3,
-  OB_LOG_WARN = 2,
-  OB_LOG_ERROR = 1,
-  OB_LOG_DISABLE = 0,
-} ob_LogLevel;
+  QL_LOG_DEBUG = 4,
+  QL_LOG_INFO = 3,
+  QL_LOG_WARN = 2,
+  QL_LOG_ERROR = 1,
+  QL_LOG_DISABLE = 0,
+} ql_LogLevel;
 
 typedef struct {
-  ob_LogLevel level;
+  ql_LogLevel level;
   time_t time;
   const char *module;
   const char *file;
@@ -57,21 +57,21 @@ typedef struct {
   const char *function;
   const char *message;
   va_list *arguments;
-} ob_LogData;
+} ql_LogData;
 
-typedef void (*ob_FnLogHandle)(void *userdata, ob_LogData *data);
+typedef void (*ql_FnLogHandle)(void *userdata, ql_LogData *data);
 
 typedef struct {
-  ob_FnLogHandle handle;
+  ql_FnLogHandle handle;
   void *userdata;
-} ob_LogHandler;
+} ql_LogHandler;
 
-ob_LogHandler oblog_create_handler();
+ql_LogHandler ql_log_create_handler();
 
-void oblog_set_handler(ob_LogHandler *handler);
-void oblog_set_level(ob_LogLevel level);
+void ql_log_set_handler(ql_LogHandler *handler);
+void ql_log_set_level(ql_LogLevel level);
 
-void oblog__handle(ob_LogLevel level, const char *module, const char *file,
-                   int line, const char *function, const char *message, ...);
+void ql_log__handle(ql_LogLevel level, const char *module, const char *file,
+                    int line, const char *function, const char *message, ...);
 
 #endif

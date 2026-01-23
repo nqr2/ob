@@ -3,7 +3,7 @@
 #include <ob/Context.h>
 #include <ob/Serial.h>
 
-#define OB_LOG_MODULE "dis"
+#define QL_LOG_MODULE "dis"
 #include <ob/Log.h>
 
 #include <stdint.h>
@@ -121,9 +121,9 @@ void dofile(const char *input_path, FILE *input_file, ob_Serial *srl) {
 }
 
 int main(int argn, char *argv[]) {
-  auto log = oblog_create_handler();
-  oblog_set_handler(&log);
-  oblog_set_level(OB_LOG_DEBUG);
+  auto log = ql_log_create_handler();
+  ql_log_set_handler(&log);
+  ql_log_set_level(QL_LOG_DEBUG);
 
   auto file = stdin;
   auto input = "*stdin*";

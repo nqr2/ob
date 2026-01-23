@@ -62,9 +62,9 @@ void dostring(ob_Context ctx, const char *input) {
 }
 
 int main(int argn, const char *argv[]) {
-  auto log = oblog_create_handler();
-  oblog_set_handler(&log);
-  oblog_set_level(OB_LOG_DEBUG);
+  auto log = ql_log_create_handler();
+  ql_log_set_handler(&log);
+  ql_log_set_level(QL_LOG_DEBUG);
 
   auto alloc = ql_alloc_create();
 
