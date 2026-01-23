@@ -13,7 +13,7 @@ set(STD_HEADERS
 obc_header("lib/Shell.ob")
 obc_header("lib/Boolean.ob")
 
-add_library("ObStd"
+add_library("ObStd" STATIC
   "src/Std.c"
   "src/AddMethods.c"
   "src/Activation.c"

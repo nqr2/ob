@@ -1,4 +1,4 @@
-add_library("ObCore"
+add_library("ObCore" STATIC
   "include/ob/Bytecode.h"
   "include/ob/Context.h"
   "include/ob/ContextFwd.h"
