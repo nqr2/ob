@@ -4,10 +4,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-FnAssertFailure handler = NULL;
+ql_FnAssertFailure handler = NULL;
 
-void obassert__report(const char *file, int line, const char *function,
-                      const char *condition) {
+void ql_assert__report(const char *file, int line, const char *function,
+                       const char *condition) {
   fprintf(stderr,
           "```\n"
           "Assertion failed\n"
@@ -17,7 +17,7 @@ void obassert__report(const char *file, int line, const char *function,
           file, line, function, condition);
 }
 
-void obassert__message(const char *message, ...) {
+void ql_assert__message(const char *message, ...) {
   va_list args;
   va_start(args, message);
 
@@ -28,7 +28,7 @@ void obassert__message(const char *message, ...) {
   va_end(args);
 }
 
-void obassert__fail() {
+void ql_assert__fail() {
   if (handler != NULL) {
     handler();
   }
@@ -36,6 +36,6 @@ void obassert__fail() {
   exit(EXIT_FAILURE);
 }
 
-void obassert_add_handler(FnAssertFailure fail) {
+void ql_assert_add_handler(ql_FnAssertFailure fail) {
   handler = fail;
 }

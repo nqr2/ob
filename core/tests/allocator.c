@@ -11,7 +11,7 @@ ql_Allocator libc;
 
 void alloc_0_returns_null() {
   auto null = ql_allocate(&libc, 0);
-  ASSERT_NULL(null);
+  QL_ASSERT_NULL(null);
 }
 
 const Test SUITE[] = {
@@ -23,7 +23,7 @@ const Test SUITE[] = {
 int main() {
   libc = ql_alloc_create();
 
-  obassert_add_handler(assert_failure);
+  ql_assert_add_handler(assert_failure);
 
   test(SUITE);
 

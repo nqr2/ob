@@ -161,7 +161,7 @@ bool ql_table_remove(ql_Table *table, uint64_t key) {
 }
 
 bool ql_table_iterate(ql_Table *table, uint64_t *index, uint64_t *key,
-                   void **value) {
+                      void **value) {
   uint64_t current_key = *index;
 
   while (current_key < table->capacity) {

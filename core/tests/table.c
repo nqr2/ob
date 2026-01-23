@@ -26,7 +26,7 @@ void can_add_an_element() {
 
   auto is_new = ql_table_set(&tbl, hash, pointer);
 
-  ASSERT(is_new, "fresh entry in empty table was not new");
+  QL_ASSERT(is_new, "fresh entry in empty table was not new");
 
   ql_table_free(&tbl);
 }
@@ -39,14 +39,14 @@ void can_get_an_element() {
   void *original = (void *)0xbabacafedeadbeef;
 
   auto is_new = ql_table_set(&tbl, hash, original);
-  ASSERT(is_new, "fresh entry in empty table was not new");
+  QL_ASSERT(is_new, "fresh entry in empty table was not new");
 
   void *from_table = NULL;
   auto entry_found = ql_table_get(&tbl, hash, &from_table);
-  ASSERT(entry_found, "could not find entry known to exist");
+  QL_ASSERT(entry_found, "could not find entry known to exist");
 
-  ASSERT(from_table == original, "got different values from table: %p vs. %p",
-         from_table, original);
+  QL_ASSERT(from_table == original,
+            "got different values from table: %p vs. %p", from_table, original);
 
   ql_table_free(&tbl);
 }
@@ -61,16 +61,16 @@ void can_iterate() {
   auto fourth = -1;
 
   auto is_new = ql_table_set(&tbl, 0, &first);
-  ASSERT(is_new, "fresh entry in empty table was not new: 0");
+  QL_ASSERT(is_new, "fresh entry in empty table was not new: 0");
 
   is_new = ql_table_set(&tbl, 1, &second);
-  ASSERT(is_new, "fresh entry in empty table was not new: 1");
+  QL_ASSERT(is_new, "fresh entry in empty table was not new: 1");
 
   is_new = ql_table_set(&tbl, 2, &third);
-  ASSERT(is_new, "fresh entry in empty table was not new: 2");
+  QL_ASSERT(is_new, "fresh entry in empty table was not new: 2");
 
   is_new = ql_table_set(&tbl, 3, &fourth);
-  ASSERT(is_new, "fresh entry in empty table was not new: 3");
+  QL_ASSERT(is_new, "fresh entry in empty table was not new: 3");
 
   uint64_t index = 0;
   uint64_t key = 0;
@@ -80,10 +80,10 @@ void can_iterate() {
     *(int *)value = (int)key;
   }
 
-  ASSERT(first == 0, "did not iterate though index: 0");
-  ASSERT(second == 1, "did not iterate though index: 1");
-  ASSERT(third == 2, "did not iterate though index: 2");
-  ASSERT(fourth == 3, "did not iterate though index: 3");
+  QL_ASSERT(first == 0, "did not iterate though index: 0");
+  QL_ASSERT(second == 1, "did not iterate though index: 1");
+  QL_ASSERT(third == 2, "did not iterate though index: 2");
+  QL_ASSERT(fourth == 3, "did not iterate though index: 3");
 
   ql_table_free(&tbl);
 }
@@ -99,7 +99,7 @@ const Test SUITE[] = {
 int main() {
   libc = ql_alloc_create();
 
-  obassert_add_handler(assert_failure);
+  ql_assert_add_handler(assert_failure);
   test(SUITE);
 
   return 0;

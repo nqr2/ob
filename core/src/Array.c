@@ -60,8 +60,8 @@ void ql_array_remove(ql_Array *arr, size_t size, size_t offset) {
   auto length = arr->size / size;
 
   if (offset != length - 1) {
-    ASSERT(offset < length, "index out of bounds (%lu > %lu size)", offset,
-           length);
+    QL_ASSERT(offset < length, "index out of bounds (%lu > %lu size)", offset,
+              length);
 
     memmove(bytes + (offset * size), bytes + (offset + 1) * size,
             (length - offset - 1) * size);
@@ -78,7 +78,8 @@ void *ql_array_at(ql_Array *arr, size_t size, size_t index) {
   uint8_t *bytes = arr->data;
   auto length = ql_array_length(arr, size);
 
-  ASSERT(index < length, "index out of bounds (%lu > %lu size)", index, length);
+  QL_ASSERT(index < length, "index out of bounds (%lu > %lu size)", index,
+            length);
 
   return bytes + (index * size);
 }
@@ -86,7 +87,7 @@ void *ql_array_at(ql_Array *arr, size_t size, size_t index) {
 void *ql_array_last(ql_Array *arr, size_t size) {
   auto length = ql_array_length(arr, size);
 
-  ASSERT(arr->size > 0, "cannot take last item of an empty array");
+  QL_ASSERT(arr->size > 0, "cannot take last item of an empty array");
 
   return ql_array_at(arr, size, length - 1);
 }

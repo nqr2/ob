@@ -6,10 +6,10 @@
 #include <inttypes.h>
 
 #define ASSERT_HASH_EQ(L, R)                                                   \
-  ASSERT(L == R,                                                               \
-         "%" PRIx64 " =/= "                                                    \
-         "%" PRIx64,                                                           \
-         L, R)
+  QL_ASSERT(L == R,                                                            \
+            "%" PRIx64 " =/= "                                                 \
+            "%" PRIx64,                                                        \
+            L, R)
 
 void assert_failure() {
   fail_with("assertion failed");
@@ -47,7 +47,7 @@ const Test SUITE[] = {
 };
 
 int main() {
-  obassert_add_handler(assert_failure);
+  ql_assert_add_handler(assert_failure);
   test(SUITE);
 
   return 0;

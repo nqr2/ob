@@ -314,7 +314,7 @@ ob_Obj ob_pop(ob_Context ctx) {
   ob_Obj obj;
 
   if (!ql_array_pop(&ctx->stack, sizeof(ob_Obj), (void *)&obj)) {
-    ASSERT(false, "cannot pop from empty stack");
+    QL_ASSERT(false, "cannot pop from empty stack");
   }
 
   return obj;
@@ -438,8 +438,8 @@ static void invoke(ob_Context ctx, ob_Obj invoked, ob_Obj recv, size_t n_args) {
   case OB_CMETHOD: {
     ob_ObjCMethod *data = ob_get_payload(invoked);
 
-    ASSERT(n_args == ql_array_length(&data->parameters, sizeof(ob_Str)),
-           "not enough arguments to invoke C method");
+    QL_ASSERT(n_args == ql_array_length(&data->parameters, sizeof(ob_Str)),
+              "not enough arguments to invoke C method");
 
     ctx->gc_state.enabled = false;
 
@@ -467,7 +467,7 @@ static void invoke(ob_Context ctx, ob_Obj invoked, ob_Obj recv, size_t n_args) {
     obbc_run(ctx, data->bytecode.size, data->bytecode.data);
   }; break;
   default:
-    ASSERT(false, "should not be able to invoke this object");
+    QL_ASSERT(false, "should not be able to invoke this object");
   }
 }
 
@@ -494,8 +494,8 @@ void ob_send_ext(ob_Context ctx, ob_Obj recv, ob_Str selector,
 
   auto n_args = args_for_sel(len, sel);
 
-  ASSERT(ob_checkstack(ctx, n_args), "expected to have %lu arguments on stack",
-         n_args);
+  QL_ASSERT(ob_checkstack(ctx, n_args),
+            "expected to have %lu arguments on stack", n_args);
 
   ob_Obj invoked = NULL;
 
@@ -520,13 +520,13 @@ void ob_send_ext(ob_Context ctx, ob_Obj recv, ob_Str selector,
       return;
     }
 
-    ASSERT(false, "doesNotUnderstand: #'%.*s'", len, sel);
+    QL_ASSERT(false, "doesNotUnderstand: #'%.*s'", len, sel);
   }
 
   bool is_invocable = OB_IS_INVOCABLE(invoked);
 
   if (n_args != 0) {
-    ASSERT(is_invocable, "tried to invoke a non-method object %p", invoked);
+    QL_ASSERT(is_invocable, "tried to invoke a non-method object %p", invoked);
   }
 
   if (is_invocable) {

@@ -184,7 +184,7 @@ void ob_visit(ob_Object *obj, ob_VisitFlags flags, ob_FnVisit visit,
 
 static void *cast(ob_Obj obj, ob_ObjectTag tag) {
   auto got = ob_get_tag(obj);
-  ASSERT(tag == got, "expected tag %d, got tag %d", tag, got);
+  QL_ASSERT(tag == got, "expected tag %d, got tag %d", tag, got);
   return ob_get_payload(obj);
 }
 

@@ -1,5 +1,5 @@
-#ifndef OB_CORE_ASSERT_H_INCLUDED
-#define OB_CORE_ASSERT_H_INCLUDED
+#ifndef QL_ASSERT_H_INCLUDED
+#define QL_ASSERT_H_INCLUDED
 
 /*
  * Copyright (C) 2025-2026 nqr2
@@ -23,28 +23,28 @@
  * @brief Assertions.
  */
 
-#define ASSERT(Condition, Message, ...)                                        \
+#define QL_ASSERT(Condition, Message, ...)                                     \
   do {                                                                         \
     if (!(Condition)) {                                                        \
-      obassert__report(__FILE__, __LINE__, __func__, #Condition);              \
-      obassert__message(Message "\n" __VA_OPT__(, ) __VA_ARGS__);              \
-      obassert__fail();                                                        \
+      ql_assert__report(__FILE__, __LINE__, __func__, #Condition);             \
+      ql_assert__message(Message "\n" __VA_OPT__(, ) __VA_ARGS__);             \
+      ql_assert__fail();                                                       \
     }                                                                          \
   } while (false)
 
-#define ASSERT_NONNULL(P) ASSERT(P != NULL, "unexpected NULL: %p", (P))
+#define QL_ASSERT_NONNULL(P) QL_ASSERT((P) != NULL, "unexpected NULL: %p", (P))
 
-#define ASSERT_NULL(P) ASSERT(P == NULL, "unexpected non-NULL: %p", (P))
+#define QL_ASSERT_NULL(P) QL_ASSERT((P) == NULL, "unexpected non-NULL: %p", (P))
 
-typedef void (*FnAssertFailure)();
+typedef void (*ql_FnAssertFailure)();
 
-void obassert__report(const char *file, int line, const char *function,
-                      const char *condition);
+void ql_assert__report(const char *file, int line, const char *function,
+                       const char *condition);
 
-void obassert__message(const char *message, ...);
+void ql_assert__message(const char *message, ...);
 
-void obassert__fail();
+void ql_assert__fail();
 
-void obassert_add_handler(FnAssertFailure fail);
+void ql_assert_add_handler(ql_FnAssertFailure fail);
 
 #endif

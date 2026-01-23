@@ -13,7 +13,7 @@
 
 static void write_int(ob_Serial *srl, uint64_t n) {
   auto len = stdc_bit_width(n);
-  ASSERT(len <= 63, "cannot encode a num > 64 bits.");
+  QL_ASSERT(len <= 63, "cannot encode a num > 64 bits.");
 
   do {
     uint8_t byte = n & 0x7f;
@@ -67,7 +67,7 @@ static void write_ref(ob_Obj object, ob_Serial *srl) {
     return;
   }
 
-  ASSERT(false, "object %p was not yet written", (void *)object);
+  QL_ASSERT(false, "object %p was not yet written", (void *)object);
 }
 
 static void write_obj(ob_Obj object, void *userdata) {
@@ -132,7 +132,7 @@ static void write_obj(ob_Obj object, void *userdata) {
   }; break;
 
   default:
-    ASSERT(false, "cannot serialize this object of tag %d", tag);
+    QL_ASSERT(false, "cannot serialize this object of tag %d", tag);
     break;
   }
 }
@@ -165,7 +165,7 @@ ob_Obj read_ref(ob_Serial *srl, uint64_t ident) {
     return res;
   }
 
-  ASSERT(false, "ref %ld doesn't exist", ident);
+  QL_ASSERT(false, "ref %ld doesn't exist", ident);
   return NULL;
 }
 
@@ -176,8 +176,8 @@ ob_Obj obsrl_read(ob_Serial *srl) {
   uint8_t *head = srl->buffer.data;
   auto remaining = srl->buffer.size - sizeof(OB_SERIAL_HEADER);
 
-  ASSERT(string_equal(sizeof(OB_SERIAL_HEADER), head, OB_SERIAL_HEADER),
-         "invalid header");
+  QL_ASSERT(string_equal(sizeof(OB_SERIAL_HEADER), head, OB_SERIAL_HEADER),
+            "invalid header");
 
   head += sizeof(OB_SERIAL_HEADER);
 
@@ -249,8 +249,8 @@ ob_Obj obsrl_read(ob_Serial *srl) {
     } break;
 
     default:
-      ASSERT(false, "unsupported object type when read: %d at offset %d", tag,
-             offset);
+      QL_ASSERT(false, "unsupported object type when read: %d at offset %d",
+                tag, offset);
     }
 
     ql_table_set(&srl->identifiers, offset, result);

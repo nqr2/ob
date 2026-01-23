@@ -89,7 +89,7 @@ void obbc_run(ob_Context ctx, size_t len, const uint8_t *code) {
       auto stack_len = ql_array_length(&ctx->stack, sizeof(ob_Obj));
 
       ob_Obj recv = *(ob_Obj *)ql_array_at(&ctx->stack, sizeof(ob_Obj),
-                                        stack_len - nargs - 1);
+                                           stack_len - nargs - 1);
 
       ql_array_remove(&ctx->stack, sizeof(ob_Obj), stack_len - nargs - 1);
 

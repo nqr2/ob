@@ -50,7 +50,7 @@ void dofile(const char *input_path, FILE *input_file, ob_Serial *srl) {
       auto data = obstr_get_data(srl->ctx, sym);
       auto len = obstr_get_length(sym);
 
-      printf("symbol: #'%.*s'\n", len, data);
+      printf("symbol: #'%.*s'\n", (int)len, data);
     }
 
     if (ob_get_tag(obj) == OB_METHOD) {
@@ -109,7 +109,8 @@ void dofile(const char *input_path, FILE *input_file, ob_Serial *srl) {
         auto len = ql_array_length(&method->literals, sizeof(ob_Obj));
 
         for (size_t i = 0; i < len; i++) {
-          auto obj = *(ob_Obj *)ql_array_at(&method->literals, sizeof(ob_Obj), i);
+          auto obj =
+              *(ob_Obj *)ql_array_at(&method->literals, sizeof(ob_Obj), i);
           printf("  %zu = %p\n", i, (void *)obj);
         }
       }
@@ -131,10 +132,10 @@ int main(int argn, char *argv[]) {
     input = argv[1];
     file = fopen(input, "r");
 
-    ASSERT(file != NULL, "could not open file '%s'", input);
+    QL_ASSERT(file != NULL, "could not open file '%s'", input);
   }
 
-  ASSERT(argn <= 2, "expected 0 or 1 arguments, got %d", argn - 1);
+  QL_ASSERT(argn <= 2, "expected 0 or 1 arguments, got %d", argn - 1);
 
   auto alloc = ql_alloc_create();
   auto ctx = obctx_create(&alloc);

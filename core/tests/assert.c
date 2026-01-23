@@ -7,11 +7,11 @@ void assert_failure() {
 }
 
 void assert_false_fails() {
-  ASSERT(false, "This always fails");
+  QL_ASSERT(false, "This always fails");
 }
 
 void assert_true_succeeds() {
-  ASSERT(true, "This never fails");
+  QL_ASSERT(true, "This never fails");
 }
 
 const Test SUITE[] = {
@@ -21,7 +21,7 @@ const Test SUITE[] = {
 };
 
 int main() {
-  obassert_add_handler(assert_failure);
+  ql_assert_add_handler(assert_failure);
 
   test(SUITE);
 

@@ -10,5 +10,6 @@ void oblib_load_shell(ob_Context ctx) {
   ql_table_set(&shell->slots, obstr_get_hash(ctx, sym_true), ctx->known.o_true);
 
   auto sym_false = obstr_create_literal(ctx, "false");
-  ql_table_set(&shell->slots, obstr_get_hash(ctx, sym_false), ctx->known.o_false);
+  ql_table_set(&shell->slots, obstr_get_hash(ctx, sym_false),
+               ctx->known.o_false);
 }

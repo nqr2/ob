@@ -8,7 +8,7 @@
 
 static void add_method(ob_Context ctx, ob_Obj target, const char *name,
                        ob_FnCMethod method) {
-  ASSERT(ob_get_tag(target) == OB_SLOTS, "expected a slots object");
+  QL_ASSERT(ob_get_tag(target) == OB_SLOTS, "expected a slots object");
 
   auto slots = ob_cast_slots(target);
 

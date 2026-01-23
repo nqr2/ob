@@ -70,7 +70,7 @@ Reader rdr_new(ob_Context context, ob_ObjMethod *output, size_t length,
 }
 
 void rdr_next(Reader *rdr) {
-  ASSERT(rdr->remaining > 0, "unexpected end of file");
+  QL_ASSERT(rdr->remaining > 0, "unexpected end of file");
 
   rdr->column++;
 
@@ -84,8 +84,8 @@ void rdr_next(Reader *rdr) {
 }
 
 static void rdr_expect1(Reader *rdr, char chr) {
-  ASSERT(*rdr->head == chr, "at %s %zu:%zu: expected `%c`, got `%c`", rdr->path,
-         rdr->line + 1, rdr->column + 1, chr, *rdr->head);
+  QL_ASSERT(*rdr->head == chr, "at %s %zu:%zu: expected `%c`, got `%c`",
+            rdr->path, rdr->line + 1, rdr->column + 1, chr, *rdr->head);
   rdr_next(rdr);
 }
 
@@ -99,8 +99,8 @@ static void rdr_expectn(Reader *rdr, const char *chrs) {
     chrs++;
   }
 
-  ASSERT(false, "at %s %zu:%zu: expected one of [%s], got `%c`", rdr->path,
-         rdr->line + 1, rdr->column + 1, chrs, *rdr->head);
+  QL_ASSERT(false, "at %s %zu:%zu: expected one of [%s], got `%c`", rdr->path,
+            rdr->line + 1, rdr->column + 1, chrs, *rdr->head);
 }
 
 // i wish C had lambdas...
@@ -257,8 +257,8 @@ static void p_method(Reader *rdr) {
       p_skip_blank(rdr);
 
       if (!((*rdr->head == '|') || isalpha(*rdr->head))) {
-        ASSERT(false, "unexpected character in argument list: `%c`",
-               *rdr->head);
+        QL_ASSERT(false, "unexpected character in argument list: `%c`",
+                  *rdr->head);
       }
     }
   }
@@ -474,7 +474,8 @@ static bool p_unary_send(Reader *rdr, bool explicitp) {
       auto objsel = ob_create_symbol(rdr->context, sel);
 
       auto index = ql_array_length(&rdr->output->literals, sizeof(ob_Obj));
-      ql_array_push(&rdr->output->literals, sizeof(ob_Obj), (const void *)&objsel);
+      ql_array_push(&rdr->output->literals, sizeof(ob_Obj),
+                    (const void *)&objsel);
 
       emit_send(rdr, index, explicitp);
 
@@ -512,7 +513,8 @@ static bool p_binary_send(Reader *rdr, bool explicitp) {
       auto objsel = ob_create_symbol(rdr->context, sel);
 
       auto index = ql_array_length(&rdr->output->literals, sizeof(ob_Obj));
-      ql_array_push(&rdr->output->literals, sizeof(ob_Obj), (const void *)&objsel);
+      ql_array_push(&rdr->output->literals, sizeof(ob_Obj),
+                    (const void *)&objsel);
 
       emit_send(rdr, index, explicitp);
 
@@ -564,7 +566,8 @@ static bool p_keyword_send(Reader *rdr, bool explicitp) {
     auto objsel = ob_create_symbol(rdr->context, sel);
 
     auto index = ql_array_length(&rdr->output->literals, sizeof(ob_Obj));
-    ql_array_push(&rdr->output->literals, sizeof(ob_Obj), (const void *)&objsel);
+    ql_array_push(&rdr->output->literals, sizeof(ob_Obj),
+                  (const void *)&objsel);
 
     emit_send(rdr, index, explicitp);
   }
@@ -628,7 +631,7 @@ ob_Obj ob_load(ob_Context ctx, size_t length, const char *text) {
     auto previous = reader.head;
     p_toplevel(&reader);
 
-    ASSERT(reader.head != previous, "didn't read anything");
+    QL_ASSERT(reader.head != previous, "didn't read anything");
   }
 
   return closure;

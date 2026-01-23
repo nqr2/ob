@@ -22,16 +22,16 @@ void f_set_unset() {
   });
 
   obarg_parse(&parser, 2, (const char *[]){"arg", "-s"});
-  ASSERT(flag == true, "expected FLAG_SET to set a flag to true");
+  QL_ASSERT(flag == true, "expected FLAG_SET to set a flag to true");
 
   obarg_parse(&parser, 2, (const char *[]){"arg", "-u"});
-  ASSERT(flag == false, "expected FLAG_UNSET to set a flag to false");
+  QL_ASSERT(flag == false, "expected FLAG_UNSET to set a flag to false");
 
   obarg_parse(&parser, 2, (const char *[]){"arg", "--set"});
-  ASSERT(flag == true, "expected long FLAG_SET to set a flag to true");
+  QL_ASSERT(flag == true, "expected long FLAG_SET to set a flag to true");
 
   obarg_parse(&parser, 2, (const char *[]){"arg", "--unset"});
-  ASSERT(flag == false, "expected long FLAG_UNSET to set a flag to false");
+  QL_ASSERT(flag == false, "expected long FLAG_UNSET to set a flag to false");
 }
 
 void f_int() {
@@ -43,10 +43,10 @@ void f_int() {
   });
 
   obarg_parse(&parser, 3, (const char *[]){"arg", "-i", "1"});
-  ASSERT(flag == 1, "expected FLAG_INT to set a value to 1");
+  QL_ASSERT(flag == 1, "expected FLAG_INT to set a value to 1");
 
   obarg_parse(&parser, 3, (const char *[]){"arg", "--int", "11"});
-  ASSERT(flag == 11, "expected long FLAG_INT to set a value to 11");
+  QL_ASSERT(flag == 11, "expected long FLAG_INT to set a value to 11");
 }
 
 static void pos_arg__pa(void *udata, const char *arg) {
@@ -62,7 +62,7 @@ void pos_arg() {
   parser.positional_arg = pos_arg__pa;
 
   obarg_parse(&parser, 2, (const char *[]){"arg", known});
-  ASSERT(arg == known, "expected a positional argument to be set");
+  QL_ASSERT(arg == known, "expected a positional argument to be set");
 }
 
 void f_string() {
@@ -77,10 +77,10 @@ void f_string() {
   });
 
   obarg_parse(&parser, 3, (const char *[]){"arg", "-s", k_short});
-  ASSERT(arg == k_short, "expected FLAG_STRING to set a value");
+  QL_ASSERT(arg == k_short, "expected FLAG_STRING to set a value");
 
   obarg_parse(&parser, 3, (const char *[]){"arg", "--string", k_long});
-  ASSERT(arg == k_long, "expected long FLAG_STRING to set a value");
+  QL_ASSERT(arg == k_long, "expected long FLAG_STRING to set a value");
 }
 
 void f_subcommand() {
@@ -98,11 +98,12 @@ void f_subcommand() {
   });
 
   obarg_parse(&parser, 3, (const char *[]){"arg", "-S", "--set"});
-  ASSERT(flag == true, "expected a FLAG_SET in FLAG_SUBCOMMAND to set a flag");
+  QL_ASSERT(flag == true,
+            "expected a FLAG_SET in FLAG_SUBCOMMAND to set a flag");
 
   obarg_parse(&parser, 3, (const char *[]){"arg", "-S", "--unset"});
-  ASSERT(flag == false,
-         "expected a FLAG_UNSET in FLAG_SUBCOMMAND to unset a flag");
+  QL_ASSERT(flag == false,
+            "expected a FLAG_UNSET in FLAG_SUBCOMMAND to unset a flag");
 }
 
 const Test SUITE[] = {
@@ -116,7 +117,7 @@ const Test SUITE[] = {
 };
 
 int main() {
-  obassert_add_handler(assert_failure);
+  ql_assert_add_handler(assert_failure);
 
   test(SUITE);
 
