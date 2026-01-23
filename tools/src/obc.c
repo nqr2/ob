@@ -17,7 +17,7 @@ void dofile(void *udata, const char *path) {
     return;
   }
 
-  auto data = (ob_Array){};
+  auto data = (ql_Array){};
   auto length = 0L;
 
   fseek(file, 0, SEEK_END);
@@ -26,8 +26,8 @@ void dofile(void *udata, const char *path) {
 
   rewind(file);
 
-  obarr_init(&data, ctx->allocator);
-  obarr_reserve(&data, length);
+  ql_array_init(&data, ctx->allocator);
+  ql_array_reserve(&data, length);
   data.size = length;
 
   fread(data.data, sizeof(char), data.size, file);
@@ -43,7 +43,7 @@ void dofile(void *udata, const char *path) {
   obsrl_free(&srl);
 
   // exit:
-  obarr_free(&data);
+  ql_array_free(&data);
   fclose(file);
 }
 

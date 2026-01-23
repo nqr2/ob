@@ -12,23 +12,23 @@ struct Entry {
 void obexn__begin(ob_Exnbuf *buf, jmp_buf jmp) {
   struct Entry entry = {};
   memcpy(entry.jmp, jmp, sizeof(jmp_buf));
-  obarr_push(&buf->entries, sizeof(entry), &entry);
+  ql_array_push(&buf->entries, sizeof(entry), &entry);
 }
 
 void obexn__end(ob_Exnbuf *buf) {
-  obarr_pop(&buf->entries, sizeof(struct Entry), NULL);
+  ql_array_pop(&buf->entries, sizeof(struct Entry), NULL);
 }
 
 void obexn_init(ob_Exnbuf *buf, ob_Allocator *alloc) {
-  obarr_init(&buf->entries, alloc);
+  ql_array_init(&buf->entries, alloc);
 }
 
 void obexn_free(ob_Exnbuf *buf) {
-  obarr_free(&buf->entries);
+  ql_array_free(&buf->entries);
 }
 
 const ob_Exndata *obexn_data(ob_Exnbuf *buf) {
-  struct Entry *entry = obarr_last(&buf->entries, sizeof(struct Entry));
+  struct Entry *entry = ql_array_last(&buf->entries, sizeof(struct Entry));
 
   if (entry) {
     return &entry->data;
@@ -38,7 +38,7 @@ const ob_Exndata *obexn_data(ob_Exnbuf *buf) {
 }
 
 ob_Exncode obexn_code(ob_Exnbuf *buf) {
-  struct Entry *entry = obarr_last(&buf->entries, sizeof(struct Entry));
+  struct Entry *entry = ql_array_last(&buf->entries, sizeof(struct Entry));
 
   if (entry) {
     return entry->code;
@@ -48,7 +48,7 @@ ob_Exncode obexn_code(ob_Exnbuf *buf) {
 }
 
 void obexn_throw(ob_Exnbuf *buf, ob_Exncode code, ob_Exndata data) {
-  struct Entry *ent = obarr_last(&buf->entries, sizeof(struct Entry));
+  struct Entry *ent = ql_array_last(&buf->entries, sizeof(struct Entry));
 
   if (ent) {
     ent->code = code;
@@ -58,7 +58,7 @@ void obexn_throw(ob_Exnbuf *buf, ob_Exncode code, ob_Exndata data) {
 }
 
 void obexn_rethrow(ob_Exnbuf *buf) {
-  struct Entry *ent = obarr_last(&buf->entries, sizeof(struct Entry));
+  struct Entry *ent = ql_array_last(&buf->entries, sizeof(struct Entry));
 
   if (ent) {
     longjmp(ent->jmp, ent->code);

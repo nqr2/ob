@@ -74,9 +74,9 @@ typedef struct {
 
 typedef struct {
   ob_Obj env;
-  ob_ArrayT(ob_Str) parameters;
-  ob_ArrayT(uint8_t) bytecode;
-  ob_ArrayT(ob_Obj) literals;
+  ql_ArrayT(ob_Str) parameters;
+  ql_ArrayT(uint8_t) bytecode;
+  ql_ArrayT(ob_Obj) literals;
 } ob_ObjMethod;
 
 typedef bool (*ob_FnCMethod)(ob_Context ctx);
@@ -89,7 +89,7 @@ typedef struct {
 } ob_ObjActivation;
 
 typedef struct {
-  ob_ArrayT(ob_Str) parameters;
+  ql_ArrayT(ob_Str) parameters;
   ob_FnCMethod method;
 } ob_ObjCMethod;
 
@@ -134,7 +134,7 @@ ob_Str *ob_cast_symbol(ob_Obj obj);
 ob_Str *ob_cast_string(ob_Obj obj);
 ob_ObjSlots *ob_cast_slots(ob_Obj obj);
 ob_Number *ob_cast_number(ob_Obj obj);
-ob_ArrayT(ob_Obj) * ob_cast_array(ob_Obj obj);
+ql_ArrayT(ob_Obj) * ob_cast_array(ob_Obj obj);
 ob_ObjMethod *ob_cast_method(ob_Obj obj);
 ob_FnCMethod *ob_cast_lightcmethod(ob_Obj obj);
 ob_ObjCMethod *ob_cast_cmethod(ob_Obj obj);

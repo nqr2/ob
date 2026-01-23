@@ -24,9 +24,9 @@ ob_Context obctx_create(ob_Allocator *alloc) {
   ctx->gc_state.factor = DEFAULT_GC_FACTOR;
   ctx->gc_state.enabled = true;
 
-  obarr_init(&ctx->stack, alloc);
-  obarr_init(&ctx->string_data, alloc);
-  obarr_init(&ctx->string_available, alloc);
+  ql_array_init(&ctx->stack, alloc);
+  ql_array_init(&ctx->string_data, alloc);
+  ql_array_init(&ctx->string_available, alloc);
 
   ctx->allocator = alloc;
 
@@ -64,9 +64,9 @@ void obctx_destroy(ob_Context ctx) {
   gc_sweep(ctx);
   gc_sweep(ctx);
 
-  obarr_free(&ctx->stack);
-  obarr_free(&ctx->string_data);
-  obarr_free(&ctx->string_available);
+  ql_array_free(&ctx->stack);
+  ql_array_free(&ctx->string_data);
+  ql_array_free(&ctx->string_available);
 
   obtbl_free(&ctx->interned);
 
@@ -148,10 +148,10 @@ ob_Obj ob_create_real(ob_Context ctx, double number) {
 }
 
 ob_Obj ob_create_array(ob_Context ctx) {
-  auto obj = obctx_allocate(ctx, OB_ARRAY, sizeof(ob_Array));
+  auto obj = obctx_allocate(ctx, OB_ARRAY, sizeof(ql_Array));
 
-  ob_Array *arr = ob_get_payload(obj);
-  obarr_init(arr, ctx->allocator);
+  ql_Array *arr = ob_get_payload(obj);
+  ql_array_init(arr, ctx->allocator);
 
   return obj;
 }
@@ -163,9 +163,9 @@ ob_Obj ob_create_method(ob_Context ctx) {
 
   method->env = ctx->this_activation;
 
-  obarr_init(&method->bytecode, ctx->allocator);
-  obarr_init(&method->literals, ctx->allocator);
-  obarr_init(&method->parameters, ctx->allocator);
+  ql_array_init(&method->bytecode, ctx->allocator);
+  ql_array_init(&method->literals, ctx->allocator);
+  ql_array_init(&method->parameters, ctx->allocator);
 
   return obj;
 }
@@ -307,13 +307,13 @@ void obctx_leave_activation(ob_Context ctx) {
 }
 
 void ob_push(ob_Context ctx, ob_Obj obj) {
-  obarr_push(&ctx->stack, sizeof(ob_Obj), (const void *)&obj);
+  ql_array_push(&ctx->stack, sizeof(ob_Obj), (const void *)&obj);
 }
 
 ob_Obj ob_pop(ob_Context ctx) {
   ob_Obj obj;
 
-  if (!obarr_pop(&ctx->stack, sizeof(ob_Obj), (void *)&obj)) {
+  if (!ql_array_pop(&ctx->stack, sizeof(ob_Obj), (void *)&obj)) {
     ASSERT(false, "cannot pop from empty stack");
   }
 
@@ -438,7 +438,7 @@ static void invoke(ob_Context ctx, ob_Obj invoked, ob_Obj recv, size_t n_args) {
   case OB_CMETHOD: {
     ob_ObjCMethod *data = ob_get_payload(invoked);
 
-    ASSERT(n_args == obarr_length(&data->parameters, sizeof(ob_Str)),
+    ASSERT(n_args == ql_array_length(&data->parameters, sizeof(ob_Str)),
            "not enough arguments to invoke C method");
 
     ctx->gc_state.enabled = false;
@@ -455,10 +455,10 @@ static void invoke(ob_Context ctx, ob_Obj invoked, ob_Obj recv, size_t n_args) {
     ob_ObjActivation *act = ob_get_payload(ctx->this_activation);
     ob_ObjSlots *env = ob_get_payload(act->env);
 
-    size_t length = obarr_length(&data->parameters, sizeof(ob_Str));
+    size_t length = ql_array_length(&data->parameters, sizeof(ob_Str));
 
     for (size_t i = 0; i < length; i++) {
-      auto param = (ob_Str *)obarr_at(&data->parameters, sizeof(ob_Str), i);
+      auto param = (ob_Str *)ql_array_at(&data->parameters, sizeof(ob_Str), i);
       auto item = ob_pop(ctx);
 
       obtbl_set(&env->slots, obstr_get_hash(ctx, *param), item);
@@ -509,7 +509,7 @@ void ob_send_ext(ob_Context ctx, ob_Obj recv, ob_Str selector,
       while (n_args > 0) {
         ob_Obj obj = NULL;
         obj = ob_pop(ctx);
-        obarr_push(args_data, sizeof(ob_Obj), (void *)&obj);
+        ql_array_push(args_data, sizeof(ob_Obj), (void *)&obj);
         n_args--;
       }
 

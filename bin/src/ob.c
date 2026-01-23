@@ -18,7 +18,7 @@ void dofile(ob_Context ctx, const char *path) {
     return;
   }
 
-  auto data = (ob_Array){};
+  auto data = (ql_Array){};
   auto length = 0L;
 
   fseek(file, 0, SEEK_END);
@@ -27,8 +27,8 @@ void dofile(ob_Context ctx, const char *path) {
 
   fseek(file, 0, SEEK_SET);
 
-  obarr_init(&data, ctx->allocator);
-  obarr_reserve(&data, length);
+  ql_array_init(&data, ctx->allocator);
+  ql_array_reserve(&data, length);
   data.size = length;
 
   fread(data.data, sizeof(char), data.size, file);
@@ -36,19 +36,19 @@ void dofile(ob_Context ctx, const char *path) {
   ob_run(ctx, data.size, data.data);
 
   // exit:
-  obarr_free(&data);
+  ql_array_free(&data);
   fclose(file);
 }
 
 void repl(ob_Context ctx) {
-  auto line = (ob_Array){};
-  obarr_init(&line, ctx->allocator);
+  auto line = (ql_Array){};
+  ql_array_init(&line, ctx->allocator);
 
-  obarr_reserve(&line, 256);
+  ql_array_reserve(&line, 256);
 
   while (true) {
-    obarr_clear(&line);
-    obarr_clear(&ctx->stack);
+    ql_array_clear(&line);
+    ql_array_clear(&ctx->stack);
 
     if (feof(stdin)) {
       break;
@@ -67,7 +67,7 @@ void repl(ob_Context ctx) {
       }
 
       auto tmp2 = (char)tmp;
-      obarr_push(&line, sizeof(char), &tmp2);
+      ql_array_push(&line, sizeof(char), &tmp2);
     }
 
     ob_run(ctx, line.size, line.data);
@@ -83,7 +83,7 @@ void repl(ob_Context ctx) {
     }
   }
 
-  obarr_free(&line);
+  ql_array_free(&line);
 }
 
 int main(int argn, const char *argv[]) {

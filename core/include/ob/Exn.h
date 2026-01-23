@@ -35,7 +35,7 @@ typedef union {
 } ob_Exndata;
 
 typedef struct {
-  ob_Array entries;
+  ql_Array entries;
 } ob_Exnbuf;
 
 #define OB_EXN_BEGIN(Buf, OnFailure)                                           \

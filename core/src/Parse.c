@@ -111,8 +111,8 @@ void rdr_takewhile(Reader *rdr, bool (*pred)(char)) {
 }
 
 static void push_literal(Reader *rdr, ob_Obj obj) {
-  auto index = obarr_length(&rdr->output->literals, sizeof(ob_Obj));
-  obarr_push(&rdr->output->literals, sizeof(ob_Obj), (const void *)&obj);
+  auto index = ql_array_length(&rdr->output->literals, sizeof(ob_Obj));
+  ql_array_push(&rdr->output->literals, sizeof(ob_Obj), (const void *)&obj);
 
   OB_DEBUG("push literal: %zu", index);
 
@@ -229,8 +229,8 @@ static void p_method(Reader *rdr) {
   rdr->output = method;
 
   // | {word} |
-  auto buf = (ob_Array){};
-  obarr_init(&buf, rdr->context->allocator);
+  auto buf = (ql_Array){};
+  ql_array_init(&buf, rdr->context->allocator);
 
   if (*rdr->head == '|') {
     rdr_next(rdr);
@@ -243,16 +243,16 @@ static void p_method(Reader *rdr) {
         break;
       }
 
-      obarr_clear(&buf);
+      ql_array_clear(&buf);
 
       auto begin = rdr->head;
       rdr_takewhile(rdr, is_word_tail);
 
-      obarr_push(&buf, sizeof(char) * (rdr->head - begin), begin);
+      ql_array_push(&buf, sizeof(char) * (rdr->head - begin), begin);
 
       // TODO: also intern this
       auto str = obstr_create(rdr->context, buf.size, buf.data);
-      obarr_push(&rdr->output->parameters, sizeof(ob_Str), (void *)&str);
+      ql_array_push(&rdr->output->parameters, sizeof(ob_Str), (void *)&str);
 
       p_skip_blank(rdr);
 
@@ -263,7 +263,7 @@ static void p_method(Reader *rdr) {
     }
   }
 
-  obarr_free(&buf);
+  ql_array_free(&buf);
 
   // expression { . expression }
   p_expression(rdr);
@@ -288,14 +288,14 @@ static void p_method(Reader *rdr) {
 static ob_Str p_string_inner(Reader *rdr) {
   rdr_next(rdr);
 
-  auto buf = (ob_Array){};
-  obarr_init(&buf, rdr->context->allocator);
+  auto buf = (ql_Array){};
+  ql_array_init(&buf, rdr->context->allocator);
 
   auto begin = rdr->head;
 
   while (*rdr->head != '\'') {
     if (*rdr->head == '\\') {
-      obarr_push(&buf, sizeof(char) * (rdr->head - begin - 1), begin - 1);
+      ql_array_push(&buf, sizeof(char) * (rdr->head - begin - 1), begin - 1);
 
       rdr_next(rdr);
 
@@ -312,7 +312,7 @@ static ob_Str p_string_inner(Reader *rdr) {
         break;
       }
 
-      obarr_push(&buf, sizeof(char), &escaped);
+      ql_array_push(&buf, sizeof(char), &escaped);
       rdr_next(rdr);
 
       begin = rdr->head;
@@ -322,12 +322,12 @@ static ob_Str p_string_inner(Reader *rdr) {
     rdr_next(rdr);
   }
 
-  obarr_push(&buf, sizeof(char) * (rdr->head - begin), begin);
+  ql_array_push(&buf, sizeof(char) * (rdr->head - begin), begin);
 
   rdr_expect1(rdr, '\'');
 
   auto str = obstr_create(rdr->context, buf.size, buf.data);
-  obarr_free(&buf);
+  ql_array_free(&buf);
 
   return str;
 }
@@ -343,8 +343,8 @@ static void p_symbol(Reader *rdr) {
   rdr_next(rdr);
 
   ob_Str sel = NULL;
-  auto sym = (ob_Array){};
-  obarr_init(&sym, rdr->context->allocator);
+  auto sym = (ql_Array){};
+  ql_array_init(&sym, rdr->context->allocator);
 
   auto begin = rdr->head;
 
@@ -371,7 +371,7 @@ static void p_symbol(Reader *rdr) {
     }
   }
 
-  obarr_push(&sym, sizeof(char) * (rdr->head - begin), begin);
+  ql_array_push(&sym, sizeof(char) * (rdr->head - begin), begin);
 
   sel = obstr_create(rdr->context, sym.size, sym.data);
 
@@ -379,7 +379,7 @@ after_str:
   auto objsel = ob_create_symbol(rdr->context, sel);
 
   push_literal(rdr, objsel);
-  obarr_free(&sym);
+  ql_array_free(&sym);
 }
 
 static bool p_primary(Reader *rdr) {
@@ -473,8 +473,8 @@ static bool p_unary_send(Reader *rdr, bool explicitp) {
       auto sel = obstr_create(rdr->context, (rdr->head - here), here);
       auto objsel = ob_create_symbol(rdr->context, sel);
 
-      auto index = obarr_length(&rdr->output->literals, sizeof(ob_Obj));
-      obarr_push(&rdr->output->literals, sizeof(ob_Obj), (const void *)&objsel);
+      auto index = ql_array_length(&rdr->output->literals, sizeof(ob_Obj));
+      ql_array_push(&rdr->output->literals, sizeof(ob_Obj), (const void *)&objsel);
 
       emit_send(rdr, index, explicitp);
 
@@ -511,8 +511,8 @@ static bool p_binary_send(Reader *rdr, bool explicitp) {
       auto sel = obstr_create(rdr->context, (rdr->head - here), here);
       auto objsel = ob_create_symbol(rdr->context, sel);
 
-      auto index = obarr_length(&rdr->output->literals, sizeof(ob_Obj));
-      obarr_push(&rdr->output->literals, sizeof(ob_Obj), (const void *)&objsel);
+      auto index = ql_array_length(&rdr->output->literals, sizeof(ob_Obj));
+      ql_array_push(&rdr->output->literals, sizeof(ob_Obj), (const void *)&objsel);
 
       emit_send(rdr, index, explicitp);
 
@@ -532,8 +532,8 @@ static bool p_binary(Reader *rdr) {
 }
 
 static bool p_keyword_send(Reader *rdr, bool explicitp) {
-  auto message = (ob_Array){};
-  obarr_init(&message, rdr->context->allocator);
+  auto message = (ql_Array){};
+  ql_array_init(&message, rdr->context->allocator);
 
   while (true) {
     p_skip_blank(rdr);
@@ -549,7 +549,7 @@ static bool p_keyword_send(Reader *rdr, bool explicitp) {
       // this char can only be :
       rdr_expect1(rdr, ':');
 
-      obarr_push(&message, (rdr->head - here), here);
+      ql_array_push(&message, (rdr->head - here), here);
 
       (void)p_binary(rdr);
 
@@ -563,13 +563,13 @@ static bool p_keyword_send(Reader *rdr, bool explicitp) {
     auto sel = obstr_create(rdr->context, message.size, message.data);
     auto objsel = ob_create_symbol(rdr->context, sel);
 
-    auto index = obarr_length(&rdr->output->literals, sizeof(ob_Obj));
-    obarr_push(&rdr->output->literals, sizeof(ob_Obj), (const void *)&objsel);
+    auto index = ql_array_length(&rdr->output->literals, sizeof(ob_Obj));
+    ql_array_push(&rdr->output->literals, sizeof(ob_Obj), (const void *)&objsel);
 
     emit_send(rdr, index, explicitp);
   }
 
-  obarr_free(&message);
+  ql_array_free(&message);
   return explicitp;
 }
 

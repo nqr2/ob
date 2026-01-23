@@ -53,20 +53,20 @@ void ob_mark(ob_Obj obj) {
 
   case OB_METHOD: {
     ob_ObjMethod *method = ob_get_payload(obj);
-    auto len = obarr_length(&method->parameters, sizeof(ob_Str));
+    auto len = ql_array_length(&method->parameters, sizeof(ob_Str));
 
     for (size_t i = 0; i < len; i++) {
-      auto str = (ob_Str *)obarr_at(&method->parameters, sizeof(ob_Str), i);
+      auto str = (ob_Str *)ql_array_at(&method->parameters, sizeof(ob_Str), i);
       obstr_mark(*str);
     }
   }; break;
 
   case OB_CMETHOD: {
     ob_ObjCMethod *method = ob_get_payload(obj);
-    auto len = obarr_length(&method->parameters, sizeof(ob_Str));
+    auto len = ql_array_length(&method->parameters, sizeof(ob_Str));
 
     for (size_t i = 0; i < len; i++) {
-      auto str = (ob_Str *)obarr_at(&method->parameters, sizeof(ob_Str), i);
+      auto str = (ob_Str *)ql_array_at(&method->parameters, sizeof(ob_Str), i);
       obstr_mark(*str);
     }
   }; break;
@@ -86,15 +86,15 @@ void obobj_destroy(ob_Obj obj) {
   } break;
 
   case OB_ARRAY: {
-    ob_Array *data = ob_get_payload(obj);
-    obarr_free(data);
+    ql_Array *data = ob_get_payload(obj);
+    ql_array_free(data);
   } break;
 
   case OB_METHOD: {
     ob_ObjMethod *data = ob_get_payload(obj);
-    obarr_free(&data->parameters);
-    obarr_free(&data->literals);
-    obarr_free(&data->bytecode);
+    ql_array_free(&data->parameters);
+    ql_array_free(&data->literals);
+    ql_array_free(&data->bytecode);
   } break;
 
   case OB_CDATA: {
@@ -138,11 +138,11 @@ void ob_visit(ob_Object *obj, ob_VisitFlags flags, ob_FnVisit visit,
   } break;
 
   case OB_ARRAY: {
-    ob_Array *data = ob_get_payload(obj);
+    ql_Array *data = ob_get_payload(obj);
 
     auto length = data->size / sizeof(ob_Obj);
     for (size_t i = 0; i < length; i++) {
-      auto item = obarr_at(data, sizeof(ob_Obj), i);
+      auto item = ql_array_at(data, sizeof(ob_Obj), i);
       ob_visit(item, flags, visit, predicate, userdata);
     }
   } break;
@@ -204,7 +204,7 @@ ob_Number *ob_cast_number(ob_Obj obj) {
   return cast(obj, OB_NUMBER);
 }
 
-ob_ArrayT(ob_Obj) * ob_cast_array(ob_Obj obj) {
+ql_ArrayT(ob_Obj) * ob_cast_array(ob_Obj obj) {
   return cast(obj, OB_ARRAY);
 }
 

@@ -18,5 +18,5 @@ void oblib_load_world(ob_Context ctx) {
   RUN(ctx, Shell);
   RUN(ctx, Boolean);
 
-  obarr_clear(&ctx->stack);
+  ql_array_clear(&ctx->stack);
 }

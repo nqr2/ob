@@ -39,7 +39,7 @@ typedef struct Context {
 
   ob_Allocator *allocator;
 
-  ob_Array stack;
+  ql_Array stack;
 
   ob_Obj objects;
 
@@ -54,8 +54,8 @@ typedef struct Context {
 
   ob_Obj this_activation;
 
-  ob_Array string_data;
-  ob_Array string_available;
+  ql_Array string_data;
+  ql_Array string_available;
 
   ob_String *strings;
   ob_Table interned;
@@ -77,7 +77,7 @@ ob_Obj ob_create_array(ob_Context ctx);
 ob_Obj ob_create_method(ob_Context ctx);
 ob_Obj ob_create_lightcmethod(ob_Context ctx, ob_FnCMethod method);
 ob_Obj ob_create_cmethod(ob_Context ctx, ob_FnCMethod method,
-                         ob_Array parameters);
+                         ql_Array parameters);
 ob_Obj ob_create_lightcdata(ob_Context ctx, void *cdata);
 ob_Obj ob_create_cdata(ob_Context ctx, ob_Obj prototype, ob_FnVisit visit,
                        ob_FnDestroy destructor, void *data);

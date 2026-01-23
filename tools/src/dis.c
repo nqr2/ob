@@ -1,10 +1,10 @@
-#include "ob/Array.h"
-#include "ob/Log.h"
-#include "ob/Object.h"
 #include <ob/Assert.h>
 #include <ob/Bytecode.h>
 #include <ob/Context.h>
 #include <ob/Serial.h>
+
+#define OB_LOG_MODULE "dis"
+#include <ob/Log.h>
 
 #include <stdint.h>
 #include <stdio.h>
@@ -13,8 +13,8 @@
 void dofile(const char *input_path, FILE *input_file, ob_Serial *srl) {
   size_t length = 0;
 
-  auto data = (ob_Array){};
-  obarr_init(&data, srl->ctx->allocator);
+  auto data = (ql_Array){};
+  ql_array_init(&data, srl->ctx->allocator);
 
   if (input_file != stdin) {
     fseek(input_file, 0, SEEK_END);
@@ -22,7 +22,7 @@ void dofile(const char *input_path, FILE *input_file, ob_Serial *srl) {
     length = ftell(input_file);
     fseek(input_file, 0, SEEK_SET);
 
-    obarr_reserve(&data, length * sizeof(char));
+    ql_array_reserve(&data, length * sizeof(char));
     fread(data.data, sizeof(char), length, input_file);
   } else {
     // at least on my machine the above fails, so we check for errors VERY
@@ -31,7 +31,7 @@ void dofile(const char *input_path, FILE *input_file, ob_Serial *srl) {
     while (!feof(stdin) && !ferror(stdin)) {
       char tmp = 0;
       fread(&tmp, sizeof(char), 1, stdin);
-      obarr_push(&data, sizeof(char), &tmp);
+      ql_array_push(&data, sizeof(char), &tmp);
     }
   }
 
@@ -106,17 +106,17 @@ void dofile(const char *input_path, FILE *input_file, ob_Serial *srl) {
       puts("lit:");
 
       {
-        auto len = obarr_length(&method->literals, sizeof(ob_Obj));
+        auto len = ql_array_length(&method->literals, sizeof(ob_Obj));
 
         for (size_t i = 0; i < len; i++) {
-          auto obj = *(ob_Obj *)obarr_at(&method->literals, sizeof(ob_Obj), i);
+          auto obj = *(ob_Obj *)ql_array_at(&method->literals, sizeof(ob_Obj), i);
           printf("  %zu = %p\n", i, (void *)obj);
         }
       }
     }
   }
 
-  obarr_free(&data);
+  ql_array_free(&data);
 }
 
 int main(int argn, char *argv[]) {

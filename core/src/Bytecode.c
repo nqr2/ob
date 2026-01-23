@@ -42,7 +42,7 @@ void obbc_run(ob_Context ctx, size_t len, const uint8_t *code) {
     auto method = ob_cast_method(act->method);
 
     ob_Obj literal =
-        *(ob_Obj *)obarr_at(&method->literals, sizeof(ob_Obj), data);
+        *(ob_Obj *)ql_array_at(&method->literals, sizeof(ob_Obj), data);
 
     OB_DEBUG("offset %ld: %02x with literal: %p", (code - start), byte,
              literal);
@@ -51,7 +51,7 @@ void obbc_run(ob_Context ctx, size_t len, const uint8_t *code) {
     case OBBC_PUSH_LITERAL: {
       auto obj = ((ob_Obj *)method->literals.data)[data];
       ob_push(ctx, obj);
-      obarr_push(&ctx->stack, sizeof(ob_Obj), (void *)&obj);
+      ql_array_push(&ctx->stack, sizeof(ob_Obj), (void *)&obj);
     }; break;
 
     case OBBC_SEND: {
@@ -61,13 +61,13 @@ void obbc_run(ob_Context ctx, size_t len, const uint8_t *code) {
                obstr_get_data(ctx, selector));
 
       auto nargs = nargs_for_sel(ctx, selector);
-      auto stack_len = obarr_length(&ctx->stack, sizeof(ob_Obj));
+      auto stack_len = ql_array_length(&ctx->stack, sizeof(ob_Obj));
       auto recv_index = stack_len - nargs - 1;
 
       ob_Obj recv =
-          *(ob_Obj *)obarr_at(&ctx->stack, sizeof(ob_Obj), recv_index);
+          *(ob_Obj *)ql_array_at(&ctx->stack, sizeof(ob_Obj), recv_index);
 
-      obarr_remove(&ctx->stack, sizeof(ob_Obj), recv_index);
+      ql_array_remove(&ctx->stack, sizeof(ob_Obj), recv_index);
 
       ob_send(ctx, recv, selector);
     }; break;
@@ -86,12 +86,12 @@ void obbc_run(ob_Context ctx, size_t len, const uint8_t *code) {
       auto selector = *ob_cast_symbol(literal);
       auto nargs = nargs_for_sel(ctx, selector);
 
-      auto stack_len = obarr_length(&ctx->stack, sizeof(ob_Obj));
+      auto stack_len = ql_array_length(&ctx->stack, sizeof(ob_Obj));
 
-      ob_Obj recv = *(ob_Obj *)obarr_at(&ctx->stack, sizeof(ob_Obj),
+      ob_Obj recv = *(ob_Obj *)ql_array_at(&ctx->stack, sizeof(ob_Obj),
                                         stack_len - nargs - 1);
 
-      obarr_remove(&ctx->stack, sizeof(ob_Obj), stack_len - nargs - 1);
+      ql_array_remove(&ctx->stack, sizeof(ob_Obj), stack_len - nargs - 1);
 
       ob_send(ctx, recv, selector);
 
@@ -106,9 +106,9 @@ void obbc_run(ob_Context ctx, size_t len, const uint8_t *code) {
       auto obj = ob_create_array(ctx);
       auto arr = ob_cast_array(obj);
 
-      obarr_reserve(arr, data * sizeof(ob_Obj));
+      ql_array_reserve(arr, data * sizeof(ob_Obj));
 
-      obarr_pop(&ctx->stack, data * sizeof(ob_Obj), arr->data);
+      ql_array_pop(&ctx->stack, data * sizeof(ob_Obj), arr->data);
       arr->size = data * sizeof(ob_Obj);
 
       ob_push(ctx, obj);
@@ -122,11 +122,11 @@ void obbc_run(ob_Context ctx, size_t len, const uint8_t *code) {
   }
 }
 
-void obbc_append_insn(ob_Array *out, ob_Instruction insn) {
-  obarr_push(out, sizeof(ob_Instruction), &insn);
+void obbc_append_insn(ql_Array *out, ob_Instruction insn) {
+  ql_array_push(out, sizeof(ob_Instruction), &insn);
 }
 
-uint8_t obbc_append_index(ob_Array *out, uint64_t index) {
+uint8_t obbc_append_index(ql_Array *out, uint64_t index) {
   while (index > 15) {
     obbc_append_insn(out, OBBC_MAKE(OBBC_EXTEND, index & 0xf));
     index >>= 4;

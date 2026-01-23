@@ -29,7 +29,7 @@
 
 typedef struct {
   ob_Context ctx;
-  ob_Array buffer;
+  ql_Array buffer;
   ob_Table identifiers;
 } ob_Serial;
 

@@ -22,7 +22,7 @@ static void write_int(ob_Serial *srl, uint64_t n) {
     if (n != 0) {
       byte |= 0x80;
     }
-    obarr_push(&srl->buffer, sizeof(uint8_t), &byte);
+    ql_array_push(&srl->buffer, sizeof(uint8_t), &byte);
   } while (n != 0);
 }
 
@@ -44,12 +44,12 @@ static uint8_t *read_int(uint8_t *bytes, uint64_t *result) {
 
 void obsrl_init(ob_Serial *srl, ob_Context ctx) {
   srl->ctx = ctx;
-  obarr_init(&srl->buffer, ctx->allocator);
+  ql_array_init(&srl->buffer, ctx->allocator);
   obtbl_init(&srl->identifiers, ctx->allocator);
 }
 
 void obsrl_free(ob_Serial *srl) {
-  obarr_free(&srl->buffer);
+  ql_array_free(&srl->buffer);
   obtbl_free(&srl->identifiers);
 }
 
@@ -80,7 +80,7 @@ static void write_obj(ob_Obj object, void *userdata) {
   uint8_t tag = ob_get_tag(object);
 
   if (tag != OB_NIL) {
-    obarr_push(&srl->buffer, sizeof(tag), &tag);
+    ql_array_push(&srl->buffer, sizeof(tag), &tag);
   }
 
   // data
@@ -95,7 +95,7 @@ static void write_obj(ob_Obj object, void *userdata) {
     auto data = obstr_get_data(srl->ctx, *str);
 
     write_int(srl, length);
-    obarr_push(&srl->buffer, length, data);
+    ql_array_push(&srl->buffer, length, data);
   } break;
   case OB_STRING: // same
   {
@@ -104,13 +104,13 @@ static void write_obj(ob_Obj object, void *userdata) {
     auto data = obstr_get_data(srl->ctx, *str);
 
     write_int(srl, length);
-    obarr_push(&srl->buffer, length, data);
+    ql_array_push(&srl->buffer, length, data);
   } break;
   case OB_NUMBER: // the number
   {
     auto num = ob_cast_number(object);
     // TODO: something actually portable
-    obarr_push(&srl->buffer, sizeof(ob_Number), num);
+    ql_array_push(&srl->buffer, sizeof(ob_Number), num);
   } break;
 
   case OB_METHOD: {
@@ -128,7 +128,7 @@ static void write_obj(ob_Obj object, void *userdata) {
     }
 
     write_int(srl, data->bytecode.size);
-    obarr_push(&srl->buffer, data->bytecode.size, data->bytecode.data);
+    ql_array_push(&srl->buffer, data->bytecode.size, data->bytecode.data);
   }; break;
 
   default:
@@ -145,7 +145,7 @@ static bool write_pred(ob_Obj obj, void *udata) {
 void obsrl_write(ob_Serial *srl, ob_Obj object) {
   obtbl_clear(&srl->identifiers);
 
-  obarr_push(&srl->buffer, sizeof(OB_SERIAL_HEADER), OB_SERIAL_HEADER);
+  ql_array_push(&srl->buffer, sizeof(OB_SERIAL_HEADER), OB_SERIAL_HEADER);
 
   ob_visit(object, OB_VISIT_AFTER, write_obj, write_pred, srl);
 }
@@ -239,12 +239,12 @@ ob_Obj obsrl_read(ob_Serial *srl) {
 
         auto item = read_ref(srl, ident);
 
-        obarr_push(&method->literals, sizeof(ob_Obj), (void *)&item);
+        ql_array_push(&method->literals, sizeof(ob_Obj), (void *)&item);
       }
 
       // method->bytecode
       head = read_int(head, &length);
-      obarr_push(&method->bytecode, length, head);
+      ql_array_push(&method->bytecode, length, head);
       head += length;
     } break;
 
@@ -266,7 +266,7 @@ void obsrl_store(const ob_Serial *srl, size_t len, uint8_t *data) {
 }
 
 void obsrl_load(ob_Serial *srl, size_t len, const uint8_t *data) {
-  obarr_reserve(&srl->buffer, len);
+  ql_array_reserve(&srl->buffer, len);
   memcpy(srl->buffer.data, data, len);
   srl->buffer.size = len;
 }

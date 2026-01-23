@@ -15,11 +15,11 @@ typedef struct {
 
 ob_String *obstr_create(ob_Context ctx, size_t len, const char *data) {
   size_t target = 0;
-  auto length = obarr_length(&ctx->string_available, sizeof(StrAvailable));
+  auto length = ql_array_length(&ctx->string_available, sizeof(StrAvailable));
 
   for (size_t i = 0; i < length; i++) {
     StrAvailable *avail =
-        obarr_at(&ctx->string_available, sizeof(StrAvailable), i);
+        ql_array_at(&ctx->string_available, sizeof(StrAvailable), i);
 
     if (len <= avail->size) {
       target = avail->offset;
@@ -28,7 +28,7 @@ ob_String *obstr_create(ob_Context ctx, size_t len, const char *data) {
       avail->size -= len;
 
       if (avail->size == 0) {
-        obarr_remove(&ctx->string_available, sizeof(StrAvailable), i);
+        ql_array_remove(&ctx->string_available, sizeof(StrAvailable), i);
         i -= 1;
         length--;
       }
@@ -36,7 +36,7 @@ ob_String *obstr_create(ob_Context ctx, size_t len, const char *data) {
   }
 
   if (target == 0) {
-    obarr_push(&ctx->string_data, len, data);
+    ql_array_push(&ctx->string_data, len, data);
     target = ctx->string_data.size - len;
   }
 
@@ -81,7 +81,7 @@ static void str__delete(ob_Context ctx, ob_String *str) {
   avail.offset = str->offset;
   avail.size = str->length;
 
-  obarr_push(&ctx->string_available, sizeof(StrAvailable), (void *)&avail);
+  ql_array_push(&ctx->string_available, sizeof(StrAvailable), (void *)&avail);
 }
 
 void obstr_sweep(ob_Context ctx) {
@@ -108,21 +108,21 @@ void obstr_sweep(ob_Context ctx) {
 }
 
 ob_Str obstr_concat(ob_Context ctx, ob_Str left, ob_Str right) {
-  auto buf = (ob_Array){};
-  obarr_init(&buf, ctx->allocator);
+  auto buf = (ql_Array){};
+  ql_array_init(&buf, ctx->allocator);
 
   auto data = obstr_get_data(ctx, left);
   auto len = obstr_get_length(left);
 
-  obarr_push(&buf, len, data);
+  ql_array_push(&buf, len, data);
 
   data = obstr_get_data(ctx, right);
   len = obstr_get_length(right);
 
-  obarr_push(&buf, len, data);
+  ql_array_push(&buf, len, data);
 
   auto res = obstr_create(ctx, buf.size, buf.data);
-  obarr_free(&buf);
+  ql_array_free(&buf);
 
   return res;
 }

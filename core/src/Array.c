@@ -4,7 +4,7 @@
 #include <stdbit.h>
 #include <string.h>
 
-void obarr_init(ob_Array *arr, ob_Allocator *alloc) {
+void ql_array_init(ql_Array *arr, ob_Allocator *alloc) {
   arr->allocator = alloc;
 
   arr->size = 0;
@@ -12,12 +12,12 @@ void obarr_init(ob_Array *arr, ob_Allocator *alloc) {
   arr->data = NULL;
 }
 
-void obarr_free(ob_Array *arr) {
+void ql_array_free(ql_Array *arr) {
   ob_deallocate(arr->allocator, arr->capacity, arr->data);
-  obarr_init(arr, NULL);
+  ql_array_init(arr, NULL);
 }
 
-void obarr_reserve(ob_Array *arr, size_t newcap) {
+void ql_array_reserve(ql_Array *arr, size_t newcap) {
   auto capacity = stdc_bit_ceil(newcap);
 
   if (capacity > arr->capacity) {
@@ -28,19 +28,19 @@ void obarr_reserve(ob_Array *arr, size_t newcap) {
   }
 }
 
-void obarr_push(ob_Array *arr, size_t len, const void *data) {
-  obarr_reserve(arr, arr->size + len);
+void ql_array_push(ql_Array *arr, size_t len, const void *data) {
+  ql_array_reserve(arr, arr->size + len);
 
   memcpy(((uint8_t *)arr->data) + arr->size, data, len);
 
   arr->size += len;
 }
 
-void obarr_clear(ob_Array *arr) {
+void ql_array_clear(ql_Array *arr) {
   arr->size = 0;
 }
 
-bool obarr_pop(ob_Array *arr, size_t len, void *data) {
+bool ql_array_pop(ql_Array *arr, size_t len, void *data) {
   if (arr->size < len) {
     return false;
   }
@@ -54,7 +54,7 @@ bool obarr_pop(ob_Array *arr, size_t len, void *data) {
   return true;
 }
 
-void obarr_remove(ob_Array *arr, size_t size, size_t offset) {
+void ql_array_remove(ql_Array *arr, size_t size, size_t offset) {
   uint8_t *bytes = arr->data;
 
   auto length = arr->size / size;
@@ -67,26 +67,26 @@ void obarr_remove(ob_Array *arr, size_t size, size_t offset) {
             (length - offset - 1) * size);
   }
 
-  obarr_pop(arr, size, NULL);
+  ql_array_pop(arr, size, NULL);
 }
 
-size_t obarr_length(ob_Array *arr, size_t size) {
+size_t ql_array_length(ql_Array *arr, size_t size) {
   return arr->size / size;
 }
 
-void *obarr_at(ob_Array *arr, size_t size, size_t index) {
+void *ql_array_at(ql_Array *arr, size_t size, size_t index) {
   uint8_t *bytes = arr->data;
-  auto length = obarr_length(arr, size);
+  auto length = ql_array_length(arr, size);
 
   ASSERT(index < length, "index out of bounds (%lu > %lu size)", index, length);
 
   return bytes + (index * size);
 }
 
-void *obarr_last(ob_Array *arr, size_t size) {
-  auto length = obarr_length(arr, size);
+void *ql_array_last(ql_Array *arr, size_t size) {
+  auto length = ql_array_length(arr, size);
 
   ASSERT(arr->size > 0, "cannot take last item of an empty array");
 
-  return obarr_at(arr, size, length - 1);
+  return ql_array_at(arr, size, length - 1);
 }

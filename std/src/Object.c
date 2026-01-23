@@ -127,7 +127,7 @@ static bool o__send(ob_Context ctx) {
 
   while (args_data->size > 0) {
     ob_Obj item = NULL;
-    obarr_pop(args_data, sizeof(ob_Obj), (void *)&item);
+    ql_array_pop(args_data, sizeof(ob_Obj), (void *)&item);
     ob_push(ctx, item);
   }
 

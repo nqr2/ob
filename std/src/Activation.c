@@ -38,10 +38,10 @@ static bool act__env(ob_Context ctx) {
 static void unpack(ob_Context ctx, ob_Obj args) {
   auto data = ob_cast_array(args);
 
-  auto len = obarr_length(data, sizeof(ob_Obj));
+  auto len = ql_array_length(data, sizeof(ob_Obj));
 
   for (size_t i = 0; i < len; i++) {
-    auto obj = *(ob_Obj *)obarr_at(data, sizeof(ob_Obj), i);
+    auto obj = *(ob_Obj *)ql_array_at(data, sizeof(ob_Obj), i);
     ob_push(ctx, obj);
   }
 }

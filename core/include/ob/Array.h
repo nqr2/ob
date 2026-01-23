@@ -1,5 +1,5 @@
-#ifndef OB_CORE_ARRAY_H_INCLUDED
-#define OB_CORE_ARRAY_H_INCLUDED
+#ifndef QL_CORE_ARRAY_H_INCLUDED
+#define QL_CORE_ARRAY_H_INCLUDED
 
 /*
  * Copyright (C) 2025-2026 nqr2
@@ -29,28 +29,28 @@ typedef struct {
   ob_Allocator *allocator;
   size_t size, capacity;
   void *data;
-} ob_Array;
+} ql_Array;
 
-void obarr_init(ob_Array *arr, ob_Allocator *alloc);
+void ql_array_init(ql_Array *arr, ob_Allocator *alloc);
 
-void obarr_free(ob_Array *arr);
+void ql_array_free(ql_Array *arr);
 
-void obarr_reserve(ob_Array *arr, size_t newcap);
+void ql_array_reserve(ql_Array *arr, size_t newcap);
 
-void obarr_push(ob_Array *arr, size_t len, const void *data);
+void ql_array_push(ql_Array *arr, size_t len, const void *data);
 
-void obarr_clear(ob_Array *arr);
+void ql_array_clear(ql_Array *arr);
 
-bool obarr_pop(ob_Array *arr, size_t len, void *data);
+bool ql_array_pop(ql_Array *arr, size_t len, void *data);
 
-void obarr_remove(ob_Array *arr, size_t size, size_t offset);
+void ql_array_remove(ql_Array *arr, size_t size, size_t offset);
 
-size_t obarr_length(ob_Array *arr, size_t size);
+size_t ql_array_length(ql_Array *arr, size_t size);
 
-void *obarr_at(ob_Array *arr, size_t size, size_t index);
+void *ql_array_at(ql_Array *arr, size_t size, size_t index);
 
-void *obarr_last(ob_Array *arr, size_t size);
+void *ql_array_last(ql_Array *arr, size_t size);
 
-#define ob_ArrayT(...) ob_Array
+#define ql_ArrayT(...) ql_Array
 
 #endif

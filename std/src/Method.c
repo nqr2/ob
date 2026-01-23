@@ -12,7 +12,7 @@ static bool method_call(ob_Context ctx) {
   auto args = ob_cast_array(operand);
   auto method = ob_cast_method(receiver);
 
-  size_t length = obarr_length(args, sizeof(ob_Str));
+  size_t length = ql_array_length(args, sizeof(ob_Str));
 
   obctx_enter_activation(ctx, receiver, receiver);
 
@@ -20,8 +20,8 @@ static bool method_call(ob_Context ctx) {
   auto env = ob_cast_slots(activation->env);
 
   for (size_t i = 0; i < length; i++) {
-    auto param = (ob_Str *)obarr_at(&method->parameters, sizeof(ob_Str), i);
-    auto item = (ob_Obj *)obarr_at(args, sizeof(ob_Obj), i);
+    auto param = (ob_Str *)ql_array_at(&method->parameters, sizeof(ob_Str), i);
+    auto item = (ob_Obj *)ql_array_at(args, sizeof(ob_Obj), i);
 
     obtbl_set(&env->slots, obstr_get_hash(ctx, *param), *item);
   }
