@@ -92,20 +92,19 @@ int main(int argn, const char *argv[]) {
   int loglevel = QL_LOG_ERROR;
 
   auto f_interactive =
-      obarg_create_flag('i', "interactive", OBARG_FLAG_SET, &is_interactive);
+      ql_create_flag('i', "interactive", QL_FLAG_SET, &is_interactive);
   f_interactive.description = "Open the interactive shell";
 
-  auto f_exec =
-      obarg_create_flag('e', NULL, OBARG_FLAG_STRING, (void *)&execute);
+  auto f_exec = ql_create_flag('e', NULL, QL_FLAG_STRING, (void *)&execute);
   f_exec.description = "Run a string passed in the command line";
 
-  auto f_log = obarg_create_flag('v', NULL, OBARG_FLAG_INT, (void *)&loglevel);
+  auto f_log = ql_create_flag('v', NULL, QL_FLAG_INT, (void *)&loglevel);
   f_log.description = "Set the log level (0 to disable, 4 to allow everything)";
 
-  auto parser = obarg_create_parser(
-      (ob_Flag[]){f_interactive, f_exec, f_log, OB_FLAGS_END});
+  auto parser =
+      ql_create_parser((ql_Flag[]){f_interactive, f_exec, f_log, QL_FLAGS_END});
 
-  obarg_parse(&parser, argn, argv);
+  ql_parse(&parser, argn, argv);
 
   auto log = ql_log_create_handler();
   ql_log_set_handler(&log);

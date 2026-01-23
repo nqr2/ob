@@ -1,5 +1,5 @@
-#ifndef OB_CORE_ARGPARSE_H_INCLUDED
-#define OB_CORE_ARGPARSE_H_INCLUDED
+#ifndef QL_ARGPARSE_H_INCLUDED
+#define QL_ARGPARSE_H_INCLUDED
 
 /*
  * Copyright (C) 2025-2026 nqr2
@@ -28,25 +28,25 @@
 /// Decides the action to perform when a flag is handled.
 typedef enum {
   /// Set a boolean flag to @c true. @c *flag->target must have type @c bool.
-  OBARG_FLAG_SET,
+  QL_FLAG_SET,
 
   /// Set a boolean flag to @c false. @c *flag->target must have type @c bool.
-  OBARG_FLAG_UNSET,
+  QL_FLAG_UNSET,
 
   /// Parse and set an integer value. @c *flag->target must have type @c bool.
-  OBARG_FLAG_INT,
+  QL_FLAG_INT,
 
   /// Set a string value. @c *flag->target must have type @c char*.
-  OBARG_FLAG_STRING,
+  QL_FLAG_STRING,
 
   /// Use another parser for the remaining arguments. @c *flag->target must have
   /// type @ref ob_Parser.
-  OBARG_FLAG_SUBCOMMAND,
-} ob_FlagKind;
+  QL_FLAG_SUBCOMMAND,
+} ql_FlagType;
 
 /// A parser option.
 typedef struct {
-  ob_FlagKind kind;
+  ql_FlagType type;
 
   /// The name in a short option (starting with a @-), or @c '@\0' to not parse.
   char short_name;
@@ -59,38 +59,38 @@ typedef struct {
 
   /// A value to be set when handled. @see ob_FlagKind for what pointers to use.
   void *target;
-} ob_Flag;
+} ql_Flag;
 
-#define OB_FLAGS_END ((ob_Flag){})
+#define QL_FLAGS_END ((ql_Flag){})
 
-typedef void (*ob_FnPositionalArgument)(void *userdata, const char *argument);
+typedef void (*ql_FnPositionalArgument)(void *userdata, const char *argument);
 
-typedef struct Parser {
+typedef struct {
   const char *description;
 
   size_t length;
-  const ob_Flag *flags;
+  const ql_Flag *flags;
 
   /// A callback for positional arguments.
-  ob_FnPositionalArgument positional_arg;
+  ql_FnPositionalArgument positional_arg;
 
   /// Data to pass to this callback.
   void *userdata;
-} ob_Parser;
+} ql_Parser;
 
 /** @brief Constructs a flag.
  */
-ob_Flag obarg_create_flag(char short_name, const char *long_name,
-                          ob_FlagKind kind, void *pointer);
+ql_Flag ql_create_flag(char short_name, const char *long_name, ql_FlagType kind,
+                       void *pointer);
 
 /** @brief Constructs a parser.
  *  @param flags An array of flags, that must have @ref OB_FLAGS_END at the end.
  */
-ob_Parser obarg_create_parser(const ob_Flag *flags);
+ql_Parser ql_create_parser(const ql_Flag *flags);
 
 /** @brief Parses an argument list.
  * @returns The index of the first invalid argument, or @p length if successful.
  */
-size_t obarg_parse(const ob_Parser *parser, size_t length, const char **args);
+size_t ql_parse(const ql_Parser *parser, size_t length, const char **args);
 
 #endif

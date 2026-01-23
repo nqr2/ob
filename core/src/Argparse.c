@@ -3,18 +3,18 @@
 #include <stdlib.h>
 #include <string.h>
 
-ob_Flag obarg_create_flag(char short_name, const char *long_name,
-                          ob_FlagKind kind, void *pointer) {
-  return (ob_Flag){
+ql_Flag ql_create_flag(char short_name, const char *long_name, ql_FlagType kind,
+                       void *pointer) {
+  return (ql_Flag){
       .short_name = short_name,
       .long_name = long_name,
       .description = NULL,
-      .kind = kind,
+      .type = kind,
       .target = pointer,
   };
 }
 
-ob_Parser obarg_create_parser(const ob_Flag *flags) {
+ql_Parser ql_create_parser(const ql_Flag *flags) {
   size_t length = 0;
 
   if (flags != NULL) {
@@ -26,36 +26,36 @@ ob_Parser obarg_create_parser(const ob_Flag *flags) {
     }
   }
 
-  return (ob_Parser){.description = NULL, .length = length, .flags = flags};
+  return (ql_Parser){.description = NULL, .length = length, .flags = flags};
 }
 
-void run_flag(const ob_Flag *flag, size_t *idx, const char **args,
-              const ob_Parser **parser) {
-  switch (flag->kind) {
-  case OBARG_FLAG_SET:
+void run_flag(const ql_Flag *flag, size_t *idx, const char **args,
+              const ql_Parser **parser) {
+  switch (flag->type) {
+  case QL_FLAG_SET:
     *(bool *)(flag->target) = true;
     break;
-  case OBARG_FLAG_UNSET:
+  case QL_FLAG_UNSET:
     *(bool *)(flag->target) = false;
     break;
 
-  case OBARG_FLAG_INT:
+  case QL_FLAG_INT:
     *idx += 1;
     *(int *)(flag->target) = atoi(args[*idx]);
     break;
 
-  case OBARG_FLAG_STRING:
+  case QL_FLAG_STRING:
     *idx += 1;
     *(const char **)(flag->target) = args[*idx];
     break;
 
-  case OBARG_FLAG_SUBCOMMAND:
+  case QL_FLAG_SUBCOMMAND:
     *parser = flag->target;
     break;
   }
 }
 
-static const ob_Flag *parse_arg(const ob_Parser *parser, const char *arg) {
+static const ql_Flag *parse_arg(const ql_Parser *parser, const char *arg) {
   for (size_t i = 0; i < parser->length; i++) {
     auto flag = &parser->flags[i];
 
@@ -73,13 +73,13 @@ static const ob_Flag *parse_arg(const ob_Parser *parser, const char *arg) {
   }
 
   if (arg[0] != '-' && (parser->positional_arg != NULL)) {
-    return (const ob_Flag *)1;
+    return (const ql_Flag *)1;
   }
 
   return NULL;
 }
 
-size_t obarg_parse(const ob_Parser *parser, size_t length, const char **args) {
+size_t ql_parse(const ql_Parser *parser, size_t length, const char **args) {
   for (size_t i = 1; i < length; i++) {
     if (parser == NULL) {
       return i;
@@ -87,7 +87,7 @@ size_t obarg_parse(const ob_Parser *parser, size_t length, const char **args) {
 
     auto flag = parse_arg(parser, args[i]);
 
-    if (flag == (const ob_Flag *)1) {
+    if (flag == (const ql_Flag *)1) {
       parser->positional_arg(parser->userdata, args[i]);
     } else if (flag != NULL) {
       run_flag(flag, &i, args, &parser);

@@ -72,16 +72,16 @@ int main(int argn, const char *argv[]) {
 
   const char *instr = NULL;
 
-  auto f_i = obarg_create_flag('e', NULL, OBARG_FLAG_STRING, (void *)&instr);
+  auto f_i = ql_create_flag('e', NULL, QL_FLAG_STRING, (void *)&instr);
 
-  auto parser = obarg_create_parser((ob_Flag[]){f_i});
+  auto parser = ql_create_parser((ql_Flag[]){f_i});
   parser.userdata = ctx;
   parser.positional_arg = dofile;
 
   size_t arg_index = 0;
 
   do {
-    arg_index = obarg_parse(&parser, argn - arg_index, argv + arg_index);
+    arg_index = ql_parse(&parser, argn - arg_index, argv + arg_index);
 
     if (instr != NULL) {
       dostring(ctx, instr);
