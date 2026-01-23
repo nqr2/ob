@@ -1,5 +1,5 @@
-#ifndef OB_CORE_ALLOCATOR_H_INCLUDED
-#define OB_CORE_ALLOCATOR_H_INCLUDED
+#ifndef QL_ALLOCATOR_H_INCLUDED
+#define QL_ALLOCATOR_H_INCLUDED
 
 /*
  * Copyright (C) 2025-2026 nqr2
@@ -31,21 +31,21 @@
  * @returns An allocated pointer if @ptr is NULL and @p new_size is not 0.
  * @returns A resized pointer otherwise.
  */
-typedef void *(*ob_FnAllocate)(void *userdata, size_t ptr_size, void *ptr,
+typedef void *(*ql_FnAllocate)(void *userdata, size_t ptr_size, void *ptr,
                                size_t new_size);
 
 /// A vtable for a memory allocator.
 typedef struct {
-  ob_FnAllocate allocate;
+  ql_FnAllocate allocate;
   size_t used;
   void *userdata;
-} ob_Allocator;
+} ql_Allocator;
 
 /// Creates a default allocator.
-ob_Allocator oballoc_create();
+ql_Allocator ql_alloc_create();
 
-void *ob_allocate(ob_Allocator *alloc, size_t size);
-void *ob_reallocate(ob_Allocator *alloc, size_t old, void *source, size_t new);
-void ob_deallocate(ob_Allocator *alloc, size_t size, void *source);
+void *ql_allocate(ql_Allocator *alloc, size_t size);
+void *ql_reallocate(ql_Allocator *alloc, size_t old, void *source, size_t new);
+void ql_deallocate(ql_Allocator *alloc, size_t size, void *source);
 
 #endif

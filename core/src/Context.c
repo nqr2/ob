@@ -18,8 +18,8 @@
 
 static void gc_sweep(ob_Context ctx);
 
-ob_Context obctx_create(ob_Allocator *alloc) {
-  ob_Context ctx = ob_allocate(alloc, sizeof(struct Context));
+ob_Context obctx_create(ql_Allocator *alloc) {
+  ob_Context ctx = ql_allocate(alloc, sizeof(struct Context));
 
   ctx->gc_state.factor = DEFAULT_GC_FACTOR;
   ctx->gc_state.enabled = true;
@@ -72,12 +72,12 @@ void obctx_destroy(ob_Context ctx) {
 
   obexn_free(&ctx->exnbuf);
 
-  ob_deallocate(alloc, sizeof(struct Context), ctx);
+  ql_deallocate(alloc, sizeof(struct Context), ctx);
 }
 
 ob_Obj obctx_allocate(ob_Context ctx, ob_ObjectTag tag, size_t payload_size) {
   auto obj =
-      (ob_Obj)ob_allocate(ctx->allocator, sizeof(ob_Object) + payload_size);
+      (ob_Obj)ql_allocate(ctx->allocator, sizeof(ob_Object) + payload_size);
 
   obj->next = ctx->objects;
   obj->size = payload_size;
@@ -205,7 +205,7 @@ static void deallocate(ob_Context ctx, ob_Obj object) {
   auto size = sizeof(ob_Object) + object->size;
 
   obobj_destroy(object);
-  ob_deallocate(ctx->allocator, size, object);
+  ql_deallocate(ctx->allocator, size, object);
 }
 
 static void gc_mark(ob_Context ctx) {

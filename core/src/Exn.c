@@ -19,7 +19,7 @@ void obexn__end(ob_Exnbuf *buf) {
   ql_array_pop(&buf->entries, sizeof(struct Entry), NULL);
 }
 
-void obexn_init(ob_Exnbuf *buf, ob_Allocator *alloc) {
+void obexn_init(ob_Exnbuf *buf, ql_Allocator *alloc) {
   ql_array_init(&buf->entries, alloc);
 }
 

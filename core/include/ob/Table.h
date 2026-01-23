@@ -28,12 +28,12 @@
 #include <stdint.h>
 
 typedef struct {
-  ob_Allocator *allocator;
+  ql_Allocator *allocator;
   size_t length, capacity;
   void *data;
 } ob_Table;
 
-void obtbl_init(ob_Table *tbl, ob_Allocator *alloc);
+void obtbl_init(ob_Table *tbl, ql_Allocator *alloc);
 void obtbl_free(ob_Table *tbl);
 
 void obtbl_reserve(ob_Table *tbl, size_t newcap);

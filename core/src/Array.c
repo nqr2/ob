@@ -4,7 +4,7 @@
 #include <stdbit.h>
 #include <string.h>
 
-void ql_array_init(ql_Array *arr, ob_Allocator *alloc) {
+void ql_array_init(ql_Array *arr, ql_Allocator *alloc) {
   arr->allocator = alloc;
 
   arr->size = 0;
@@ -13,7 +13,7 @@ void ql_array_init(ql_Array *arr, ob_Allocator *alloc) {
 }
 
 void ql_array_free(ql_Array *arr) {
-  ob_deallocate(arr->allocator, arr->capacity, arr->data);
+  ql_deallocate(arr->allocator, arr->capacity, arr->data);
   ql_array_init(arr, NULL);
 }
 
@@ -22,7 +22,7 @@ void ql_array_reserve(ql_Array *arr, size_t newcap) {
 
   if (capacity > arr->capacity) {
     arr->data =
-        ob_reallocate(arr->allocator, arr->capacity, arr->data, capacity);
+        ql_reallocate(arr->allocator, arr->capacity, arr->data, capacity);
 
     arr->capacity = capacity;
   }

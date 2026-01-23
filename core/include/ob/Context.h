@@ -37,7 +37,7 @@ typedef struct Context {
     size_t previous_hs;
   } gc_state;
 
-  ob_Allocator *allocator;
+  ql_Allocator *allocator;
 
   ql_Array stack;
 
@@ -63,7 +63,7 @@ typedef struct Context {
   ob_Exnbuf exnbuf;
 } *ob_Context;
 
-ob_Context obctx_create(ob_Allocator *alloc);
+ob_Context obctx_create(ql_Allocator *alloc);
 void obctx_destroy(ob_Context ctx);
 
 ob_Obj obctx_allocate(ob_Context ctx, ob_ObjectTag tag, size_t payload_size);

@@ -1,5 +1,5 @@
-#ifndef QL_CORE_ARRAY_H_INCLUDED
-#define QL_CORE_ARRAY_H_INCLUDED
+#ifndef QL_ARRAY_H_INCLUDED
+#define QL_ARRAY_H_INCLUDED
 
 /*
  * Copyright (C) 2025-2026 nqr2
@@ -26,12 +26,12 @@
 #include "Allocator.h"
 
 typedef struct {
-  ob_Allocator *allocator;
+  ql_Allocator *allocator;
   size_t size, capacity;
   void *data;
 } ql_Array;
 
-void ql_array_init(ql_Array *arr, ob_Allocator *alloc);
+void ql_array_init(ql_Array *arr, ql_Allocator *alloc);
 
 void ql_array_free(ql_Array *arr);
 

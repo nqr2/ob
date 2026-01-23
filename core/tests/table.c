@@ -8,7 +8,7 @@ void assert_failure() {
   fail_with("assertion failed");
 }
 
-ob_Allocator libc;
+ql_Allocator libc;
 
 void can_create() {
   auto tbl = (ob_Table){};
@@ -97,7 +97,7 @@ const Test SUITE[] = {
 };
 
 int main() {
-  libc = oballoc_create();
+  libc = ql_alloc_create();
 
   obassert_add_handler(assert_failure);
   test(SUITE);

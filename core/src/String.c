@@ -40,7 +40,7 @@ ob_String *obstr_create(ob_Context ctx, size_t len, const char *data) {
     target = ctx->string_data.size - len;
   }
 
-  ob_Str str = ob_allocate(ctx->allocator, sizeof(ob_String));
+  ob_Str str = ql_allocate(ctx->allocator, sizeof(ob_String));
 
   str->offset = target;
   str->length = len;
@@ -98,7 +98,7 @@ void obstr_sweep(ob_Context ctx) {
       new = strings;
     } else {
       str__delete(ctx, strings);
-      ob_deallocate(ctx->allocator, sizeof(struct String), strings);
+      ql_deallocate(ctx->allocator, sizeof(struct String), strings);
     }
 
     strings = next;

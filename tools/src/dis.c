@@ -136,7 +136,7 @@ int main(int argn, char *argv[]) {
 
   ASSERT(argn <= 2, "expected 0 or 1 arguments, got %d", argn - 1);
 
-  auto alloc = oballoc_create();
+  auto alloc = ql_alloc_create();
   auto ctx = obctx_create(&alloc);
 
   auto srl = (ob_Serial){};

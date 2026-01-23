@@ -66,7 +66,7 @@ int main(int argn, const char *argv[]) {
   oblog_set_handler(&log);
   oblog_set_level(OB_LOG_DEBUG);
 
-  auto alloc = oballoc_create();
+  auto alloc = ql_alloc_create();
 
   auto ctx = obctx_create(&alloc);
 

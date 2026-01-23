@@ -52,7 +52,7 @@ typedef struct {
 void obexn__begin(ob_Exnbuf *buf, jmp_buf jmp);
 void obexn__end(ob_Exnbuf *buf);
 
-void obexn_init(ob_Exnbuf *buf, ob_Allocator *alloc);
+void obexn_init(ob_Exnbuf *buf, ql_Allocator *alloc);
 void obexn_free(ob_Exnbuf *buf);
 
 const ob_Exndata *obexn_data(ob_Exnbuf *buf);

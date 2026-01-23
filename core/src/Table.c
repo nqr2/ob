@@ -16,7 +16,7 @@ typedef struct {
   TableEntryStatus status;
 } TableEntry;
 
-void obtbl_init(ob_Table *tbl, ob_Allocator *alloc) {
+void obtbl_init(ob_Table *tbl, ql_Allocator *alloc) {
   tbl->allocator = alloc;
   tbl->length = 0;
   tbl->capacity = 0;
@@ -24,7 +24,7 @@ void obtbl_init(ob_Table *tbl, ob_Allocator *alloc) {
 }
 
 void obtbl_free(ob_Table *tbl) {
-  ob_deallocate(tbl->allocator, tbl->capacity * sizeof(TableEntry), tbl->data);
+  ql_deallocate(tbl->allocator, tbl->capacity * sizeof(TableEntry), tbl->data);
 
   obtbl_init(tbl, NULL);
 }
@@ -50,7 +50,7 @@ static TableEntry *tbl__find(size_t capacity, TableEntry *entries,
 void obtbl_reserve(ob_Table *tbl, size_t newcap) {
   newcap = stdc_bit_ceil(newcap);
   auto new_entries =
-      (TableEntry *)ob_allocate(tbl->allocator, newcap * sizeof(TableEntry));
+      (TableEntry *)ql_allocate(tbl->allocator, newcap * sizeof(TableEntry));
 
   tbl->length = 0;
 
@@ -70,7 +70,7 @@ void obtbl_reserve(ob_Table *tbl, size_t newcap) {
     tbl->length++;
   }
 
-  ob_deallocate(tbl->allocator, tbl->capacity * sizeof(TableEntry), tbl->data);
+  ql_deallocate(tbl->allocator, tbl->capacity * sizeof(TableEntry), tbl->data);
 
   tbl->data = new_entries;
   tbl->capacity = newcap;

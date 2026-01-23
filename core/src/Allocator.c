@@ -22,8 +22,8 @@ static void *a_alloc(void *userdata, size_t ptr_size, void *ptr,
   return ptr;
 }
 
-ob_Allocator oballoc_create() {
-  auto result = (ob_Allocator){};
+ql_Allocator ql_alloc_create() {
+  auto result = (ql_Allocator){};
 
   result.userdata = NULL;
   result.used = 0;
@@ -32,11 +32,11 @@ ob_Allocator oballoc_create() {
   return result;
 }
 
-void *ob_allocate(ob_Allocator *alloc, size_t size) {
-  return ob_reallocate(alloc, 0, NULL, size);
+void *ql_allocate(ql_Allocator *alloc, size_t size) {
+  return ql_reallocate(alloc, 0, NULL, size);
 }
 
-void *ob_reallocate(ob_Allocator *alloc, size_t old, void *source, size_t new) {
+void *ql_reallocate(ql_Allocator *alloc, size_t old, void *source, size_t new) {
   ASSERT_NONNULL(alloc);
 
   ASSERT_NONNULL(alloc->allocate);
@@ -56,6 +56,6 @@ void *ob_reallocate(ob_Allocator *alloc, size_t old, void *source, size_t new) {
   return ptr;
 }
 
-void ob_deallocate(ob_Allocator *alloc, size_t size, void *source) {
-  ob_reallocate(alloc, size, source, 0);
+void ql_deallocate(ql_Allocator *alloc, size_t size, void *source) {
+  ql_reallocate(alloc, size, source, 0);
 }
