@@ -51,7 +51,7 @@ ob_Context obctx_create(ql_Allocator *alloc) {
 
   ql_table_init(&ctx->interned, ctx->allocator);
 
-  obexn_init(&ctx->exnbuf, ctx->allocator);
+  ql_exn_init(&ctx->exnbuf, ctx->allocator);
 
   ctx->gc_state.previous_hs = ctx->allocator->used;
 
@@ -70,7 +70,7 @@ void obctx_destroy(ob_Context ctx) {
 
   ql_table_free(&ctx->interned);
 
-  obexn_free(&ctx->exnbuf);
+  ql_exn_free(&ctx->exnbuf);
 
   ql_deallocate(alloc, sizeof(struct Context), ctx);
 }
@@ -544,18 +544,18 @@ void ob_send(ob_Context ctx, ob_Obj recv, ob_Str selector) {
   ob_send_ext(ctx, recv, selector, OB_SEND_DNUW);
 }
 
-ob_Exncode obctx_pcall(ob_Context ctx,
+ql_Exncode obctx_pcall(ob_Context ctx,
                        void (*inner)(ob_Context ctx, void *userdata),
                        void *userdata) {
-  OB_EXN_BEGIN(&ctx->exnbuf, {
-    auto code = obexn_code(&ctx->exnbuf);
-    obexn__end(&ctx->exnbuf);
+  QL_EXN_BEGIN(&ctx->exnbuf, {
+    auto code = ql_exn_get_code(&ctx->exnbuf);
+    ql_exn__end(&ctx->exnbuf);
     return code;
   });
 
   inner(ctx, userdata);
 
-  OB_EXN_END(&ctx->exnbuf);
+  QL_EXN_END(&ctx->exnbuf);
 
   return OB_OK;
 }

@@ -1,5 +1,5 @@
-#ifndef OB_CORE_EXN_H_INCLUDED
-#define OB_CORE_EXN_H_INCLUDED
+#ifndef QL_EXN_H_INCLUDED
+#define QL_EXN_H_INCLUDED
 
 /*
  * Copyright (C) 2025-2026 nqr2
@@ -27,38 +27,38 @@
 
 #include <setjmp.h>
 
-typedef int ob_Exncode;
+typedef int ql_Exncode;
 
 typedef union {
   void *pointer;
   size_t integer;
-} ob_Exndata;
+} ql_Exndata;
 
 typedef struct {
   ql_Array entries;
-} ob_Exnbuf;
+} ql_Exnbuf;
 
-#define OB_EXN_BEGIN(Buf, OnFailure)                                           \
+#define QL_EXN_BEGIN(Buf, OnFailure)                                           \
   do {                                                                         \
     jmp_buf jmp;                                                               \
     if (setjmp(jmp)) {                                                         \
       OnFailure                                                                \
     }                                                                          \
-    obexn__begin((Buf), jmp);                                                  \
+    ql_exn__begin((Buf), jmp);                                                 \
   } while (false)
 
-#define OB_EXN_END(Buf) obexn__end((Buf))
+#define QL_EXN_END(Buf) ql_exn__end((Buf))
 
-void obexn__begin(ob_Exnbuf *buf, jmp_buf jmp);
-void obexn__end(ob_Exnbuf *buf);
+void ql_exn__begin(ql_Exnbuf *buf, jmp_buf jmp);
+void ql_exn__end(ql_Exnbuf *buf);
 
-void obexn_init(ob_Exnbuf *buf, ql_Allocator *alloc);
-void obexn_free(ob_Exnbuf *buf);
+void ql_exn_init(ql_Exnbuf *buf, ql_Allocator *alloc);
+void ql_exn_free(ql_Exnbuf *buf);
 
-const ob_Exndata *obexn_data(ob_Exnbuf *buf);
-ob_Exncode obexn_code(ob_Exnbuf *buf);
+const ql_Exndata *ql_exn_get_data(ql_Exnbuf *buf);
+ql_Exncode ql_exn_get_code(ql_Exnbuf *buf);
 
-void obexn_throw(ob_Exnbuf *buf, ob_Exncode code, ob_Exndata data);
-void obexn_rethrow(ob_Exnbuf *buf);
+void ql_exn_throw(ql_Exnbuf *buf, ql_Exncode code, ql_Exndata data);
+void ql_exn_rethrow(ql_Exnbuf *buf);
 
 #endif

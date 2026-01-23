@@ -20,7 +20,7 @@
 
 #include "Exn.h"
 
-enum : ob_Exncode {
+enum : ql_Exncode {
   OB_OK,
 
   OB_DOES_NOT_UNDERSTAND,

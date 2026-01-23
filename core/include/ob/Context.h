@@ -60,7 +60,7 @@ typedef struct Context {
   ob_String *strings;
   ql_Table interned;
 
-  ob_Exnbuf exnbuf;
+  ql_Exnbuf exnbuf;
 } *ob_Context;
 
 ob_Context obctx_create(ql_Allocator *alloc);
@@ -104,7 +104,7 @@ void ob_send_ext(ob_Context ctx, ob_Obj recv, ob_Str selector,
 
 void ob_send(ob_Context ctx, ob_Obj recv, ob_Str selector);
 
-ob_Exncode obctx_pcall(ob_Context ctx,
+ql_Exncode obctx_pcall(ob_Context ctx,
                        void (*inner)(ob_Context ctx, void *userdata),
                        void *userdata);
 
