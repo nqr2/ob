@@ -60,7 +60,7 @@ const char *obstr_get_data(ob_Context ctx, ob_Str str) {
 }
 
 uint64_t obstr_get_hash(ob_Context ctx, ob_Str str) {
-  return obhash_start(str->length, obstr_get_data(ctx, str));
+  return ql_hash_start(str->length, obstr_get_data(ctx, str));
 }
 
 void obstr_mark(ob_String *str) {

@@ -92,7 +92,7 @@ ob_Obj ob_create_symbol(ob_Context ctx, ob_Str symbol) {
   auto data = obstr_get_data(ctx, symbol);
   auto len = obstr_get_length(symbol);
 
-  auto hash = obhash_start(len, data);
+  auto hash = ql_hash_start(len, data);
 
   ob_Obj obj = NULL;
 
@@ -388,7 +388,7 @@ bool ob_get_slot(ob_Context ctx, ob_Obj *slot, ob_Obj obj, ob_Str selector) {
       auto data = ob_cast_slots(obj);
 
       auto str = obstr_get_data(ctx, selector);
-      auto hash = obhash_start(selector->length, str);
+      auto hash = ql_hash_start(selector->length, str);
 
       if (ql_table_get(&data->slots, hash, (void **)&obj)) {
         if (slot != NULL) {
@@ -410,7 +410,7 @@ bool ob_get_slot(ob_Context ctx, ob_Obj *slot, ob_Obj obj, ob_Str selector) {
     auto data = ob_cast_slots(obj);
 
     auto str = obstr_get_data(ctx, selector);
-    auto hash = obhash_start(selector->length, str);
+    auto hash = ql_hash_start(selector->length, str);
 
     return ql_table_get(&data->slots, hash, (void **)slot);
   }

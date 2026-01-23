@@ -1,5 +1,5 @@
-#ifndef OB_CORE_HASH_H_INCLUDED
-#define OB_CORE_HASH_H_INCLUDED
+#ifndef QL_HASH_H_INCLUDED
+#define QL_HASH_H_INCLUDED
 
 /*
  * Copyright (C) 2025-2026 nqr2
@@ -26,10 +26,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
-uint64_t obhash_continue(uint64_t state, size_t len, const void *ptr);
-uint64_t obhash_start(size_t len, const void *ptr);
+uint64_t ql_hash_continue(uint64_t state, size_t len, const void *ptr);
+uint64_t ql_hash_start(size_t len, const void *ptr);
 
-#define obhash_literal(Literal)                                                \
-  obhash_start(sizeof("" Literal) - 1, (const void *)"" Literal "")
+#define ql_hash_literal(Literal)                                               \
+  ql_hash_start(sizeof("" Literal) - 1, (const void *)"" Literal "")
 
 #endif

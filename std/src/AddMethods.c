@@ -13,7 +13,7 @@ static void add_method(ob_Context ctx, ob_Obj target, const char *name,
   auto slots = ob_cast_slots(target);
 
   auto obj = ob_create_lightcmethod(ctx, method);
-  auto hash = obhash_start(strlen(name), name);
+  auto hash = ql_hash_start(strlen(name), name);
 
   ql_table_set(&slots->slots, hash, (void *)obj);
 }
