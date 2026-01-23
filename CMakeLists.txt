@@ -23,8 +23,6 @@ endif()
 if(BUILD_TESTS)
   include(CTest)
   enable_testing()
-
-  add_subdirectory("tap")
 endif()
 
 add_subdirectory("ql")

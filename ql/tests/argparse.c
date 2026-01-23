@@ -1,10 +1,9 @@
-#include "Tap.h"
-
 #include <ql/Argparse.h>
 #include <ql/Assert.h>
+#include <ql/Tap.h>
 
 void assert_failure() {
-  fail_with("assertion failed");
+  ql_fail_with("assertion failed");
 }
 
 void empty_flags() {
@@ -106,20 +105,20 @@ void f_subcommand() {
             "expected a FLAG_UNSET in FLAG_SUBCOMMAND to unset a flag");
 }
 
-const Test SUITE[] = {
+const ql_Test SUITE[] = {
     {"empty flag list", empty_flags, false},
     {"FLAG_SET and FLAG_UNSET", f_set_unset, false},
     {"FLAG_INT", f_int, false},
     {"positional arguments", pos_arg, false},
     {"FLAG_STRING", f_string, false},
     {"FLAG_SUBCOMMAND", f_subcommand, false},
-    SUITE_END,
+    QL_SUITE_END,
 };
 
 int main() {
   ql_assert_add_handler(assert_failure);
 
-  test(SUITE);
+  ql_test(SUITE);
 
   return 0;
 }

@@ -8,6 +8,7 @@ add_library("Ql"
   "include/ql/Log.h"
   "include/ql/Number.h"
   "include/ql/Table.h"
+  "include/ql/Tap.h"
 
   "src/Allocator.c"
   "src/Argparse.c"
@@ -18,6 +19,7 @@ add_library("Ql"
   "src/Log.c"
   "src/Number.c"
   "src/Table.c"
+  "src/Tap.c"
 )
 
 target_include_directories("Ql" PUBLIC "include")

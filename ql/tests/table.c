@@ -1,11 +1,11 @@
-#include "Tap.h"
+#include <ql/Tap.h>
 
 #include <ql/Allocator.h>
 #include <ql/Assert.h>
 #include <ql/Table.h>
 
 void assert_failure() {
-  fail_with("assertion failed");
+  ql_fail_with("assertion failed");
 }
 
 ql_Allocator libc;
@@ -88,19 +88,19 @@ void can_iterate() {
   ql_table_free(&tbl);
 }
 
-const Test SUITE[] = {
-    PASS(can_create),
-    PASS(can_add_an_element),
-    PASS(can_get_an_element),
-    PASS(can_iterate),
-    SUITE_END,
+const ql_Test SUITE[] = {
+    QL_PASS(can_create),
+    QL_PASS(can_add_an_element),
+    QL_PASS(can_get_an_element),
+    QL_PASS(can_iterate),
+    QL_SUITE_END,
 };
 
 int main() {
   libc = ql_alloc_create();
 
   ql_assert_add_handler(assert_failure);
-  test(SUITE);
+  ql_test(SUITE);
 
   return 0;
 }

@@ -1,7 +1,6 @@
-#include "Tap.h"
-
 #include <ql/Assert.h>
 #include <ql/Hash.h>
+#include <ql/Tap.h>
 
 #include <inttypes.h>
 
@@ -12,7 +11,7 @@
             L, R)
 
 void assert_failure() {
-  fail_with("assertion failed");
+  ql_fail_with("assertion failed");
 }
 
 void known_results() {
@@ -35,7 +34,7 @@ void hash_continue_works() {
   ASSERT_HASH_EQ(foobar, ql_hash_literal("foobar"));
 }
 
-const Test SUITE[] = {
+const ql_Test SUITE[] = {
     {"known results", known_results, false},
 
     {"hash_continue works", hash_continue_works, false},
@@ -43,12 +42,12 @@ const Test SUITE[] = {
     // The vulnerability mentioned in Wikipedia, and a set of collissions
     // in StackOverflow seem to only hold with the 32-bit hashes.
 
-    SUITE_END,
+    QL_SUITE_END,
 };
 
 int main() {
   ql_assert_add_handler(assert_failure);
-  test(SUITE);
+  ql_test(SUITE);
 
   return 0;
 }

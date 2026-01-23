@@ -1,10 +1,9 @@
-#include "Tap.h"
-
 #include <ql/Allocator.h>
 #include <ql/Assert.h>
+#include <ql/Tap.h>
 
 void assert_failure() {
-  fail_with("assertion failed");
+  ql_fail_with("assertion failed");
 }
 
 ql_Allocator libc;
@@ -14,10 +13,10 @@ void alloc_0_returns_null() {
   QL_ASSERT_NULL(null);
 }
 
-const Test SUITE[] = {
+const ql_Test SUITE[] = {
     {"allocate(0) returns NULL", alloc_0_returns_null, false},
 
-    SUITE_END,
+    QL_SUITE_END,
 };
 
 int main() {
@@ -25,7 +24,7 @@ int main() {
 
   ql_assert_add_handler(assert_failure);
 
-  test(SUITE);
+  ql_test(SUITE);
 
   return 0;
 }
