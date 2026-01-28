@@ -3,12 +3,30 @@
 
     "configurePresets": [
         {
-            "name": "config.debug",
+            "name": "config.default",
+            "hidden": true,
+
             "binaryDir": ".build",
             "cacheVariables": {
               "QL_BUILD_TESTS": false,
-              "QL_BUILD_DOCS": false
+              "QL_BUILD_DOCS": false,
+              "CMAKE_BUILD_TYPE": "Debug"
             }
+        },
+
+        {
+            "name": "config.release",
+            "inherits": "config.default",
+            "cacheVariables": {
+                "QL_ENABLE_ASSERTS": false,
+                "QL_ENABLE_LOG": false,
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+
+        {
+            "name": "config.debug",
+            "inherits": "config.default"
         }
     ],
 
@@ -16,6 +34,12 @@
         {
             "name": "build.debug",
             "configurePreset": "config.debug",
+            "targets": "all"
+        },
+
+        {
+            "name": "build.release",
+            "configurePreset": "config.release",
             "targets": "all"
         }
     ],
@@ -41,6 +65,21 @@
                 }
             ]
         },
+
+        {
+            "name": "release",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "config.release"
+                },
+                {
+                    "type": "build",
+                    "name": "build.release"
+                }
+            ]
+        },
+
         {
             "name": "debug-and-test",
             "steps": [
