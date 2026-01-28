@@ -269,6 +269,29 @@ static void gc_sweep(ob_Context ctx) {
   ctx->objects = newlive;
 }
 
+void ob_gc2(ob_Context ctx, bool force) {
+  if (force) {
+    gc_mark(ctx);
+    gc_sweep(ctx);
+
+    ctx->gc_state.previous_hs = ctx->allocator->used;
+    return;
+  }
+
+  ob_gc(ctx);
+}
+
+bool ob_should_gc(ob_Context ctx) {
+  if (!ctx->gc_state.enabled) {
+    return false;
+  }
+
+  auto max_hs =
+      (size_t)((float)ctx->gc_state.previous_hs * ctx->gc_state.factor);
+
+  return ctx->allocator->used > max_hs;
+}
+
 void ob_gc(ob_Context ctx) {
   if (!ctx->gc_state.enabled) {
     return;
@@ -545,9 +568,9 @@ void ob_send(ob_Context ctx, ob_Obj recv, ob_Str selector) {
   ob_send_ext(ctx, recv, selector, OB_SEND_DNUW);
 }
 
-ql_Exncode obctx_pcall(ob_Context ctx,
-                       void (*inner)(ob_Context ctx, void *userdata),
-                       void *userdata) {
+ql_Exncode ob_pcall(ob_Context ctx,
+                    void (*inner)(ob_Context ctx, void *userdata),
+                    void *userdata) {
   QL_EXN_BEGIN(&ctx->exnbuf, {
     auto code = ql_exn_get_code(&ctx->exnbuf);
     ql_exn__end(&ctx->exnbuf);

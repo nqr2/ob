@@ -23,6 +23,7 @@
  * @brief A forward declaration for @c ob_Context.
  */
 
+[[deprecated("use ob_Ctx in Core.h")]]
 typedef struct Context *ob_Context;
 
 #endif

@@ -105,9 +105,9 @@ void ob_send_ext(ob_Context ctx, ob_Obj recv, ob_Str selector,
 
 void ob_send(ob_Context ctx, ob_Obj recv, ob_Str selector);
 
-ql_Exncode obctx_pcall(ob_Context ctx,
-                       void (*inner)(ob_Context ctx, void *userdata),
-                       void *userdata);
+ql_Exncode ob_pcall(ob_Context ctx,
+                    void (*inner)(ob_Context ctx, void *userdata),
+                    void *userdata);
 
 ob_Obj ob_get_receiver(ob_Context ctx);
 

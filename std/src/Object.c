@@ -1,5 +1,5 @@
-#include <ob/core/Object.h>
 #include <ob/bits/AddMethods.h>
+#include <ob/core/Object.h>
 #include <ob/lib/Object.h>
 
 #include <ql/Array.h>
