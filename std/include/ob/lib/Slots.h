@@ -20,6 +20,6 @@
 
 #include <ob/Core.h>
 
-void oblib_load_slots(ob_Context ctx);
+void oblib_load_slots(ob_Ctx ctx);
 
 #endif

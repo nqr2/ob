@@ -9,9 +9,9 @@
 #include <string.h>
 
 // TODO: now in std, move to core?
-void obj_print(ob_Context ctx, ob_Obj receiver);
+void obj_print(ob_Ctx ctx, ob_Obj receiver);
 
-void dofile(ob_Context ctx, const char *path) {
+void dofile(ob_Ctx ctx, const char *path) {
   auto file = fopen(path, "r");
 
   if (file == NULL) {
@@ -40,7 +40,7 @@ void dofile(ob_Context ctx, const char *path) {
   fclose(file);
 }
 
-void repl(ob_Context ctx) {
+void repl(ob_Ctx ctx) {
   auto line = (ql_Array){};
   ql_array_init(&line, ctx->allocator);
 

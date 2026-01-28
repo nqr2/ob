@@ -9,7 +9,7 @@
 
 #include <ob/lib/World.h>
 
-void oblib_load_all(ob_Context ctx) {
+void oblib_load_all(ob_Ctx ctx) {
   oblib_load_object(ctx);
   oblib_load_method(ctx);
   oblib_load_string(ctx);

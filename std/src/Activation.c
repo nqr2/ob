@@ -5,7 +5,7 @@
 #include <ob/core/Object.h>
 #include <ob/core/String.h>
 
-static bool act__var(ob_Context ctx) {
+static bool act__var(ob_Ctx ctx) {
   auto receiver = ob_get_receiver(ctx);
   auto value = ob_pop(ctx);
   auto key = ob_pop(ctx);
@@ -21,21 +21,21 @@ static bool act__var(ob_Context ctx) {
   return false;
 }
 
-static bool act__self(ob_Context ctx) {
+static bool act__self(ob_Ctx ctx) {
   auto receiver = ob_get_receiver(ctx);
   auto act = ob_cast_activation(receiver);
   ob_push(ctx, act->receiver);
   return true;
 }
 
-static bool act__env(ob_Context ctx) {
+static bool act__env(ob_Ctx ctx) {
   auto receiver = ob_get_receiver(ctx);
   auto act = ob_cast_activation(receiver);
   ob_push(ctx, act->env);
   return true;
 }
 
-static void unpack(ob_Context ctx, ob_Obj args) {
+static void unpack(ob_Ctx ctx, ob_Obj args) {
   auto data = ob_cast_array(args);
 
   auto len = ql_array_length(data, sizeof(ob_Obj));
@@ -46,7 +46,7 @@ static void unpack(ob_Context ctx, ob_Obj args) {
   }
 }
 
-static bool act__dnuw(ob_Context ctx) {
+static bool act__dnuw(ob_Ctx ctx) {
   auto act = ob_cast_activation(ctx->this_activation);
 
   auto selector = ob_pop(ctx);
@@ -67,7 +67,7 @@ static bool act__dnuw(ob_Context ctx) {
   return true;
 }
 
-void oblib_load_activation(ob_Context ctx) {
+void oblib_load_activation(ob_Ctx ctx) {
   ob_add_methods(ctx, ctx->proto.slots,
                  (ob_MethodEntry[]){{"var:is:", act__var},
                                     {"self", act__self},

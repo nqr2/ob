@@ -6,7 +6,7 @@
 #include <ob/core/Object.h>
 #include <ob/core/String.h>
 
-static bool method_call(ob_Context ctx) {
+static bool method_call(ob_Ctx ctx) {
   auto activation = ob_cast_activation(ctx->this_activation);
   auto receiver = activation->receiver;
   auto operand = ob_pop(ctx);
@@ -34,7 +34,7 @@ static bool method_call(ob_Context ctx) {
   return true;
 }
 
-void oblib_load_method(ob_Context ctx) {
+void oblib_load_method(ob_Ctx ctx) {
   ob_add_methods(ctx, ctx->proto.method,
                  (ob_MethodEntry[]){{"call:", method_call}, OB_METHODS_END});
 }

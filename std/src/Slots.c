@@ -5,7 +5,7 @@
 #include <ob/core/Object.h>
 #include <ob/core/String.h>
 
-static bool slots_at_put(ob_Context ctx) {
+static bool slots_at_put(ob_Ctx ctx) {
   auto receiver = ob_get_receiver(ctx);
   auto value = ob_pop(ctx);
   auto key = ob_pop(ctx);
@@ -20,7 +20,7 @@ static bool slots_at_put(ob_Context ctx) {
   return false;
 }
 
-void oblib_load_slots(ob_Context ctx) {
+void oblib_load_slots(ob_Ctx ctx) {
   ob_add_methods(ctx, ctx->proto.slots,
                  (ob_MethodEntry[]){//{"at:put:", slots_at_put},
                                     OB_METHODS_END});

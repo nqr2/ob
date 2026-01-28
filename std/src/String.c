@@ -5,7 +5,7 @@
 #include <ob/core/Object.h>
 #include <ob/core/String.h>
 
-static bool str_intern(ob_Context ctx) {
+static bool str_intern(ob_Ctx ctx) {
   auto receiver = ob_get_receiver(ctx);
 
   auto str = ob_cast_string(receiver);
@@ -16,7 +16,7 @@ static bool str_intern(ob_Context ctx) {
   return true;
 }
 
-static bool str_length(ob_Context ctx) {
+static bool str_length(ob_Ctx ctx) {
   auto receiver = ob_get_receiver(ctx);
 
   auto str = ob_cast_string(receiver);
@@ -28,7 +28,7 @@ static bool str_length(ob_Context ctx) {
   return true;
 }
 
-static bool str_concat(ob_Context ctx) {
+static bool str_concat(ob_Ctx ctx) {
   auto receiver = ob_get_receiver(ctx);
   auto operand = ob_pop(ctx);
 
@@ -43,7 +43,7 @@ static bool str_concat(ob_Context ctx) {
   return true;
 }
 
-void oblib_load_string(ob_Context ctx) {
+void oblib_load_string(ob_Ctx ctx) {
   ob_add_methods(ctx, ctx->proto.string,
                  (ob_MethodEntry[]){{"intern", str_intern},
                                     {"length", str_length},

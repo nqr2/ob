@@ -43,7 +43,7 @@ static uint8_t *read_int(uint8_t *bytes, uint64_t *result) {
   return bytes;
 }
 
-void obsrl_init(ob_Serial *srl, ob_Context ctx) {
+void obsrl_init(ob_Serial *srl, ob_Ctx ctx) {
   srl->ctx = ctx;
   ql_array_init(&srl->buffer, ctx->allocator);
   ql_table_init(&srl->identifiers, ctx->allocator);

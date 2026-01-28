@@ -9,7 +9,7 @@
 #include <string.h>
 
 void dofile(void *udata, const char *path) {
-  ob_Context ctx = udata;
+  ob_Ctx ctx = udata;
   auto file = fopen(path, "r");
 
   if (file == NULL) {
@@ -46,7 +46,7 @@ void dofile(void *udata, const char *path) {
   fclose(file);
 }
 
-void dostring(ob_Context ctx, const char *input) {
+void dostring(ob_Ctx ctx, const char *input) {
   auto length = strlen(input);
 
   auto method = ob_load(ctx, length, input);

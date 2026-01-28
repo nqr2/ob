@@ -16,10 +16,10 @@
 
 #define DEFAULT_GC_FACTOR 1.5f
 
-static void gc_sweep(ob_Context ctx);
+static void gc_sweep(ob_Ctx ctx);
 
-ob_Context ob_create(ql_Allocator *alloc) {
-  ob_Context ctx = ql_allocate(alloc, sizeof(struct ob_Context));
+ob_Ctx ob_create(ql_Allocator *alloc) {
+  ob_Ctx ctx = ql_allocate(alloc, sizeof(struct ob_Context));
 
   ctx->gc_state.factor = DEFAULT_GC_FACTOR;
   ctx->gc_state.enabled = true;
@@ -58,7 +58,7 @@ ob_Context ob_create(ql_Allocator *alloc) {
   return ctx;
 }
 
-void ob_destroy(ob_Context ctx) {
+void ob_destroy(ob_Ctx ctx) {
   auto alloc = ctx->allocator;
 
   gc_sweep(ctx);
@@ -75,7 +75,7 @@ void ob_destroy(ob_Context ctx) {
   ql_deallocate(alloc, sizeof(struct ob_Context), ctx);
 }
 
-ob_Obj obctx_allocate(ob_Context ctx, ob_ObjectTag tag, size_t payload_size) {
+ob_Obj obctx_allocate(ob_Ctx ctx, ob_ObjectTag tag, size_t payload_size) {
   auto obj = (ob_Obj)ql_allocate(ctx->allocator,
                                  sizeof(struct ob_Object) + payload_size);
 
@@ -88,7 +88,7 @@ ob_Obj obctx_allocate(ob_Context ctx, ob_ObjectTag tag, size_t payload_size) {
   return obj;
 }
 
-ob_Obj ob_create_symbol(ob_Context ctx, ob_Str symbol) {
+ob_Obj ob_create_symbol(ob_Ctx ctx, ob_Str symbol) {
   auto data = obstr_get_data(ctx, symbol);
   auto len = obstr_get_length(symbol);
 
@@ -110,7 +110,7 @@ ob_Obj ob_create_symbol(ob_Context ctx, ob_Str symbol) {
   return obj;
 }
 
-ob_Obj ob_create_string(ob_Context ctx, ob_Str string) {
+ob_Obj ob_create_string(ob_Ctx ctx, ob_Str string) {
   auto obj = obctx_allocate(ctx, OB_STRING, sizeof(ob_Str));
 
   auto str = (ob_Str *)ob_get_payload(obj);
@@ -119,7 +119,7 @@ ob_Obj ob_create_string(ob_Context ctx, ob_Str string) {
   return obj;
 }
 
-ob_Obj ob_create_slots(ob_Context ctx, ob_Obj prototype) {
+ob_Obj ob_create_slots(ob_Ctx ctx, ob_Obj prototype) {
   auto obj = obctx_allocate(ctx, OB_SLOTS, sizeof(ob_ObjSlots));
 
   ob_ObjSlots *slots = ob_get_payload(obj);
@@ -130,7 +130,7 @@ ob_Obj ob_create_slots(ob_Context ctx, ob_Obj prototype) {
   return obj;
 }
 
-ob_Obj ob_create_number(ob_Context ctx, ql_Number number) {
+ob_Obj ob_create_number(ob_Ctx ctx, ql_Number number) {
   auto obj = obctx_allocate(ctx, OB_NUMBER, sizeof(ql_Number));
 
   ql_Number *num = ob_get_payload(obj);
@@ -139,15 +139,15 @@ ob_Obj ob_create_number(ob_Context ctx, ql_Number number) {
   return obj;
 }
 
-ob_Obj ob_create_integer(ob_Context ctx, int64_t number) {
+ob_Obj ob_create_integer(ob_Ctx ctx, int64_t number) {
   return ob_create_number(ctx, ql_number_of_int(number));
 }
 
-ob_Obj ob_create_real(ob_Context ctx, double number) {
+ob_Obj ob_create_real(ob_Ctx ctx, double number) {
   return ob_create_number(ctx, ql_number_of_float(number));
 }
 
-ob_Obj ob_create_array(ob_Context ctx) {
+ob_Obj ob_create_array(ob_Ctx ctx) {
   auto obj = obctx_allocate(ctx, OB_ARRAY, sizeof(ql_Array));
 
   ql_Array *arr = ob_get_payload(obj);
@@ -156,7 +156,7 @@ ob_Obj ob_create_array(ob_Context ctx) {
   return obj;
 }
 
-ob_Obj ob_create_method(ob_Context ctx) {
+ob_Obj ob_create_method(ob_Ctx ctx) {
   auto obj = obctx_allocate(ctx, OB_METHOD, sizeof(ob_ObjMethod));
 
   ob_ObjMethod *method = ob_get_payload(obj);
@@ -170,7 +170,7 @@ ob_Obj ob_create_method(ob_Context ctx) {
   return obj;
 }
 
-ob_Obj ob_create_lightcmethod(ob_Context ctx, ob_FnCMethod method) {
+ob_Obj ob_create_lightcmethod(ob_Ctx ctx, ob_FnCMethod method) {
   auto obj = obctx_allocate(ctx, OB_LIGHTCMETHOD, sizeof(ob_FnCMethod));
 
   auto data = (ob_FnCMethod *)ob_get_payload(obj);
@@ -179,7 +179,7 @@ ob_Obj ob_create_lightcmethod(ob_Context ctx, ob_FnCMethod method) {
   return obj;
 }
 
-ob_Obj ob_create_lightcdata(ob_Context ctx, void *cdata) {
+ob_Obj ob_create_lightcdata(ob_Ctx ctx, void *cdata) {
   auto obj = obctx_allocate(ctx, OB_LIGHTCDATA, sizeof(void *));
 
   auto data = (void **)ob_get_payload(obj);
@@ -188,7 +188,7 @@ ob_Obj ob_create_lightcdata(ob_Context ctx, void *cdata) {
   return obj;
 }
 
-ob_Obj ob_create_cdata(ob_Context ctx, ob_Obj prototype, ob_FnVisit visit,
+ob_Obj ob_create_cdata(ob_Ctx ctx, ob_Obj prototype, ob_FnVisit visit,
                        ob_FnDestroy destructor, void *data) {
   auto obj = obctx_allocate(ctx, OB_CDATA, sizeof(ob_ObjCData));
 
@@ -201,14 +201,14 @@ ob_Obj ob_create_cdata(ob_Context ctx, ob_Obj prototype, ob_FnVisit visit,
   return obj;
 }
 
-static void deallocate(ob_Context ctx, ob_Obj object) {
+static void deallocate(ob_Ctx ctx, ob_Obj object) {
   auto size = sizeof(struct ob_Object) + object->size;
 
   obobj_destroy(object);
   ql_deallocate(ctx->allocator, size, object);
 }
 
-static void gc_mark(ob_Context ctx) {
+static void gc_mark(ob_Ctx ctx) {
   ob_mark(ctx->this_activation);
 
   ob_mark(ctx->proto.object);
@@ -245,7 +245,7 @@ static void gc_mark(ob_Context ctx) {
 }
 
 // TODO:undebug
-static void gc_sweep(ob_Context ctx) {
+static void gc_sweep(ob_Ctx ctx) {
   obstr_sweep(ctx);
 
   ob_Obj newlive = NULL;
@@ -268,7 +268,7 @@ static void gc_sweep(ob_Context ctx) {
   ctx->objects = newlive;
 }
 
-void ob_gc2(ob_Context ctx, bool force) {
+void ob_gc2(ob_Ctx ctx, bool force) {
   if (force) {
     gc_mark(ctx);
     gc_sweep(ctx);
@@ -280,7 +280,7 @@ void ob_gc2(ob_Context ctx, bool force) {
   ob_gc(ctx);
 }
 
-bool ob_should_gc(ob_Context ctx) {
+bool ob_should_gc(ob_Ctx ctx) {
   if (!ctx->gc_state.enabled) {
     return false;
   }
@@ -291,7 +291,7 @@ bool ob_should_gc(ob_Context ctx) {
   return ctx->allocator->used > max_hs;
 }
 
-void ob_gc(ob_Context ctx) {
+void ob_gc(ob_Ctx ctx) {
   if (!ctx->gc_state.enabled) {
     return;
   }
@@ -307,7 +307,7 @@ void ob_gc(ob_Context ctx) {
   }
 }
 
-void obctx_enter_activation(ob_Context ctx, ob_Obj method, ob_Obj receiver) {
+void obctx_enter_activation(ob_Ctx ctx, ob_Obj method, ob_Obj receiver) {
   auto act = obctx_allocate(ctx, OB_ACTIVATION, sizeof(ob_ObjActivation));
 
   ob_ObjActivation *data = ob_get_payload(act);
@@ -319,7 +319,7 @@ void obctx_enter_activation(ob_Context ctx, ob_Obj method, ob_Obj receiver) {
   ctx->this_activation = act;
 }
 
-void obctx_leave_activation(ob_Context ctx) {
+void obctx_leave_activation(ob_Ctx ctx) {
   ob_ObjActivation *data = ob_get_payload(ctx->this_activation);
 
   // we know an activation is "live" if it's env is allocated, else it belongs
@@ -329,11 +329,11 @@ void obctx_leave_activation(ob_Context ctx) {
   ctx->this_activation = data->parent;
 }
 
-void ob_push(ob_Context ctx, ob_Obj obj) {
+void ob_push(ob_Ctx ctx, ob_Obj obj) {
   ql_array_push(&ctx->stack, sizeof(ob_Obj), (const void *)&obj);
 }
 
-ob_Obj ob_pop(ob_Context ctx) {
+ob_Obj ob_pop(ob_Ctx ctx) {
   ob_Obj obj;
 
   if (!ql_array_pop(&ctx->stack, sizeof(ob_Obj), (void *)&obj)) {
@@ -343,11 +343,11 @@ ob_Obj ob_pop(ob_Context ctx) {
   return obj;
 }
 
-bool ob_checkstack(ob_Context ctx, size_t narg) {
+bool ob_checkstack(ob_Ctx ctx, size_t narg) {
   return (ctx->stack.size / sizeof(ob_Obj)) >= narg;
 }
 
-ob_Obj ob_get_prototype(ob_Context ctx, ob_Obj obj) {
+ob_Obj ob_get_prototype(ob_Ctx ctx, ob_Obj obj) {
   if (obj == ctx->proto.object) {
     return NULL;
   }
@@ -405,7 +405,7 @@ ob_Obj ob_get_prototype(ob_Context ctx, ob_Obj obj) {
   return ob_get_prototype(ctx, NULL);
 }
 
-bool ob_get_slot(ob_Context ctx, ob_Obj *slot, ob_Obj obj, ob_Str selector) {
+bool ob_get_slot(ob_Ctx ctx, ob_Obj *slot, ob_Obj obj, ob_Str selector) {
   while (obj != ctx->proto.object) {
     if (OB_ISA(obj, OB_SLOTS)) {
       auto data = ob_cast_slots(obj);
@@ -441,7 +441,7 @@ bool ob_get_slot(ob_Context ctx, ob_Obj *slot, ob_Obj obj, ob_Str selector) {
   return false;
 }
 
-static void invoke(ob_Context ctx, ob_Obj invoked, ob_Obj recv, size_t n_args) {
+static void invoke(ob_Ctx ctx, ob_Obj invoked, ob_Obj recv, size_t n_args) {
   auto tag = ob_get_tag(invoked);
 
   switch (tag) {
@@ -510,7 +510,7 @@ static size_t args_for_sel(size_t len, const char *data) {
   return n_args;
 }
 
-void ob_send_ext(ob_Context ctx, ob_Obj recv, ob_Str selector,
+void ob_send_ext(ob_Ctx ctx, ob_Obj recv, ob_Str selector,
                  ob_SendFlags flags) {
   auto sel = obstr_get_data(ctx, selector);
   auto len = obstr_get_length(selector);
@@ -563,12 +563,12 @@ void ob_send_ext(ob_Context ctx, ob_Obj recv, ob_Str selector,
   }
 }
 
-void ob_send(ob_Context ctx, ob_Obj recv, ob_Str selector) {
+void ob_send(ob_Ctx ctx, ob_Obj recv, ob_Str selector) {
   ob_send_ext(ctx, recv, selector, OB_SEND_DNUW);
 }
 
-ql_Exncode ob_pcall(ob_Context ctx,
-                    void (*inner)(ob_Context ctx, void *userdata),
+ql_Exncode ob_pcall(ob_Ctx ctx,
+                    void (*inner)(ob_Ctx ctx, void *userdata),
                     void *userdata) {
   QL_EXN_BEGIN(&ctx->exnbuf, {
     auto code = ql_exn_get_code(&ctx->exnbuf);
@@ -583,7 +583,7 @@ ql_Exncode ob_pcall(ob_Context ctx,
   return OB_OK;
 }
 
-ob_Obj ob_get_receiver(ob_Context ctx) {
+ob_Obj ob_get_receiver(ob_Ctx ctx) {
   if (ctx->this_activation == NULL) {
     return NULL;
   }

@@ -14,7 +14,7 @@ typedef struct {
   size_t size;
 } StrAvailable;
 
-ob_Str obstr_create(ob_Context ctx, size_t len, const char *data) {
+ob_Str obstr_create(ob_Ctx ctx, size_t len, const char *data) {
   size_t target = 0;
   auto length = ql_array_length(&ctx->string_available, sizeof(StrAvailable));
 
@@ -56,11 +56,11 @@ size_t obstr_get_length(ob_Str str) {
   return str->length & STRING_LENGTH_MASK;
 }
 
-const char *obstr_get_data(ob_Context ctx, ob_Str str) {
+const char *obstr_get_data(ob_Ctx ctx, ob_Str str) {
   return ((const char *)ctx->string_data.data) + str->offset;
 }
 
-uint64_t obstr_get_hash(ob_Context ctx, ob_Str str) {
+uint64_t obstr_get_hash(ob_Ctx ctx, ob_Str str) {
   return ql_hash_start(str->length, obstr_get_data(ctx, str));
 }
 
@@ -76,7 +76,7 @@ bool obstr_get_mark(ob_Str str) {
   return (str->length & STRING_MARK_BIT) != 0;
 }
 
-static void str__delete(ob_Context ctx, ob_Str str) {
+static void str__delete(ob_Ctx ctx, ob_Str str) {
   StrAvailable avail = {};
 
   avail.offset = str->offset;
@@ -85,7 +85,7 @@ static void str__delete(ob_Context ctx, ob_Str str) {
   ql_array_push(&ctx->string_available, sizeof(StrAvailable), (void *)&avail);
 }
 
-void obstr_sweep(ob_Context ctx) {
+void obstr_sweep(ob_Ctx ctx) {
   ob_Str new = NULL;
 
   auto strings = ctx->strings;
@@ -108,7 +108,7 @@ void obstr_sweep(ob_Context ctx) {
   ctx->strings = new;
 }
 
-ob_Str obstr_concat(ob_Context ctx, ob_Str left, ob_Str right) {
+ob_Str obstr_concat(ob_Ctx ctx, ob_Str left, ob_Str right) {
   auto buf = (ql_Array){};
   ql_array_init(&buf, ctx->allocator);
 

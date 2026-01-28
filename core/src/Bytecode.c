@@ -9,7 +9,7 @@
 
 #include <ctype.h>
 
-static size_t nargs_for_sel(ob_Context ctx, ob_Str selector) {
+static size_t nargs_for_sel(ob_Ctx ctx, ob_Str selector) {
   size_t n_args = 0;
 
   auto sel = obstr_get_data(ctx, selector);
@@ -27,7 +27,7 @@ static size_t nargs_for_sel(ob_Context ctx, ob_Str selector) {
   return n_args;
 }
 
-void obbc_run(ob_Context ctx, size_t len, const uint8_t *code) {
+void obbc_run(ob_Ctx ctx, size_t len, const uint8_t *code) {
   QL_DEBUG("running data from %p, length %zu", code, len);
 
   auto start = code;

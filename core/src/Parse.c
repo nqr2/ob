@@ -43,7 +43,7 @@ static bool is_word_tail(char chr) {
 }
 
 typedef struct {
-  ob_Context context;
+  ob_Ctx context;
   ob_ObjMethod *output;
   size_t remaining;
   const char *head;
@@ -53,7 +53,7 @@ typedef struct {
   size_t column;
 } Reader;
 
-Reader rdr_new(ob_Context context, ob_ObjMethod *output, size_t length,
+Reader rdr_new(ob_Ctx context, ob_ObjMethod *output, size_t length,
                const char *text) {
   Reader rdr = {};
   rdr.context = context;
@@ -602,7 +602,7 @@ static void p_toplevel(Reader *rdr) {
   rdr_expect1(rdr, '.');
 }
 
-ob_Obj ob_load(ob_Context ctx, size_t length, const char *text) {
+ob_Obj ob_load(ob_Ctx ctx, size_t length, const char *text) {
   if (strncmp(text, OB_SERIAL_HEADER, sizeof(OB_SERIAL_HEADER)) == 0) {
     auto srl = (ob_Serial){};
     obsrl_init(&srl, ctx);
@@ -636,7 +636,7 @@ ob_Obj ob_load(ob_Context ctx, size_t length, const char *text) {
   return closure;
 }
 
-void ob_run(ob_Context ctx, size_t length, const char *text) {
+void ob_run(ob_Ctx ctx, size_t length, const char *text) {
   auto chunk = ob_load(ctx, length, text);
   auto method = ob_cast_method(chunk);
 

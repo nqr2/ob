@@ -4,7 +4,7 @@
 #include <ob/core/Object.h>
 #include <ob/core/String.h>
 
-void oblib_load_shell(ob_Context ctx) {
+void oblib_load_shell(ob_Ctx ctx) {
   (void)ctx;
 
   auto shell = ob_cast_slots(ctx->known.shell);

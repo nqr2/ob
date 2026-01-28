@@ -10,7 +10,7 @@
 #include <stdio.h>
 #include <string.h>
 
-void obj_print(ob_Context ctx, ob_Obj receiver) {
+void obj_print(ob_Ctx ctx, ob_Obj receiver) {
   auto tag = ob_get_tag(receiver);
   switch (tag) {
   case OB_NIL:
@@ -88,7 +88,7 @@ void obj_print(ob_Context ctx, ob_Obj receiver) {
   }
 }
 
-bool o__print(ob_Context ctx) {
+bool o__print(ob_Ctx ctx) {
   auto receiver = ob_get_receiver(ctx);
   obj_print(ctx, receiver);
 
@@ -97,7 +97,7 @@ bool o__print(ob_Context ctx) {
   return false;
 }
 
-static bool o__share(ob_Context ctx) {
+static bool o__share(ob_Ctx ctx) {
   auto receiver = ob_get_receiver(ctx);
   auto operand = ob_pop(ctx);
 
@@ -107,19 +107,19 @@ static bool o__share(ob_Context ctx) {
   return true;
 }
 
-static bool o__prototype(ob_Context ctx) {
+static bool o__prototype(ob_Ctx ctx) {
   auto receiver = ob_get_receiver(ctx);
   ob_push(ctx, ob_get_prototype(ctx, receiver));
   return true;
 }
 
-static bool o__self(ob_Context ctx) {
+static bool o__self(ob_Ctx ctx) {
   auto receiver = ob_get_receiver(ctx);
   ob_push(ctx, receiver);
   return true;
 }
 
-static bool o__send(ob_Context ctx) {
+static bool o__send(ob_Ctx ctx) {
   auto receiver = ob_get_receiver(ctx);
   auto selector = ob_pop(ctx);
   auto args = ob_pop(ctx);
@@ -138,7 +138,7 @@ static bool o__send(ob_Context ctx) {
   return true;
 }
 
-void oblib_load_object(ob_Context ctx) {
+void oblib_load_object(ob_Ctx ctx) {
   ob_add_methods(ctx, ctx->proto.object,
                  (ob_MethodEntry[]){{"print", o__print},
                                     {"sharesAddressWith:", o__share},

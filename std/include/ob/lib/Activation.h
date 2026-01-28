@@ -20,6 +20,6 @@
 
 #include <ob/Core.h>
 
-void oblib_load_activation(ob_Context ctx);
+void oblib_load_activation(ob_Ctx ctx);
 
 #endif
