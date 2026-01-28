@@ -3,6 +3,8 @@
 
 #include <ob/core/Bytecode.h>
 #include <ob/core/Context.h>
+#include <ob/core/Object.h>
+#include <ob/core/String.h>
 
 static bool method_call(ob_Context ctx) {
   auto activation = ob_cast_activation(ctx->this_activation);

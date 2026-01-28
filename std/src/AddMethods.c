@@ -1,6 +1,7 @@
 #include <ob/bits/AddMethods.h>
 
-#include <ob/core/Context.h>
+#include <ob/core/Object.h>
+#include <ob/core/String.h>
 
 #include <ql/Assert.h>
 #include <ql/Hash.h>

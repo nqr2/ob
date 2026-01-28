@@ -29,6 +29,9 @@ typedef struct ob_Context *ob_Ctx;
 typedef struct ob_String *ob_Str;
 typedef struct ob_Object *ob_Obj;
 
+[[deprecated("use ob_Ctx in Core.h")]]
+typedef ob_Ctx ob_Context;
+
 typedef struct ob_ObjSlots ob_ObjSlots;
 typedef struct ob_ObjMethod ob_ObjMethod;
 typedef struct ob_ObjCMethod ob_ObjCMethod;

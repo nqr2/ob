@@ -23,7 +23,7 @@
  * @brief Bytecode definitions, and the interpreter.
  */
 
-#include "ContextFwd.h"
+#include <ob/Core.h>
 
 #include <ql/Array.h>
 
@@ -70,7 +70,7 @@ typedef enum {
   OBBC_RESERVED_f = 15,
 } ob_Opcode;
 
-void obbc_run(ob_Context ctx, size_t len, const uint8_t *code);
+void obbc_run(ob_Ctx ctx, size_t len, const uint8_t *code);
 
 void obbc_append_insn(ql_Array *out, ob_Instruction insn);
 uint8_t obbc_append_index(ql_Array *out, uint64_t index);

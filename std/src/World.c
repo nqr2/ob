@@ -2,7 +2,8 @@
 #include <ob/lib/World.h>
 
 #include <ob/core/Context.h>
-#include <ob/core/Parse.h>
+#include <ob/core/Object.h>
+#include <ob/core/String.h>
 
 #include "Boolean.h"
 #include "Shell.h"

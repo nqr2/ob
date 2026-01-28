@@ -18,7 +18,7 @@
  * along with this library. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <ob/core/Object.h>
+#include <ob/Core.h>
 
 typedef struct {
   const char *name;

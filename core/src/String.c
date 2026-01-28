@@ -14,7 +14,7 @@ typedef struct {
   size_t size;
 } StrAvailable;
 
-ob_String *obstr_create(ob_Context ctx, size_t len, const char *data) {
+ob_Str obstr_create(ob_Context ctx, size_t len, const char *data) {
   size_t target = 0;
   auto length = ql_array_length(&ctx->string_available, sizeof(StrAvailable));
 
@@ -41,7 +41,7 @@ ob_String *obstr_create(ob_Context ctx, size_t len, const char *data) {
     target = ctx->string_data.size - len;
   }
 
-  ob_Str str = ql_allocate(ctx->allocator, sizeof(ob_String));
+  ob_Str str = ql_allocate(ctx->allocator, sizeof(struct ob_String));
 
   str->offset = target;
   str->length = len;
@@ -52,7 +52,7 @@ ob_String *obstr_create(ob_Context ctx, size_t len, const char *data) {
   return str;
 }
 
-size_t obstr_get_length(ob_String *str) {
+size_t obstr_get_length(ob_Str str) {
   return str->length & STRING_LENGTH_MASK;
 }
 
@@ -64,19 +64,19 @@ uint64_t obstr_get_hash(ob_Context ctx, ob_Str str) {
   return ql_hash_start(str->length, obstr_get_data(ctx, str));
 }
 
-void obstr_mark(ob_String *str) {
+void obstr_mark(ob_Str str) {
   str->length |= STRING_MARK_BIT;
 }
 
-void obstr_unmark(ob_String *str) {
+void obstr_unmark(ob_Str str) {
   str->length &= STRING_LENGTH_MASK;
 }
 
-bool obstr_get_mark(ob_String *str) {
+bool obstr_get_mark(ob_Str str) {
   return (str->length & STRING_MARK_BIT) != 0;
 }
 
-static void str__delete(ob_Context ctx, ob_String *str) {
+static void str__delete(ob_Context ctx, ob_Str str) {
   StrAvailable avail = {};
 
   avail.offset = str->offset;
@@ -99,7 +99,7 @@ void obstr_sweep(ob_Context ctx) {
       new = strings;
     } else {
       str__delete(ctx, strings);
-      ql_deallocate(ctx->allocator, sizeof(struct String), strings);
+      ql_deallocate(ctx->allocator, sizeof(struct ob_String), strings);
     }
 
     strings = next;

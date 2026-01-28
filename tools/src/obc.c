@@ -1,5 +1,4 @@
 #include <ob/core/Context.h>
-#include <ob/core/Parse.h>
 #include <ob/core/Serial.h>
 
 #include <ql/Argparse.h>
@@ -68,7 +67,7 @@ int main(int argn, const char *argv[]) {
 
   auto alloc = ql_alloc_create();
 
-  auto ctx = obctx_create(&alloc);
+  auto ctx = ob_create(&alloc);
 
   const char *instr = NULL;
 
@@ -89,7 +88,7 @@ int main(int argn, const char *argv[]) {
     }
   } while (arg_index < (size_t)argn);
 
-  obctx_destroy(ctx);
+  ob_destroy(ctx);
 
   return 0;
 }

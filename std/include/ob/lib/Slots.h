@@ -18,7 +18,7 @@
  * along with this library. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <ob/core/ContextFwd.h>
+#include <ob/Core.h>
 
 void oblib_load_slots(ob_Context ctx);
 

@@ -1,5 +1,4 @@
 #include <ob/core/Context.h>
-#include <ob/core/Parse.h>
 
 #include <ob/Std.h>
 
@@ -113,7 +112,7 @@ int main(int argn, const char *argv[]) {
 
   auto alloc = ql_alloc_create();
 
-  auto ctx = obctx_create(&alloc);
+  auto ctx = ob_create(&alloc);
   oblib_load_all(ctx);
 
   if (execute != NULL) {
@@ -130,7 +129,7 @@ int main(int argn, const char *argv[]) {
     repl(ctx);
   }
 
-  obctx_destroy(ctx);
+  ob_destroy(ctx);
 
   return 0;
 }

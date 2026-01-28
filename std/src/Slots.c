@@ -2,6 +2,8 @@
 #include <ob/lib/Slots.h>
 
 #include <ob/core/Context.h>
+#include <ob/core/Object.h>
+#include <ob/core/String.h>
 
 static bool slots_at_put(ob_Context ctx) {
   auto receiver = ob_get_receiver(ctx);

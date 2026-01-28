@@ -1,5 +1,8 @@
-#include <ob/core/Context.h>
 #include <ob/lib/Shell.h>
+
+#include <ob/core/Context.h>
+#include <ob/core/Object.h>
+#include <ob/core/String.h>
 
 void oblib_load_shell(ob_Context ctx) {
   (void)ctx;

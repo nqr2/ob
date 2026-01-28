@@ -23,15 +23,15 @@
  * @brief The interpreter state.
  */
 
-#include "Object.h"
-#include "String.h"
+#include <ob/Core.h>
 
 #include <ql/Allocator.h>
 #include <ql/Array.h>
 #include <ql/Exn.h>
 #include <ql/Number.h>
+#include <ql/Table.h>
 
-typedef struct Context {
+struct ob_Context {
   struct {
     bool enabled;
     float factor;
@@ -58,58 +58,18 @@ typedef struct Context {
   ql_Array string_data;
   ql_Array string_available;
 
-  ob_String *strings;
+  ob_Str strings;
   ql_Table interned;
 
   ql_Exnbuf exnbuf;
-} *ob_Context;
+};
 
-ob_Context obctx_create(ql_Allocator *alloc);
-void obctx_destroy(ob_Context ctx);
+ob_Obj obctx_allocate(ob_Ctx ctx, ob_ObjectTag tag, size_t payload_size);
 
-ob_Obj obctx_allocate(ob_Context ctx, ob_ObjectTag tag, size_t payload_size);
-ob_Obj ob_create_symbol(ob_Context ctx, ob_Str symbol);
-ob_Obj ob_create_string(ob_Context ctx, ob_Str string);
-ob_Obj ob_create_slots(ob_Context ctx, ob_Obj prototype);
-ob_Obj ob_create_number(ob_Context ctx, ql_Number number);
-ob_Obj ob_create_integer(ob_Context ctx, int64_t number);
-ob_Obj ob_create_real(ob_Context ctx, double number);
-ob_Obj ob_create_array(ob_Context ctx);
-ob_Obj ob_create_method(ob_Context ctx);
-ob_Obj ob_create_lightcmethod(ob_Context ctx, ob_FnCMethod method);
-ob_Obj ob_create_cmethod(ob_Context ctx, ob_FnCMethod method,
-                         ql_Array parameters);
-ob_Obj ob_create_lightcdata(ob_Context ctx, void *cdata);
-ob_Obj ob_create_cdata(ob_Context ctx, ob_Obj prototype, ob_FnVisit visit,
-                       ob_FnDestroy destructor, void *data);
+void ob_gc(ob_Ctx ctx);
 
-void ob_gc(ob_Context ctx);
-
-void obctx_enter_activation(ob_Context ctx, ob_Obj method, ob_Obj receiver);
-void obctx_leave_activation(ob_Context ctx);
-
-void ob_push(ob_Context ctx, ob_Obj obj);
-ob_Obj ob_pop(ob_Context ctx);
-bool ob_checkstack(ob_Context ctx, size_t narg);
-
-ob_Obj ob_get_prototype(ob_Context ctx, ob_Obj obj);
-
-bool ob_get_slot(ob_Context ctx, ob_Obj *slot, ob_Obj obj, ob_Str selector);
-
-typedef enum {
-  OB_SEND_DNUW = 0x1, // Dispatch #doesNotUnderstand:with:
-} ob_SendFlags;
-
-void ob_send_ext(ob_Context ctx, ob_Obj recv, ob_Str selector,
-                 ob_SendFlags flags);
-
-void ob_send(ob_Context ctx, ob_Obj recv, ob_Str selector);
-
-ql_Exncode ob_pcall(ob_Context ctx,
-                    void (*inner)(ob_Context ctx, void *userdata),
-                    void *userdata);
-
-ob_Obj ob_get_receiver(ob_Context ctx);
+void obctx_enter_activation(ob_Ctx ctx, ob_Obj method, ob_Obj receiver);
+void obctx_leave_activation(ob_Ctx ctx);
 
 #define OB_BOOL_CAST(Ctx, Bool)                                                \
   (Bool) ? (ctx->known.o_true) : (ctx->known.o_false)

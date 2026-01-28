@@ -15,7 +15,7 @@ ob_ObjectTag ob_get_tag(ob_Obj obj) {
 
 void *ob_get_payload(ob_Obj obj) {
   auto bytes = (uint8_t *)obj;
-  return bytes + sizeof(ob_Object);
+  return bytes + sizeof(struct ob_Object);
 }
 
 bool obobj_get_mark(ob_Obj obj) {
@@ -110,7 +110,7 @@ void obobj_destroy(ob_Obj obj) {
   }
 }
 
-void ob_visit(ob_Object *obj, ob_VisitFlags flags, ob_FnVisit visit,
+void ob_visit(ob_Obj obj, ob_VisitFlags flags, ob_FnVisit visit,
               ob_FnVisitPredicate predicate, void *userdata) {
   if (obj == NULL) {
     return;

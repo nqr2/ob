@@ -23,17 +23,19 @@
  * @brief (de)Serializing objects.
  */
 
-#include "Object.h"
+#include <ob/Core.h>
+
+#include <ql/Table.h>
 
 #define OB_SERIAL_HEADER "\x0bOB"
 
 typedef struct {
-  ob_Context ctx;
+  ob_Ctx ctx;
   ql_Array buffer;
   ql_Table identifiers;
 } ob_Serial;
 
-void obsrl_init(ob_Serial *srl, ob_Context ctx);
+void obsrl_init(ob_Serial *srl, ob_Ctx ctx);
 void obsrl_free(ob_Serial *srl);
 
 void obsrl_write(ob_Serial *srl, ob_Obj object);

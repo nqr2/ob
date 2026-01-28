@@ -1,10 +1,11 @@
 #include <ob/bits/AddMethods.h>
-#include <ob/core/Object.h>
 #include <ob/lib/Object.h>
 
 #include <ql/Array.h>
 
 #include <ob/core/Context.h>
+#include <ob/core/Object.h>
+#include <ob/core/String.h>
 
 #include <stdio.h>
 #include <string.h>

@@ -1,6 +1,8 @@
 #include <ob/core/Bytecode.h>
 #include <ob/core/Context.h>
+#include <ob/core/Object.h>
 #include <ob/core/Serial.h>
+#include <ob/core/String.h>
 
 #define QL_LOG_MODULE "dis"
 #include <ql/Assert.h>
@@ -138,7 +140,7 @@ int main(int argn, char *argv[]) {
   QL_ASSERT(argn <= 2, "expected 0 or 1 arguments, got %d", argn - 1);
 
   auto alloc = ql_alloc_create();
-  auto ctx = obctx_create(&alloc);
+  auto ctx = ob_create(&alloc);
 
   auto srl = (ob_Serial){};
   obsrl_init(&srl, ctx);
@@ -147,7 +149,7 @@ int main(int argn, char *argv[]) {
 
   obsrl_free(&srl);
 
-  obctx_destroy(ctx);
+  ob_destroy(ctx);
 
   if (file != stdin) {
     fclose(file);

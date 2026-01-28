@@ -1,6 +1,5 @@
 #include <ob/core/Bytecode.h>
 #include <ob/core/Context.h>
-#include <ob/core/Exncodes.h>
 #include <ob/core/Object.h>
 #include <ob/core/String.h>
 
@@ -19,8 +18,8 @@
 
 static void gc_sweep(ob_Context ctx);
 
-ob_Context obctx_create(ql_Allocator *alloc) {
-  ob_Context ctx = ql_allocate(alloc, sizeof(struct Context));
+ob_Context ob_create(ql_Allocator *alloc) {
+  ob_Context ctx = ql_allocate(alloc, sizeof(struct ob_Context));
 
   ctx->gc_state.factor = DEFAULT_GC_FACTOR;
   ctx->gc_state.enabled = true;
@@ -59,7 +58,7 @@ ob_Context obctx_create(ql_Allocator *alloc) {
   return ctx;
 }
 
-void obctx_destroy(ob_Context ctx) {
+void ob_destroy(ob_Context ctx) {
   auto alloc = ctx->allocator;
 
   gc_sweep(ctx);
@@ -73,12 +72,12 @@ void obctx_destroy(ob_Context ctx) {
 
   ql_exn_free(&ctx->exnbuf);
 
-  ql_deallocate(alloc, sizeof(struct Context), ctx);
+  ql_deallocate(alloc, sizeof(struct ob_Context), ctx);
 }
 
 ob_Obj obctx_allocate(ob_Context ctx, ob_ObjectTag tag, size_t payload_size) {
-  auto obj =
-      (ob_Obj)ql_allocate(ctx->allocator, sizeof(ob_Object) + payload_size);
+  auto obj = (ob_Obj)ql_allocate(ctx->allocator,
+                                 sizeof(struct ob_Object) + payload_size);
 
   obj->next = ctx->objects;
   obj->size = payload_size;
@@ -203,7 +202,7 @@ ob_Obj ob_create_cdata(ob_Context ctx, ob_Obj prototype, ob_FnVisit visit,
 }
 
 static void deallocate(ob_Context ctx, ob_Obj object) {
-  auto size = sizeof(ob_Object) + object->size;
+  auto size = sizeof(struct ob_Object) + object->size;
 
   obobj_destroy(object);
   ql_deallocate(ctx->allocator, size, object);
@@ -345,7 +344,7 @@ ob_Obj ob_pop(ob_Context ctx) {
 }
 
 bool ob_checkstack(ob_Context ctx, size_t narg) {
-  return (ctx->stack.size / sizeof(ob_Object *)) >= narg;
+  return (ctx->stack.size / sizeof(ob_Obj)) >= narg;
 }
 
 ob_Obj ob_get_prototype(ob_Context ctx, ob_Obj obj) {
