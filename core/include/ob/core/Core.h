@@ -1,5 +1,5 @@
-#ifndef OB_LIB_METHOD_H_INCLUDED
-#define OB_LIB_METHOD_H_INCLUDED
+#ifndef OB_CORE_H_INCLUDED
+#define OB_CORE_H_INCLUDED
 
 /*
  * Copyright (C) 2025-2026 nqr2
@@ -18,8 +18,6 @@
  * along with this library. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <ob/core/ContextFwd.h>
-
-void oblib_load_method(ob_Context ctx);
+// TODO: move most of the "general" functionality here.
 
 #endif

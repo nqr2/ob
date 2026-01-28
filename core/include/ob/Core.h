@@ -1,5 +1,5 @@
-#ifndef OB_CORE_OB_H_INCLUDED
-#define OB_CORE_OB_H_INCLUDED
+#ifndef OB_CORE_H_INCLUDED
+#define OB_CORE_H_INCLUDED
 
 /*
  * Copyright (C) 2025-2026 nqr2

@@ -1,13 +1,14 @@
 add_library("ObCore" STATIC
-  "include/ob/Bytecode.h"
-  "include/ob/Context.h"
-  "include/ob/ContextFwd.h"
-  "include/ob/Exncodes.h"
-  "include/ob/Object.h"
-  "include/ob/Parse.h"
-  "include/ob/Serial.h"
-  "include/ob/String.h"
-  "include/ob/Ob.h"
+  "include/ob/core/Bytecode.h"
+  "include/ob/core/Context.h"
+  "include/ob/core/ContextFwd.h"
+  "include/ob/core/Exncodes.h"
+  "include/ob/core/Object.h"
+  "include/ob/core/Parse.h"
+  "include/ob/core/Serial.h"
+  "include/ob/core/String.h"
+
+  "include/ob/Core.h"
 
   "src/Bytecode.c"
   "src/Context.c"

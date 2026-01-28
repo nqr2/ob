@@ -1,8 +1,8 @@
 #include <ob/bits/AddMethods.h>
 #include <ob/lib/Method.h>
 
-#include <ob/Bytecode.h>
-#include <ob/Context.h>
+#include <ob/core/Bytecode.h>
+#include <ob/core/Context.h>
 
 static bool method_call(ob_Context ctx) {
   auto activation = ob_cast_activation(ctx->this_activation);

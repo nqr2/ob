@@ -1,6 +1,6 @@
-#include <ob/Bytecode.h>
-#include <ob/Context.h>
-#include <ob/Serial.h>
+#include <ob/core/Bytecode.h>
+#include <ob/core/Context.h>
+#include <ob/core/Serial.h>
 
 #define QL_LOG_MODULE "dis"
 #include <ql/Assert.h>

@@ -1,5 +1,5 @@
-#include <ob/Context.h>
-#include <ob/String.h>
+#include <ob/core/Context.h>
+#include <ob/core/String.h>
 
 #include <ql/Array.h>
 #include <ql/Hash.h>

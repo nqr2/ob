@@ -1,8 +1,8 @@
-#include <ob/Bytecode.h>
-#include <ob/Context.h>
-#include <ob/Exncodes.h>
-#include <ob/Object.h>
-#include <ob/String.h>
+#include <ob/core/Bytecode.h>
+#include <ob/core/Context.h>
+#include <ob/core/Exncodes.h>
+#include <ob/core/Object.h>
+#include <ob/core/String.h>
 
 #include <ql/Allocator.h>
 #include <ql/Array.h>

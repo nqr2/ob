@@ -1,8 +1,8 @@
 #include <ob/bits/AddMethods.h>
 #include <ob/lib/World.h>
 
-#include <ob/Context.h>
-#include <ob/Parse.h>
+#include <ob/core/Context.h>
+#include <ob/core/Parse.h>
 
 #include "Boolean.h"
 #include "Shell.h"

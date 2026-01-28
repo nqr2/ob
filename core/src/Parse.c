@@ -1,9 +1,9 @@
-#include <ob/Bytecode.h>
-#include <ob/Context.h>
-#include <ob/Object.h>
-#include <ob/Parse.h>
-#include <ob/Serial.h>
-#include <ob/String.h>
+#include <ob/core/Bytecode.h>
+#include <ob/core/Context.h>
+#include <ob/core/Object.h>
+#include <ob/core/Parse.h>
+#include <ob/core/Serial.h>
+#include <ob/core/String.h>
 
 #define QL_LOG_MODULE "Parse"
 #include <ql/Array.h>

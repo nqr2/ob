@@ -1,7 +1,7 @@
 #include <ob/bits/AddMethods.h>
 #include <ob/lib/Activation.h>
 
-#include <ob/Context.h>
+#include <ob/core/Context.h>
 
 static bool act__var(ob_Context ctx) {
   auto receiver = ob_get_receiver(ctx);

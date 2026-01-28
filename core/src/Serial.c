@@ -1,7 +1,7 @@
-#include <ob/Context.h>
-#include <ob/Object.h>
-#include <ob/Serial.h>
-#include <ob/String.h>
+#include <ob/core/Context.h>
+#include <ob/core/Object.h>
+#include <ob/core/Serial.h>
+#include <ob/core/String.h>
 
 #include <ql/Array.h>
 #include <ql/Assert.h>

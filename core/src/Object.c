@@ -1,5 +1,5 @@
-#include <ob/Object.h>
-#include <ob/String.h>
+#include <ob/core/Object.h>
+#include <ob/core/String.h>
 
 #include <ql/Array.h>
 #include <ql/Assert.h>

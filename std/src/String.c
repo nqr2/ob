@@ -1,7 +1,7 @@
 #include <ob/bits/AddMethods.h>
 #include <ob/lib/String.h>
 
-#include <ob/Context.h>
+#include <ob/core/Context.h>
 
 static bool str_intern(ob_Context ctx) {
   auto receiver = ob_get_receiver(ctx);

@@ -1,4 +1,4 @@
-#include <ob/Context.h>
+#include <ob/core/Context.h>
 #include <ob/lib/Shell.h>
 
 void oblib_load_shell(ob_Context ctx) {

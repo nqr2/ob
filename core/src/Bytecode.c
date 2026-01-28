@@ -1,6 +1,6 @@
-#include <ob/Bytecode.h>
-#include <ob/Context.h>
-#include <ob/Object.h>
+#include <ob/core/Bytecode.h>
+#include <ob/core/Context.h>
+#include <ob/core/Object.h>
 
 #define QL_LOG_MODULE "Bytecode"
 #include <ql/Array.h>

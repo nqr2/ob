@@ -1,6 +1,6 @@
-#include <ob/Context.h>
-#include <ob/Parse.h>
-#include <ob/Serial.h>
+#include <ob/core/Context.h>
+#include <ob/core/Parse.h>
+#include <ob/core/Serial.h>
 
 #include <ql/Argparse.h>
 #include <ql/Log.h>
