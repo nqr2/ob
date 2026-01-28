@@ -4,7 +4,11 @@
     "configurePresets": [
         {
             "name": "config.debug",
-            "binaryDir": ".build"
+            "binaryDir": ".build",
+            "cacheVariables": {
+              "QL_BUILD_TESTS": false,
+              "QL_BUILD_DOCS": false
+            }
         }
     ],
 
