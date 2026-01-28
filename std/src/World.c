@@ -8,8 +8,7 @@
 #include "Boolean.h"
 #include "Shell.h"
 
-static void run(ob_Ctx ctx, unsigned long length,
-                const unsigned char *data) {
+static void run(ob_Ctx ctx, unsigned long length, const unsigned char *data) {
   ob_run(ctx, length, (void *)data);
 }
 

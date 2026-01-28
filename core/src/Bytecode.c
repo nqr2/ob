@@ -119,7 +119,7 @@ void obbc_run(ob_Ctx ctx, size_t len, const uint8_t *code) {
       break;
     }
 
-    ob_gc(ctx);
+    ob_gc(ctx, false);
   }
 }
 

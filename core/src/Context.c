@@ -1,3 +1,4 @@
+#include "ob/Core.h"
 #include <ob/core/Bytecode.h>
 #include <ob/core/Context.h>
 #include <ob/core/Object.h>
@@ -268,16 +269,13 @@ static void gc_sweep(ob_Ctx ctx) {
   ctx->objects = newlive;
 }
 
-void ob_gc2(ob_Ctx ctx, bool force) {
-  if (force) {
+void ob_gc(ob_Ctx ctx, bool force) {
+  if (force || ob_should_gc(ctx)) {
     gc_mark(ctx);
     gc_sweep(ctx);
 
     ctx->gc_state.previous_hs = ctx->allocator->used;
-    return;
   }
-
-  ob_gc(ctx);
 }
 
 bool ob_should_gc(ob_Ctx ctx) {
@@ -289,22 +287,6 @@ bool ob_should_gc(ob_Ctx ctx) {
       (size_t)((float)ctx->gc_state.previous_hs * ctx->gc_state.factor);
 
   return ctx->allocator->used > max_hs;
-}
-
-void ob_gc(ob_Ctx ctx) {
-  if (!ctx->gc_state.enabled) {
-    return;
-  }
-
-  auto max_hs =
-      (size_t)((float)ctx->gc_state.previous_hs * ctx->gc_state.factor);
-
-  if (ctx->allocator->used > max_hs) {
-    gc_mark(ctx);
-    gc_sweep(ctx);
-
-    ctx->gc_state.previous_hs = ctx->allocator->used;
-  }
 }
 
 void obctx_enter_activation(ob_Ctx ctx, ob_Obj method, ob_Obj receiver) {
@@ -510,8 +492,7 @@ static size_t args_for_sel(size_t len, const char *data) {
   return n_args;
 }
 
-void ob_send_ext(ob_Ctx ctx, ob_Obj recv, ob_Str selector,
-                 ob_SendFlags flags) {
+void ob_send_ext(ob_Ctx ctx, ob_Obj recv, ob_Str selector, ob_SendFlags flags) {
   auto sel = obstr_get_data(ctx, selector);
   auto len = obstr_get_length(selector);
 
@@ -567,8 +548,7 @@ void ob_send(ob_Ctx ctx, ob_Obj recv, ob_Str selector) {
   ob_send_ext(ctx, recv, selector, OB_SEND_DNUW);
 }
 
-ql_Exncode ob_pcall(ob_Ctx ctx,
-                    void (*inner)(ob_Ctx ctx, void *userdata),
+ql_Exncode ob_pcall(ob_Ctx ctx, void (*inner)(ob_Ctx ctx, void *userdata),
                     void *userdata) {
   QL_EXN_BEGIN(&ctx->exnbuf, {
     auto code = ql_exn_get_code(&ctx->exnbuf);

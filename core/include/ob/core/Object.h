@@ -31,18 +31,34 @@
 
 #include <stdint.h>
 
+/** @details
+ * This struct is actually a "header", so when the interpreter creates an Obj,
+ * it allocates for both this header as well as any data it contains. Note that
+ * said data is variably called the *contained data* or the *payload*.
+ *
+ * In all cases this should be used behind a pointer, using @ref ob_get_payload
+ * for obtaining a pointer to the "contained data", with @c ob_cast_* as a safer
+ * alternative.
+ *
+ * @todo
+ * - Since this contains a pointer, the size must be a multiple of the pointer
+ *   size, so there is a lot left unused.
+ */
 struct ob_Object {
   union {
     struct {
-      ob_ObjectTag tag : 4;
-      bool mark : 1;
+      ob_ObjectTag tag : 4; /// This object's tag.
+      bool mark : 1;        /// This object's GC mark.
     };
 
     uint16_t word;
   } header;
 
+  /// The size of the *allocated* data.
   uint16_t size;
   uint32_t unused;
+
+  /// The next allocated object, or @c NULL.
   struct ob_Object *next;
 };
 

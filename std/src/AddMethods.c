@@ -20,8 +20,7 @@ static void add_method(ob_Ctx ctx, ob_Obj target, const char *name,
   ql_table_set(&slots->slots, hash, (void *)obj);
 }
 
-void ob_add_methods(ob_Ctx ctx, ob_Obj target,
-                    const ob_MethodEntry *entries) {
+void ob_add_methods(ob_Ctx ctx, ob_Obj target, const ob_MethodEntry *entries) {
   while (entries->name != NULL) {
     add_method(ctx, target, entries->name, entries->method);
 
