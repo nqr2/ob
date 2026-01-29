@@ -32,10 +32,10 @@ cmake --workflow --preset "debug" # or "release"
 `ob` is fairly incomplete and full of bugs, and so there are a couple tools for
 debugging, notably:
 
-- bin/ob accepts a `-v` parameter, which sets the verbosity of the logs, and an
-  `-e` parameter for reading from the command line.
+- bin/ob accepts a `-v` flag, which sets the verbosity of the logs, and an `-e`
+  flag for reading from the command line.
 - tools/obc compiles `ob` code into bytecode and emits it to stdout, and has a
-  similar `-e` parameter.
+  similar `-e` flag.
 - tools/dis reads bytecode from a file or stdin and prints a description of
   it's contents.
 
@@ -51,8 +51,8 @@ tools/obc FILE | tools/dis
 tools/obc -e "'Hello' print." | tools/dis
 
 # Or show some logs when interpreting.
-bin/ob -v 5 FILE
+bin/ob -v5 FILE
 
 # Or also from the command line.
-bin/ob -v 5 -e "'Hello' print."
+bin/ob -v5 -e "'Hello' print."
 ```
