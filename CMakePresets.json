@@ -42,6 +42,12 @@
             "name": "build.release",
             "configurePreset": "config.release",
             "targets": "all"
+        },
+
+        {
+            "name": "documentation",
+            "configurePreset": "config.debug",
+            "targets": "docs"
         }
     ],
 

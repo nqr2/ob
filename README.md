@@ -24,11 +24,8 @@ cmake --workflow --preset "debug" # or "release"
 # cmake --workflow --preset "debug-and-test"
 
 # For building the documentation, after setting up CMake above
-# cmake --build "$BUILD_DIRECTORY" --target docs
+# cmake --build --preset documentation
 ```
-
-As of now, there are options for building the tests and documentation
-(`BUILD_TESTS` and `BUILD_DOCS` respectively).
 
 ## Debugging
 
