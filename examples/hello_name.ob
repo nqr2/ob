@@ -1,0 +1,3 @@
+at: #name put: 'world'.
+
+('Hello, ' + name + '!') print.

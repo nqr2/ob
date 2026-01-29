@@ -14,10 +14,6 @@
 #include <string.h>
 
 static bool is_operator(char chr) {
-  if (!ispunct(chr)) {
-    return false;
-  }
-
   switch (chr) {
   case '(':
   case ')':
@@ -30,7 +26,7 @@ static bool is_operator(char chr) {
   case '"':
     return false;
   default:
-    return true;
+    return ispunct(chr);
   }
 }
 
@@ -506,10 +502,10 @@ static bool p_binary_send(Reader *rdr, bool explicitp) {
         rdr_next(rdr);
       }
 
-      p_unary(rdr);
-
       auto sel = obstr_create(rdr->context, (rdr->head - here), here);
       auto objsel = ob_create_symbol(rdr->context, sel);
+
+      p_unary(rdr);
 
       auto index = ql_array_length(&rdr->output->literals, sizeof(ob_Obj));
       ql_array_push(&rdr->output->literals, sizeof(ob_Obj),
