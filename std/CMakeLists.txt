@@ -32,11 +32,6 @@ install(
   TYPE INCLUDE
 )
 
-install(
-  TARGETS "ObStd"
-  ARCHIVE
-)
-
 target_link_libraries("ObStd" PUBLIC "ObCore")
 
 target_include_directories("ObStd" PUBLIC "include")

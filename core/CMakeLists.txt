@@ -20,11 +20,6 @@ install(
   TYPE INCLUDE
 )
 
-install(
-  TARGETS "ObCore"
-  ARCHIVE
-)
-
 target_include_directories("ObCore" PUBLIC "include")
 
 target_link_libraries("ObCore" PUBLIC ql::ql)
