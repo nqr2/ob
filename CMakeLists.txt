@@ -35,7 +35,6 @@ FetchContent_Declare(
 FetchContent_MakeAvailable("ql")
 
 add_subdirectory("core")
-add_subdirectory("tools")
 add_subdirectory("std")
 add_subdirectory("lib")
 add_subdirectory("bin")
