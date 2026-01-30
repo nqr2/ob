@@ -27,6 +27,16 @@ add_library("ObStd" STATIC
   ${STD_HEADERS}
 )
 
+install(
+  DIRECTORY "include/ob"
+  TYPE INCLUDE
+)
+
+install(
+  TARGETS "ObStd"
+  ARCHIVE
+)
+
 target_link_libraries("ObStd" PUBLIC "ObCore")
 
 target_include_directories("ObStd" PUBLIC "include")

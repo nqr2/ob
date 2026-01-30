@@ -3,3 +3,4 @@
 vgcore.*
 *.obc
 /.build
+/.install
