@@ -46,6 +46,7 @@ static void unpack(ob_Ctx ctx, ob_Obj args) {
   }
 }
 
+#include <stdio.h>
 static bool act__dnuw(ob_Ctx ctx) {
   auto act = ob_cast_activation(ctx->this_activation);
 
@@ -54,17 +55,25 @@ static bool act__dnuw(ob_Ctx ctx) {
 
   auto sel = *ob_cast_symbol(selector);
 
+  printf("dnuw: #'%.*s'\n", obstr_get_length(sel), obstr_get_data(ctx, sel));
+
+  puts("try env");
   if (ob_get_slot(ctx, NULL, act->env, sel)) {
+    puts("dnuw env");
     unpack(ctx, args);
     ob_send(ctx, act->env, sel);
     return true;
   }
 
+  puts("try recv");
   if (ob_get_slot(ctx, NULL, act->receiver, sel)) {
+    puts("dnuw recv");
     unpack(ctx, args);
     ob_send(ctx, act->receiver, sel);
     return true;
   }
+
+  puts("dnuw failed");
 
   return false;
 }

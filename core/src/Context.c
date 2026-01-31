@@ -387,27 +387,23 @@ ob_Obj ob_get_prototype(ob_Ctx ctx, ob_Obj obj) {
   return ob_get_prototype(ctx, NULL);
 }
 
+#include <stdio.h>
 bool ob_get_slot(ob_Ctx ctx, ob_Obj *slot, ob_Obj obj, ob_Str selector) {
   while (obj != ctx->proto.object) {
     if (OB_ISA(obj, OB_SLOTS)) {
       auto data = ob_cast_slots(obj);
 
       auto str = obstr_get_data(ctx, selector);
+      printf("try on slots: %p sel #'%.*s'\n", obj, selector->length, str);
       auto hash = ql_hash_start(selector->length, str);
 
-      if (ql_table_get(&data->slots, hash, (void **)&obj)) {
-        if (slot != NULL) {
-          *slot = obj;
-        }
-
+      if (ql_table_get(&data->slots, hash, (void **)slot)) {
         return true;
       }
     }
 
     if (obj != ctx->proto.object) {
       obj = ob_get_prototype(ctx, obj);
-    } else {
-      break;
     }
   }
 
@@ -524,7 +520,8 @@ void ob_send_ext(ob_Ctx ctx, ob_Obj recv, ob_Str selector, ob_SendFlags flags) {
       return;
     }
 
-    QL_ASSERT(false, "doesNotUnderstand: #'%.*s'", len, sel);
+    QL_ASSERT(false, "#<%p> (%d) doesNotUnderstand: #'%.*s'", recv,
+              ob_get_tag(recv), len, sel);
   }
 
   bool is_invocable = OB_IS_INVOCABLE(invoked);
