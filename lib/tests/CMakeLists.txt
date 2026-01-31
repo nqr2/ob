@@ -1,5 +1,6 @@
 set(OB_TESTS
   "etc/always_pass.c"
+  "core/get_slot.c"
 )
 
 create_test_sourcelist(
@@ -12,6 +13,8 @@ add_executable(
   test_driver
   ${OB_TEST_DRIVER}
 )
+
+target_link_libraries(test_driver PUBLIC ob::ob)
 
 foreach(test ${OB_TESTS})
   get_filename_component(basename ${test} NAME_WE)
