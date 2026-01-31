@@ -11,14 +11,14 @@ project(
 set(CMAKE_C_STANDARD 23 REQUIRED)
 set(CMAKE_C_EXTENSIONS NO)
 
-option(BUILD_DOCS "Build the documentation with Doxygen" ON)
-option(BUILD_TESTS "Build the tests" ON)
+option(OB_BUILD_DOCS "Build the documentation with Doxygen" ON)
+option(OB_BUILD_TESTS "Build the tests" ON)
 
-if(BUILD_DOCS)
+if(OB_BUILD_DOCS)
   add_subdirectory("doc")
 endif()
 
-if(BUILD_TESTS)
+if(OB_BUILD_TESTS)
   include(CTest)
   enable_testing()
 endif()

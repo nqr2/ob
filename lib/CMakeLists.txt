@@ -13,3 +13,7 @@ target_include_directories("ob" PUBLIC
 add_library(ob::ob ALIAS "ob")
 
 install(TARGETS "ob" ARCHIVE)
+
+if(OB_BUILD_TESTS)
+  add_subdirectory("tests")
+endif()
