@@ -1,3 +1,4 @@
+
 #include <ob/bits/AddMethods.h>
 #include <ob/lib/Activation.h>
 
@@ -11,8 +12,7 @@ static bool act__var(ob_Ctx ctx) {
   auto key = ob_pop(ctx);
 
   auto sym = ob_cast_symbol(key);
-  auto act = ob_cast_activation(receiver);
-  auto env = ob_cast_slots(act->env);
+  auto env = ob_cast_slots(ob_cast_activation(receiver)->env);
 
   auto hash = obstr_get_hash(ctx, *sym);
 
@@ -46,34 +46,25 @@ static void unpack(ob_Ctx ctx, ob_Obj args) {
   }
 }
 
-#include <stdio.h>
 static bool act__dnuw(ob_Ctx ctx) {
-  auto act = ob_cast_activation(ctx->this_activation);
+  auto act = ob_cast_activation(ob_get_receiver(ctx));
 
   auto selector = ob_pop(ctx);
   auto args = ob_pop(ctx);
 
   auto sel = *ob_cast_symbol(selector);
 
-  printf("dnuw: #'%.*s'\n", obstr_get_length(sel), obstr_get_data(ctx, sel));
-
-  puts("try env");
   if (ob_get_slot(ctx, NULL, act->env, sel)) {
-    puts("dnuw env");
     unpack(ctx, args);
     ob_send(ctx, act->env, sel);
     return true;
   }
 
-  puts("try recv");
   if (ob_get_slot(ctx, NULL, act->receiver, sel)) {
-    puts("dnuw recv");
     unpack(ctx, args);
     ob_send(ctx, act->receiver, sel);
     return true;
   }
-
-  puts("dnuw failed");
 
   return false;
 }

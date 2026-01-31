@@ -387,14 +387,16 @@ ob_Obj ob_get_prototype(ob_Ctx ctx, ob_Obj obj) {
   return ob_get_prototype(ctx, NULL);
 }
 
-#include <stdio.h>
 bool ob_get_slot(ob_Ctx ctx, ob_Obj *slot, ob_Obj obj, ob_Str selector) {
-  while (obj != ctx->proto.object) {
+  if (obj == nullptr) {
+    obj = ctx->proto.nil;
+  }
+
+  while ((obj != nullptr) && (obj != ctx->proto.object)) {
     if (OB_ISA(obj, OB_SLOTS)) {
       auto data = ob_cast_slots(obj);
 
       auto str = obstr_get_data(ctx, selector);
-      printf("try on slots: %p sel #'%.*s'\n", obj, selector->length, str);
       auto hash = ql_hash_start(selector->length, str);
 
       if (ql_table_get(&data->slots, hash, (void **)slot)) {
