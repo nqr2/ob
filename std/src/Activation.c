@@ -57,14 +57,16 @@ static bool act__dnuw(ob_Ctx ctx) {
   if (ob_get_slot(ctx, NULL, act->env, sel)) {
     unpack(ctx, args);
     ob_send(ctx, act->env, sel);
+    return true;
   }
 
   if (ob_get_slot(ctx, NULL, act->receiver, sel)) {
     unpack(ctx, args);
     ob_send(ctx, act->receiver, sel);
+    return true;
   }
 
-  return true;
+  return false;
 }
 
 void oblib_load_activation(ob_Ctx ctx) {

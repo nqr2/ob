@@ -50,9 +50,8 @@ void obbc_run(ob_Ctx ctx, size_t len, const uint8_t *code) {
 
     switch (opcode) {
     case OBBC_PUSH_LITERAL: {
-      auto obj = ((ob_Obj *)method->literals.data)[data];
-      ob_push(ctx, obj);
-      ql_array_push(&ctx->stack, sizeof(ob_Obj), (void *)&obj);
+      // auto obj = ((ob_Obj *)method->literals.data)[data];
+      ob_push(ctx, literal);
     }; break;
 
     case OBBC_SEND: {
