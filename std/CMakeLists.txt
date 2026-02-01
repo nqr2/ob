@@ -1,11 +1,6 @@
 ## Building the tools to build ObStd
 
 add_executable(
-  "xxdi"
-  "bin/xxdi.c"
-)
-
-add_executable(
   "obc"
   "bin/obc.c"
 )
@@ -19,25 +14,12 @@ add_executable(
 
 target_link_libraries("dis" PRIVATE "ObCore")
 
-function(xxdi INPUT)
-  get_filename_component(BASENAME ${INPUT} NAME_WE)
-
-  add_custom_command(
-    OUTPUT "${BASENAME}.h"
-    COMMAND "xxdi" "${INPUT}" "${BASENAME}.h" "${BASENAME}"
-    DEPENDS "${INPUT}"
-    VERBATIM
-  )
-
-  add_custom_target("${BASENAME}.h" DEPENDS ${INPUT})
-endfunction()
-
 function(obc INPUT)
   get_filename_component(BASENAME ${INPUT} NAME_WE)
 
   add_custom_command(
     OUTPUT "${BASENAME}.obc"
-    COMMAND "obc" "${INPUT}" > "${BASENAME}.obc"
+    COMMAND "obc" "${INPUT}" > "${CMAKE_CURRENT_BINARY_DIR}/${BASENAME}.obc"
     DEPENDS "${INPUT}"
     VERBATIM
   )
@@ -45,23 +27,10 @@ function(obc INPUT)
   add_custom_target("${BASENAME}.obc" DEPENDS ${INPUT})
 endfunction()
 
-
 ## Building ObStd itself
 
-function(obc_header PATH)
-  get_filename_component(BASENAME ${PATH} NAME_WE)
-
-  obc(${PATH})
-  xxdi("${CMAKE_CURRENT_BINARY_DIR}/${BASENAME}.obc")
-endfunction()
-
-set(STD_HEADERS
-  "Shell.h"
-  "Boolean.h"
-)
-
-obc_header("lib/Shell.ob")
-obc_header("lib/Boolean.ob")
+obc("lib/Shell.ob")
+obc("lib/Boolean.ob")
 
 add_library("ObStd" STATIC
   "src/Std.c"
@@ -73,8 +42,6 @@ add_library("ObStd" STATIC
   "src/Slots.c"
   "src/Shell.c"
   "src/World.c"
-
-  ${STD_HEADERS}
 )
 
 install(
