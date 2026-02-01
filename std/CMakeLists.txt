@@ -24,7 +24,7 @@ function(obc INPUT)
     VERBATIM
   )
 
-  add_custom_target("${BASENAME}.obc" DEPENDS ${INPUT})
+  add_custom_target("${BASENAME}.obc" DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/${BASENAME}.obc")
 endfunction()
 
 ## Building ObStd itself
@@ -42,6 +42,11 @@ add_library("ObStd" STATIC
   "src/Slots.c"
   "src/Shell.c"
   "src/World.c"
+)
+
+add_dependencies("ObStd"
+  "Shell.obc"
+  "Boolean.obc"
 )
 
 install(
