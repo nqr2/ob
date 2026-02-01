@@ -6,6 +6,8 @@ foreach(test ${HOSTED_TESTS})
   get_filename_component(basename ${test} NAME_WE)
   get_filename_component(dirname ${test} DIRECTORY)
 
+  cmake_path(RELATIVE_PATH test BASE_DIRECTORY ${CMAKE_SOURCE_DIR})
+
   set(fails FALSE)
 
   if(basename MATCHES "^fail_")
@@ -19,6 +21,7 @@ foreach(test ${HOSTED_TESTS})
        --capture-stdout "${CMAKE_CURRENT_BINARY_DIR}/${basename}.stdout"
        --capture-stderr "${CMAKE_CURRENT_BINARY_DIR}/${basename}.stderr"
        "${test}"
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
   )
 
   add_test(

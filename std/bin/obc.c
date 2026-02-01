@@ -31,7 +31,7 @@ void dofile(void *udata, const char *path) {
 
   fread(data.data, sizeof(char), data.size, file);
 
-  auto method = ob_load(ctx, data.size, data.data);
+  auto method = ob_load_ext(ctx, path, data.size, data.data);
 
   auto srl = (ob_Serial){};
   obsrl_init(&srl, ctx);
@@ -49,7 +49,7 @@ void dofile(void *udata, const char *path) {
 void dostring(ob_Ctx ctx, const char *input) {
   auto length = strlen(input);
 
-  auto method = ob_load(ctx, length, input);
+  auto method = ob_load_ext(ctx, "*command*", length, input);
 
   auto srl = (ob_Serial){};
   obsrl_init(&srl, ctx);

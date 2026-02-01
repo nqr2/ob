@@ -1,3 +1,4 @@
+#include "ob/Core.h"
 #include <ob/core/Context.h>
 
 #include <ob/Std.h>
@@ -33,7 +34,7 @@ void dofile(ob_Ctx ctx, const char *path) {
 
   fread(data.data, sizeof(char), data.size, file);
 
-  ob_run(ctx, data.size, data.data);
+  ob_run_ext(ctx, path, data.size, data.data);
 
   // exit:
   ql_array_free(&data);
@@ -168,7 +169,7 @@ int main(int argn, const char *argv[]) {
   oblib_load_all(ctx);
 
   if (execute != NULL) {
-    ob_run(ctx, strlen(execute), execute);
+    ob_run_ext(ctx, "*command*", strlen(execute), execute);
   }
 
   if (argn != 1) {

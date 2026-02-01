@@ -1,3 +1,4 @@
+#include "ob/Core.h"
 #include <ob/core/Bytecode.h>
 #include <ob/core/Context.h>
 #include <ob/core/Object.h>
@@ -79,7 +80,7 @@ void rdr_next(Reader *rdr) {
 }
 
 static void rdr_expect1(Reader *rdr, char chr) {
-  QL_ASSERT(*rdr->head == chr, "at %s %zu:%zu: expected `%c`, got `%c`",
+  QL_ASSERT(*rdr->head == chr, "at '%s' %zu:%zu: expected `%c`, got `%c`",
             rdr->path, rdr->line + 1, rdr->column + 1, chr, *rdr->head);
   rdr_next(rdr);
 }
@@ -94,7 +95,7 @@ static void rdr_expectn(Reader *rdr, const char *chrs) {
     chrs++;
   }
 
-  QL_ASSERT(false, "at %s %zu:%zu: expected one of [%s], got `%c`", rdr->path,
+  QL_ASSERT(false, "at '%s' %zu:%zu: expected one of [%s], got `%c`", rdr->path,
             rdr->line + 1, rdr->column + 1, chrs, *rdr->head);
 }
 
@@ -598,7 +599,8 @@ static void p_toplevel(Reader *rdr) {
   rdr_expect1(rdr, '.');
 }
 
-ob_Obj ob_load(ob_Ctx ctx, size_t length, const char *text) {
+ob_Obj ob_load_ext(ob_Ctx ctx, const char *file, size_t length,
+                   const char *text) {
   if (strncmp(text, OB_SERIAL_HEADER, sizeof(OB_SERIAL_HEADER)) == 0) {
     auto srl = (ob_Serial){};
     obsrl_init(&srl, ctx);
@@ -615,6 +617,7 @@ ob_Obj ob_load(ob_Ctx ctx, size_t length, const char *text) {
   auto clos = ob_cast_method(closure);
 
   auto reader = rdr_new(ctx, clos, length, text);
+  reader.path = file;
 
   while (reader.remaining > 0) {
     p_skip_blank(&reader);
@@ -632,8 +635,12 @@ ob_Obj ob_load(ob_Ctx ctx, size_t length, const char *text) {
   return closure;
 }
 
-void ob_run(ob_Ctx ctx, size_t length, const char *text) {
-  auto chunk = ob_load(ctx, length, text);
+ob_Obj ob_load(ob_Ctx ctx, size_t length, const char *text) {
+  return ob_load_ext(ctx, "*unknown*", length, text);
+}
+
+void ob_run_ext(ob_Ctx ctx, const char *file, size_t length, const char *text) {
+  auto chunk = ob_load_ext(ctx, file, length, text);
   auto method = ob_cast_method(chunk);
 
   obctx_enter_activation(ctx, chunk, ctx->known.shell);
@@ -641,4 +648,8 @@ void ob_run(ob_Ctx ctx, size_t length, const char *text) {
   obbc_run(ctx, method->bytecode.size, method->bytecode.data);
 
   obctx_leave_activation(ctx);
+}
+
+void ob_run(ob_Ctx ctx, size_t length, const char *text) {
+  ob_run_ext(ctx, "*unknown*", length, text);
 }

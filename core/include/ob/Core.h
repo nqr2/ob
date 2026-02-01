@@ -226,8 +226,15 @@ void ob_send(ob_Ctx ctx, ob_Obj recv, ob_Str selector);
 ob_Exncode ob_pcall(ob_Ctx ctx, void (*inner)(ob_Ctx ctx, void *userdata),
                     void *userdata);
 
+/// Parse some text with a path, and return a unary closure
+ob_Obj ob_load_ext(ob_Ctx ctx, const char *file, size_t length,
+                   const char *text);
+
 /// Parse some text, and return a unary closure
 ob_Obj ob_load(ob_Ctx ctx, size_t length, const char *text);
+
+/// Call @ref ob_load_ext, and invoke the returned closure.
+void ob_run_ext(ob_Ctx ctx, const char *file, size_t length, const char *text);
 
 /// Call @ref ob_load, and invoke the returned closure.
 void ob_run(ob_Ctx ctx, size_t length, const char *text);
