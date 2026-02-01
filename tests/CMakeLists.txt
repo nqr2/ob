@@ -6,6 +6,12 @@ foreach(test ${HOSTED_TESTS})
   get_filename_component(basename ${test} NAME_WE)
   get_filename_component(dirname ${test} DIRECTORY)
 
+  set(fails FALSE)
+
+  if(basename MATCHES "^fail_")
+    set(fails TRUE)
+  endif()
+
   add_test(
     NAME "capture/${basename}"
     COMMAND
@@ -37,6 +43,7 @@ foreach(test ${HOSTED_TESTS})
     "capture/${basename}"
     PROPERTIES
       FIXTURES_SETUP "${basename}"
+      WILL_FAIL ${fails}
   )
 
   set_tests_properties(

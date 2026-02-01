@@ -15,11 +15,13 @@ do
 
   if [ ! -e tests/stdout/$basename ]
   then
+    echo "Capturing stdout..."
     $BUILD_DIRECTORY/bin/ob --verbose=0 $f --capture-stdout tests/stdout/$basename
   fi
 
   if [ ! -e tests/stderr/$basename ]
   then
+    echo "Capturing stderr..."
     $BUILD_DIRECTORY/bin/ob --verbose=0 $f --capture-stderr tests/stderr/$basename
   fi
 done
