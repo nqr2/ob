@@ -3,10 +3,8 @@ file(GLOB HOSTED_TESTS
 )
 
 foreach(test ${HOSTED_TESTS})
-  get_filename_component(basename ${test} NAME)
+  get_filename_component(basename ${test} NAME_WE)
   get_filename_component(dirname ${test} DIRECTORY)
-
-  message("${basename} :: ${dirname} :: ${CMAKE_CURRENT_BINARY_DIR}/${basename}.stdout")
 
   add_test(
     NAME "capture/${basename}"
@@ -22,7 +20,7 @@ foreach(test ${HOSTED_TESTS})
     COMMAND ${CMAKE_COMMAND}
       -E compare_files
       --ignore-eol
-      "${test}.stdout"
+      "${CMAKE_CURRENT_SOURCE_DIR}/stdout/${basename}"
       "${CMAKE_CURRENT_BINARY_DIR}/${basename}.stdout"
   )
 
@@ -31,7 +29,7 @@ foreach(test ${HOSTED_TESTS})
     COMMAND ${CMAKE_COMMAND}
       -E compare_files
       --ignore-eol
-      "${test}.stderr"
+      "${CMAKE_CURRENT_SOURCE_DIR}/stderr/${basename}"
       "${CMAKE_CURRENT_BINARY_DIR}/${basename}.stderr"
   )
 
@@ -46,7 +44,7 @@ foreach(test ${HOSTED_TESTS})
      PROPERTIES
        DEPENDS "capture/${basename}"
        FIXTURES_REQUIRED "${basename}"
-       REQUIRED_FILES "${basename}.stdout"
+       REQUIRED_FILES "${CMAKE_CURRENT_SOURCE_DIR}/stdout/${basename}"
   )
 
   set_tests_properties(
@@ -54,6 +52,6 @@ foreach(test ${HOSTED_TESTS})
      PROPERTIES
        DEPENDS "capture/${basename}"
        FIXTURES_REQUIRED "${basename}"
-       REQUIRED_FILES "${basename}.stderr"
+       REQUIRED_FILES "${CMAKE_CURRENT_SOURCE_DIR}/stderr/${basename}"
   )
 endforeach()
