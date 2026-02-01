@@ -38,3 +38,7 @@ add_subdirectory("core")
 add_subdirectory("std")
 add_subdirectory("lib")
 add_subdirectory("bin")
+
+if(OB_BUILD_TESTS)
+  add_subdirectory("tests")
+endif()

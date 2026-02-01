@@ -89,22 +89,74 @@ void repl(ob_Ctx ctx) {
 int main(int argn, const char *argv[]) {
   bool is_interactive = argn == 1;
   const char *execute = NULL;
+
+  const char *stdout_capture = nullptr;
+  const char *stderr_capture = nullptr;
+  const char *stdin_capture = nullptr;
+
   int loglevel = QL_LOG_ERROR;
 
   auto f_interactive =
       ql_create_flag('i', "interactive", QL_FLAG_SET, &is_interactive);
   f_interactive.description = "Open the interactive shell";
 
-  auto f_exec = ql_create_flag('e', NULL, QL_FLAG_STRING, (void *)&execute);
+  auto f_exec =
+      ql_create_flag('e', "execute", QL_FLAG_STRING, (void *)&execute);
   f_exec.description = "Run a string passed in the command line";
 
-  auto f_log = ql_create_flag('v', NULL, QL_FLAG_INT, (void *)&loglevel);
+  auto f_log = ql_create_flag('v', "verbose", QL_FLAG_INT, (void *)&loglevel);
   f_log.description = "Set the log level (0 to disable, 4 to allow everything)";
 
-  auto parser =
-      ql_create_parser((ql_Flag[]){f_interactive, f_exec, f_log, QL_FLAGS_END});
+  auto f_capture_stdin = ql_create_flag(0, "capture-stdin", QL_FLAG_STRING,
+                                        (void *)&stdin_capture);
+  f_capture_stdin.description = "Read standard input from a file.";
+
+  auto f_capture_stderr = ql_create_flag(0, "capture-stderr", QL_FLAG_STRING,
+                                         (void *)&stderr_capture);
+  f_capture_stderr.description = "Capture standard error into a file.";
+
+  auto f_capture_stdout = ql_create_flag(0, "capture-stdout", QL_FLAG_STRING,
+                                         (void *)&stdout_capture);
+  f_capture_stdout.description = "Capture standard output into a file.";
+
+  auto parser = ql_create_parser((ql_Flag[]){f_interactive, f_exec, f_log,
+                                             f_capture_stdin, f_capture_stderr,
+                                             f_capture_stdout, QL_FLAGS_END});
 
   ql_parse(&parser, argn, argv);
+
+  if (stdin_capture != nullptr) {
+    auto new_stdin = freopen(stdin_capture, "r", stdin);
+
+    if (new_stdin == NULL) {
+      perror("failed to capture stdin");
+      return 1;
+    }
+
+    stdin = new_stdin;
+  }
+
+  if (stderr_capture != nullptr) {
+    auto new_stderr = freopen(stderr_capture, "w", stderr);
+
+    if (new_stderr == NULL) {
+      perror("cannot capture stderr");
+      return 1;
+    }
+
+    stderr = new_stderr;
+  }
+
+  if (stdout_capture != nullptr) {
+    auto new_stdout = freopen(stdout_capture, "w", stdout);
+
+    if (new_stdout == NULL) {
+      perror("cannot capture stdout");
+      return 1;
+    }
+
+    stdout = new_stdout;
+  }
 
   auto log = ql_log_create_handler();
   ql_log_set_handler(&log);
@@ -130,6 +182,18 @@ int main(int argn, const char *argv[]) {
   }
 
   ob_destroy(ctx);
+
+  if (stdin_capture != nullptr) {
+    fclose(stdin);
+  }
+
+  if (stderr_capture != nullptr) {
+    fclose(stderr);
+  }
+
+  if (stdout_capture != nullptr) {
+    fclose(stdout);
+  }
 
   return 0;
 }
