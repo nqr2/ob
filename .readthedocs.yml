@@ -17,4 +17,4 @@ build:
     build:
       html:
         - "mkdir -p $READTHEDOCS_OUTPUT"
-        - "cp -r .build/docs/html $READTHEDOCS_OUTPUT/html"
+        - "cp -r .build/html $READTHEDOCS_OUTPUT/html"
