@@ -32,7 +32,7 @@ endfunction()
 obc("lib/Shell.ob")
 obc("lib/Boolean.ob")
 
-add_library("ObStd" STATIC
+add_library("ObStd" OBJECT
   "src/Std.c"
   "src/AddMethods.c"
   "src/Activation.c"
