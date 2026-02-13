@@ -39,35 +39,56 @@ typedef uint8_t ob_Instruction;
 
 typedef enum {
   /// Push a literal
-  OBBC_PUSH_LITERAL = 0,
+  OB_OP_PUSH = 0,
 
   /// Send a message to a known receiver
-  OBBC_SEND = 1,
+  OB_OP_SEND = 1,
 
   /// Send a message to the implicit receiver
-  OBBC_IMPLICIT_SEND = 2,
+  OB_OP_IMPLICIT = 2,
 
   /// Extend the payload by prepending 4 bits
-  OBBC_EXTEND = 3,
+  OB_OP_EXTEND = 3,
 
   /// Implements @c ^
-  OBBC_RETURN = 4,
-
-  /// Implements @c ,
-  OBBC_CASCADE = 5,
+  OB_OP_RETURN = 4,
 
   /// Construct an @c Array from @c index items in the stack.
-  OBBC_ARRAY = 6,
+  OB_OP_ARRAY = 5,
 
-  OBBC_RESERVED_7 = 7,
-  OBBC_RESERVED_8 = 8,
-  OBBC_RESERVED_9 = 9,
-  OBBC_RESERVED_a = 10,
-  OBBC_RESERVED_b = 11,
-  OBBC_RESERVED_c = 12,
-  OBBC_RESERVED_d = 13,
-  OBBC_RESERVED_e = 14,
-  OBBC_RESERVED_f = 15,
+  /** Sets the debug information data.
+   *
+   * The format is somewhat complicated: `DEBUG length` is an opcode followed
+   * by a "column delta", and a "line delta" if `length` is not 0. Both "deltas"
+   * are encoded in LEB128.
+   *
+   * The interpreter starts by setting the currently executing line and column
+   * to 0, and always adds the column and line deltas from this instruction.
+   *
+   * If the length == 0, it is interpreted as just having a column delta.
+   *
+   * When length is > 0, it is interpreted as the length of a sequence of text
+   * immediately after this opcode, which contains the contents of the currently
+   * executing line (so if there is no changes in the line, there is no line
+   * "movement", thus the line delta is not encoded), and the column is set to 0
+   * before handling the column delta.
+   */
+  OB_OP_DEBUG = 6,
+
+  /** Sets the filename of the current program's debug information. The data is
+   * interpreted as the length of text immediately following this opcode. Also
+   * sets the line and column to 0.
+   */
+  OB_OP_FILENAME = 7,
+
+  OB_OP_RESERVED8 = 8,
+  OB_OP_RESERVED9 = 9,
+  OB_OP_RESERVEDa = 10,
+  OB_OP_RESERVEDb = 11,
+  OB_OP_RESERVEDc = 12,
+  OB_OP_RESERVEDd = 13,
+  OB_OP_RESERVEDe = 14,
+  OB_OP_RESERVEDf = 15,
 } ob_Opcode;
 
 void obbc_run(ob_Ctx ctx, size_t len, const uint8_t *code);

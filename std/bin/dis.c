@@ -75,24 +75,21 @@ void dofile(const char *input_path, FILE *input_file, ob_Serial *srl) {
         const char *name = "???";
 
         switch (opcode) {
-        case OBBC_PUSH_LITERAL:
+        case OB_OP_PUSH:
           name = "literal";
           break;
-        case OBBC_SEND:
+        case OB_OP_SEND:
           name = "send";
           break;
-        case OBBC_IMPLICIT_SEND:
+        case OB_OP_IMPLICIT:
           name = "implicit";
           break;
-        case OBBC_EXTEND:
+        case OB_OP_EXTEND:
           break;
-        case OBBC_RETURN:
+        case OB_OP_RETURN:
           name = "return";
           break;
-        case OBBC_CASCADE:
-          name = "cascade";
-          break;
-        case OBBC_ARRAY:
+        case OB_OP_ARRAY:
           name = "array";
           break;
         default:

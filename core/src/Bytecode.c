@@ -49,12 +49,12 @@ void obbc_run(ob_Ctx ctx, size_t len, const uint8_t *code) {
              literal);
 
     switch (opcode) {
-    case OBBC_PUSH_LITERAL: {
+    case OB_OP_PUSH: {
       // auto obj = ((ob_Obj *)method->literals.data)[data];
       ob_push(ctx, literal);
     }; break;
 
-    case OBBC_SEND: {
+    case OB_OP_SEND: {
       auto selector = *ob_cast_symbol(literal);
 
       QL_DEBUG("send: #'%.*s'", obstr_get_length(selector),
@@ -72,37 +72,19 @@ void obbc_run(ob_Ctx ctx, size_t len, const uint8_t *code) {
       ob_send(ctx, recv, selector);
     }; break;
 
-    case OBBC_IMPLICIT_SEND: {
+    case OB_OP_IMPLICIT: {
       auto selector = *ob_cast_symbol(literal);
 
       ob_send(ctx, ctx->this_activation, selector);
     }; break;
 
     // already handled by read_insn
-    case OBBC_EXTEND:
+    case OB_OP_EXTEND:
       break;
-
-    case OBBC_CASCADE: {
-      auto selector = *ob_cast_symbol(literal);
-      auto nargs = nargs_for_sel(ctx, selector);
-
-      auto stack_len = ql_array_length(&ctx->stack, sizeof(ob_Obj));
-
-      ob_Obj recv = *(ob_Obj *)ql_array_at(&ctx->stack, sizeof(ob_Obj),
-                                           stack_len - nargs - 1);
-
-      ql_array_remove(&ctx->stack, sizeof(ob_Obj), stack_len - nargs - 1);
-
-      ob_send(ctx, recv, selector);
-
-      (void)ob_pop(ctx);
-
-      ob_push(ctx, recv);
-    }; break;
 
       // TODO: OP_RETURN
 
-    case OBBC_ARRAY: {
+    case OB_OP_ARRAY: {
       auto obj = ob_create_array(ctx);
       auto arr = ob_cast_array(obj);
 
@@ -128,7 +110,7 @@ void obbc_append_insn(ql_Array *out, ob_Instruction insn) {
 
 uint8_t obbc_append_index(ql_Array *out, uint64_t index) {
   while (index > 15) {
-    obbc_append_insn(out, OBBC_MAKE(OBBC_EXTEND, index & 0xf));
+    obbc_append_insn(out, OBBC_MAKE(OB_OP_EXTEND, index & 0xf));
     index >>= 4;
   }
 
@@ -152,7 +134,7 @@ const uint8_t *obbc_read_insn(const uint8_t *source, ob_Opcode *opcode,
     source++;
     shift++;
 
-    if (code == OBBC_EXTEND) {
+    if (code == OB_OP_EXTEND) {
       // this_index <<= 4;
       continue;
     }

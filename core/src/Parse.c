@@ -113,7 +113,7 @@ static void push_literal(Reader *rdr, ob_Obj obj) {
   QL_DEBUG("push literal: %zu", index);
 
   index = obbc_append_index(&rdr->output->bytecode, index);
-  obbc_append_insn(&rdr->output->bytecode, OBBC_MAKE(OBBC_PUSH_LITERAL, index));
+  obbc_append_insn(&rdr->output->bytecode, OBBC_MAKE(OB_OP_PUSH, index));
 }
 
 /*
@@ -209,7 +209,7 @@ static void p_array(Reader *rdr) {
   rdr_expect1(rdr, ']');
 
   items = obbc_append_index(&rdr->output->bytecode, items);
-  obbc_append_insn(&rdr->output->bytecode, OBBC_MAKE(OBBC_ARRAY, items));
+  obbc_append_insn(&rdr->output->bytecode, OBBC_MAKE(OB_OP_ARRAY, items));
 }
 
 static void p_method(Reader *rdr) {
@@ -437,9 +437,8 @@ static bool p_primary(Reader *rdr) {
 static void emit_send(Reader *rdr, size_t index, bool explicitp) {
   index = obbc_append_index(&rdr->output->bytecode, index);
 
-  obbc_append_insn(
-      &rdr->output->bytecode,
-      OBBC_MAKE((explicitp ? OBBC_SEND : OBBC_IMPLICIT_SEND), index));
+  obbc_append_insn(&rdr->output->bytecode,
+                   OBBC_MAKE((explicitp ? OB_OP_SEND : OB_OP_IMPLICIT), index));
 }
 
 // primary . {unary-message}
@@ -585,7 +584,7 @@ static void p_expression(Reader *rdr) {
     rdr_next(rdr);
     p_expression(rdr);
 
-    obbc_append_insn(&rdr->output->bytecode, OBBC_RETURN);
+    obbc_append_insn(&rdr->output->bytecode, OB_OP_RETURN);
     return;
   }
 
