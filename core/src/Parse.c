@@ -48,11 +48,12 @@ typedef struct {
   const char *path;
   size_t line;
   size_t column;
-} Reader;
+} ob_Reader;
 
-Reader rdr_new(ob_Ctx context, ob_ObjMethod *output, size_t length,
-               const char *text) {
-  Reader rdr = {};
+ob_Reader ob_reader_create(ob_Ctx context, ob_ObjMethod *output, size_t length,
+                           const char *text) {
+  auto rdr = (ob_Reader){};
+
   rdr.context = context;
   rdr.output = output;
   rdr.remaining = length;
@@ -65,7 +66,7 @@ Reader rdr_new(ob_Ctx context, ob_ObjMethod *output, size_t length,
   return rdr;
 }
 
-void rdr_next(Reader *rdr) {
+void rdr_next(ob_Reader *rdr) {
   QL_ASSERT(rdr->remaining > 0, "unexpected end of file");
 
   rdr->column++;
@@ -79,13 +80,13 @@ void rdr_next(Reader *rdr) {
   rdr->remaining--;
 }
 
-static void rdr_expect1(Reader *rdr, char chr) {
+static void rdr_expect1(ob_Reader *rdr, char chr) {
   QL_ASSERT(*rdr->head == chr, "at '%s' %zu:%zu: expected `%c`, got `%c`",
             rdr->path, rdr->line + 1, rdr->column + 1, chr, *rdr->head);
   rdr_next(rdr);
 }
 
-static void rdr_expectn(Reader *rdr, const char *chrs) {
+static void rdr_expectn(ob_Reader *rdr, const char *chrs) {
   while (*chrs != 0) {
     if (*rdr->head == *chrs) {
       rdr_next(rdr);
@@ -100,13 +101,13 @@ static void rdr_expectn(Reader *rdr, const char *chrs) {
 }
 
 // i wish C had lambdas...
-void rdr_takewhile(Reader *rdr, bool (*pred)(char)) {
+void rdr_takewhile(ob_Reader *rdr, bool (*pred)(char)) {
   while (pred(*rdr->head)) {
     rdr_next(rdr);
   }
 }
 
-static void push_literal(Reader *rdr, ob_Obj obj) {
+static void push_literal(ob_Reader *rdr, ob_Obj obj) {
   auto index = ql_array_length(&rdr->output->literals, sizeof(ob_Obj));
   ql_array_push(&rdr->output->literals, sizeof(ob_Obj), (const void *)&obj);
 
@@ -130,9 +131,9 @@ static void push_literal(Reader *rdr, ob_Obj obj) {
  * expressions = expression { '.' expression }.
  */
 
-static void p_expression(Reader *rdr);
+static void p_expression(ob_Reader *rdr);
 
-static void p_skip_blank(Reader *rdr) {
+static void p_skip_blank(ob_Reader *rdr) {
   while (rdr->remaining > 0) {
     if (isspace(*rdr->head)) {
       while (isspace(*rdr->head)) {
@@ -158,7 +159,7 @@ static void p_skip_blank(Reader *rdr) {
   }
 }
 
-static void p_paren(Reader *rdr) {
+static void p_paren(ob_Reader *rdr) {
   rdr_next(rdr);
 
   p_skip_blank(rdr);
@@ -183,7 +184,7 @@ static void p_paren(Reader *rdr) {
   rdr_expect1(rdr, ')');
 }
 
-static void p_array(Reader *rdr) {
+static void p_array(ob_Reader *rdr) {
   size_t items = 0;
 
   rdr_next(rdr);
@@ -212,7 +213,7 @@ static void p_array(Reader *rdr) {
   obbc_append_insn(&rdr->output->bytecode, OBBC_MAKE(OB_OP_ARRAY, items));
 }
 
-static void p_method(Reader *rdr) {
+static void p_method(ob_Reader *rdr) {
   rdr_next(rdr);
 
   p_skip_blank(rdr);
@@ -281,7 +282,7 @@ static void p_method(Reader *rdr) {
   rdr_expect1(rdr, '}');
 }
 
-static ob_Str p_string_inner(Reader *rdr) {
+static ob_Str p_string_inner(ob_Reader *rdr) {
   rdr_next(rdr);
 
   auto buf = (ql_Array){};
@@ -328,14 +329,14 @@ static ob_Str p_string_inner(Reader *rdr) {
   return str;
 }
 
-static void p_string(Reader *rdr) {
+static void p_string(ob_Reader *rdr) {
   auto str = p_string_inner(rdr);
   auto obj = ob_create_string(rdr->context, str);
 
   push_literal(rdr, obj);
 }
 
-static void p_symbol(Reader *rdr) {
+static void p_symbol(ob_Reader *rdr) {
   rdr_next(rdr);
 
   ob_Str sel = NULL;
@@ -378,7 +379,7 @@ after_str:
   ql_array_free(&sym);
 }
 
-static bool p_primary(Reader *rdr) {
+static bool p_primary(ob_Reader *rdr) {
   /*
    * We know that explicit receivers can be one of:
    * -  Number literals, which always start with a digit,
@@ -434,7 +435,7 @@ static bool p_primary(Reader *rdr) {
   return true;
 }
 
-static void emit_send(Reader *rdr, size_t index, bool explicitp) {
+static void emit_send(ob_Reader *rdr, size_t index, bool explicitp) {
   index = obbc_append_index(&rdr->output->bytecode, index);
 
   obbc_append_insn(&rdr->output->bytecode,
@@ -443,7 +444,7 @@ static void emit_send(Reader *rdr, size_t index, bool explicitp) {
 
 // primary . {unary-message}
 // if we found a keyword instead, backtrack
-static bool p_unary_send(Reader *rdr, bool explicitp) {
+static bool p_unary_send(ob_Reader *rdr, bool explicitp) {
   while (true) {
     p_skip_blank(rdr);
 
@@ -486,13 +487,13 @@ static bool p_unary_send(Reader *rdr, bool explicitp) {
 }
 
 // primary [unary-send]
-static bool p_unary(Reader *rdr) {
+static bool p_unary(ob_Reader *rdr) {
   auto explicitp = p_primary(rdr);
   return p_unary_send(rdr, explicitp);
 }
 
 // unary-send . { operator unary-send }
-static bool p_binary_send(Reader *rdr, bool explicitp) {
+static bool p_binary_send(ob_Reader *rdr, bool explicitp) {
   while (true) {
     p_skip_blank(rdr);
     auto here = rdr->head;
@@ -523,12 +524,12 @@ static bool p_binary_send(Reader *rdr, bool explicitp) {
   return explicitp;
 }
 
-static bool p_binary(Reader *rdr) {
+static bool p_binary(ob_Reader *rdr) {
   auto explicitp = p_unary(rdr);
   return p_binary_send(rdr, explicitp);
 }
 
-static bool p_keyword_send(Reader *rdr, bool explicitp) {
+static bool p_keyword_send(ob_Reader *rdr, bool explicitp) {
   auto message = (ql_Array){};
   ql_array_init(&message, rdr->context->allocator);
 
@@ -572,12 +573,12 @@ static bool p_keyword_send(Reader *rdr, bool explicitp) {
 }
 
 // binary . { keyword binary }
-static bool p_keyword(Reader *rdr) {
+static bool p_keyword(ob_Reader *rdr) {
   auto explicitp = p_binary(rdr);
   return p_keyword_send(rdr, explicitp);
 }
 
-static void p_expression(Reader *rdr) {
+static void p_expression(ob_Reader *rdr) {
   p_skip_blank(rdr);
 
   if (*rdr->head == '^') {
@@ -591,7 +592,7 @@ static void p_expression(Reader *rdr) {
   (void)p_keyword(rdr);
 }
 
-static void p_toplevel(Reader *rdr) {
+static void p_toplevel(ob_Reader *rdr) {
   p_expression(rdr);
   p_skip_blank(rdr);
 
@@ -615,7 +616,7 @@ ob_Obj ob_load_ext(ob_Ctx ctx, const char *file, size_t length,
   ob_Obj closure = ob_create_method(ctx);
   auto clos = ob_cast_method(closure);
 
-  auto reader = rdr_new(ctx, clos, length, text);
+  auto reader = ob_reader_create(ctx, clos, length, text);
   reader.path = file;
 
   while (reader.remaining > 0) {
