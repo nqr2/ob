@@ -293,6 +293,10 @@ void obctx_enter_activation(ob_Ctx ctx, ob_Obj method, ob_Obj receiver) {
   auto act = obctx_allocate(ctx, OB_ACTIVATION, sizeof(ob_ObjActivation));
 
   ob_ObjActivation *data = ob_get_payload(act);
+  data->path = "*unknown*";
+  data->line = 0;
+  data->column = 0;
+
   data->parent = ctx->this_activation;
   data->method = method;
   data->receiver = receiver;

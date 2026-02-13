@@ -3,6 +3,7 @@
 #include <ob/core/Object.h>
 #include <ob/core/Serial.h>
 #include <ob/core/String.h>
+#include <stdbit.h>
 
 #define QL_LOG_MODULE "dis"
 #include <ql/Assert.h>
@@ -11,6 +12,15 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+size_t skip_leb(const uint8_t *data) {
+  size_t len = 0;
+
+  for (len = 0; data[len] & 0x80; len++) {
+  }
+
+  return len + 1;
+}
 
 void dofile(const char *input_path, FILE *input_file, ob_Serial *srl) {
   size_t length = 0;
@@ -68,6 +78,8 @@ void dofile(const char *input_path, FILE *input_file, ob_Serial *srl) {
       auto start = code;
 
       while ((size_t)(code - start) < len) {
+        int size = stdc_bit_width(method->bytecode.size) / 4 + 1;
+
         auto byte = *code;
         auto offset = (size_t)(code - start);
         code = obbc_read_insn(code, &opcode, &data);
@@ -84,6 +96,21 @@ void dofile(const char *input_path, FILE *input_file, ob_Serial *srl) {
         case OB_OP_IMPLICIT:
           name = "implicit";
           break;
+        case OB_OP_DEBUG:
+          name = "debug";
+
+          if (data == 0) {
+            code += skip_leb(code);
+          } else {
+            code += skip_leb(code);
+            code += skip_leb(code);
+            code += data + 1;
+          }
+          break;
+        case OB_OP_FILENAME:
+          name = "filename";
+          code += data + 1;
+          break;
         case OB_OP_EXTEND:
           break;
         case OB_OP_RETURN:
@@ -96,7 +123,7 @@ void dofile(const char *input_path, FILE *input_file, ob_Serial *srl) {
           break;
         }
 
-        printf("  %03zx : %02x", offset, byte);
+        printf("  %.*zx : %02x", size, offset, byte);
         printf("\t%s %zd", name, data);
 
         putchar('\n');

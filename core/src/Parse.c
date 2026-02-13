@@ -11,6 +11,7 @@
 #include <ql/Log.h>
 
 #include <ctype.h>
+#include <stdbit.h>
 #include <stdint.h>
 #include <string.h>
 
@@ -66,18 +67,68 @@ ob_Reader ob_reader_create(ob_Ctx context, ob_ObjMethod *output, size_t length,
   return rdr;
 }
 
+static void write_int(ql_Array *arr, uint64_t n) {
+  auto len = stdc_bit_width(n);
+  QL_ASSERT(len <= 63, "cannot encode a num > 64 bits.");
+
+  do {
+    uint8_t byte = n & 0x7f;
+    n >>= 7;
+
+    if (n != 0) {
+      byte |= 0x80;
+    }
+
+    ql_array_push(arr, sizeof(uint8_t), &byte);
+  } while (n != 0);
+}
+
+void rdr_emit_debug_file(ob_Reader *rdr) {
+  auto len = strlen(rdr->path);
+  auto tail = obbc_append_index(&rdr->output->bytecode, len + 1);
+  obbc_append_insn(&rdr->output->bytecode, OBBC_MAKE(OB_OP_FILENAME, tail));
+
+  ql_array_push(&rdr->output->bytecode, len, rdr->path);
+  ql_array_push(&rdr->output->bytecode, 1, (char[]){0});
+}
+
+void rdr_emit_debug_column(ob_Reader *rdr, size_t cdelta) {
+  obbc_append_insn(&rdr->output->bytecode, OBBC_MAKE(OB_OP_DEBUG, 0));
+
+  write_int(&rdr->output->bytecode, cdelta);
+}
+
+void rdr_emit_debug_line(ob_Reader *rdr, size_t column, size_t ldelta) {
+  auto eol = memchr(rdr->head, '\n', rdr->remaining);
+  auto len = (size_t)((const char *)eol - rdr->head);
+
+  if (eol == NULL) {
+    len = strlen(rdr->head);
+  }
+
+  auto tail = obbc_append_index(&rdr->output->bytecode, len);
+  obbc_append_insn(&rdr->output->bytecode, OBBC_MAKE(OB_OP_DEBUG, tail));
+
+  write_int(&rdr->output->bytecode, column);
+  write_int(&rdr->output->bytecode, ldelta);
+
+  ql_array_push(&rdr->output->bytecode, len, rdr->head);
+  ql_array_push(&rdr->output->bytecode, 1, (char[]){0});
+}
+
 void rdr_next(ob_Reader *rdr) {
   QL_ASSERT(rdr->remaining > 0, "unexpected end of file");
+  rdr->remaining--;
+  rdr->head++;
 
   rdr->column++;
 
-  if (*rdr->head == '\n') {
+  if (*(rdr->head - 1) == '\n') {
     rdr->line++;
     rdr->column = 0;
-  }
 
-  rdr->head++;
-  rdr->remaining--;
+    rdr_emit_debug_line(rdr, 0, 1);
+  }
 }
 
 static void rdr_expect1(ob_Reader *rdr, char chr) {
@@ -134,8 +185,11 @@ static void push_literal(ob_Reader *rdr, ob_Obj obj) {
 static void p_expression(ob_Reader *rdr);
 
 static void p_skip_blank(ob_Reader *rdr) {
+  auto stepped = false;
   while (rdr->remaining > 0) {
     if (isspace(*rdr->head)) {
+      stepped = true;
+
       while (isspace(*rdr->head)) {
         rdr_next(rdr);
       }
@@ -144,6 +198,8 @@ static void p_skip_blank(ob_Reader *rdr) {
     }
 
     if (*rdr->head == '"') {
+      stepped = true;
+
       rdr_next(rdr);
 
       while (*rdr->head != '"') {
@@ -156,6 +212,10 @@ static void p_skip_blank(ob_Reader *rdr) {
     }
 
     break;
+  }
+
+  if (stepped) {
+    rdr_emit_debug_column(rdr, 0);
   }
 }
 
@@ -618,6 +678,8 @@ ob_Obj ob_load_ext(ob_Ctx ctx, const char *file, size_t length,
 
   auto reader = ob_reader_create(ctx, clos, length, text);
   reader.path = file;
+
+  rdr_emit_debug_file(&reader);
 
   while (reader.remaining > 0) {
     p_skip_blank(&reader);

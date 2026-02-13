@@ -1,3 +1,4 @@
+#include "ob/Core.h"
 #include <ob/core/Bytecode.h>
 #include <ob/core/Context.h>
 #include <ob/core/Object.h>
@@ -27,8 +28,26 @@ static size_t nargs_for_sel(ob_Ctx ctx, ob_Str selector) {
   return n_args;
 }
 
+static const uint8_t *read_int(const uint8_t *bytes, uint64_t *result) {
+  auto shift = 0;
+  auto byte = *bytes;
+
+  *result = 0;
+
+  do {
+    byte = *bytes;
+    *result |= (byte & 0x7f) << (shift * 7);
+    shift++;
+    bytes++;
+  } while ((byte & 0x80) != 0);
+
+  return bytes;
+}
+
 void obbc_run(ob_Ctx ctx, size_t len, const uint8_t *code) {
   QL_DEBUG("running data from %p, length %zu", code, len);
+
+  auto here = ob_cast_activation(ctx->this_activation);
 
   auto start = code;
 
@@ -78,8 +97,37 @@ void obbc_run(ob_Ctx ctx, size_t len, const uint8_t *code) {
       ob_send(ctx, ctx->this_activation, selector);
     }; break;
 
-    // already handled by read_insn
     case OB_OP_EXTEND:
+      // already handled by read_insn
+      break;
+
+    case OB_OP_DEBUG:
+      if (data == 0) {
+        size_t col_delta = 0;
+        code = read_int(code, &col_delta);
+
+        here->column += col_delta;
+      } else {
+        size_t col_delta = 0;
+        size_t line_delta = 0;
+
+        code = read_int(code, &col_delta);
+        code = read_int(code, &line_delta);
+
+        here->this_line = (const char *)code;
+        here->line += line_delta;
+        here->column = col_delta;
+
+        code += data;
+      }
+      break;
+
+    case OB_OP_FILENAME:
+      here->path = (const char *)code;
+      here->line = 0;
+      here->column = 0;
+
+      code += data;
       break;
 
       // TODO: OP_RETURN
