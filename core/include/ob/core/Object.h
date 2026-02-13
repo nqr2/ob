@@ -91,7 +91,17 @@ struct ob_ObjCMethod {
 typedef void (*ob_FnDestroy)(ob_Obj obj);
 typedef void (*ob_FnVisit)(ob_Obj obj, void *userdata);
 
+typedef void (*ob_FnVisit2)(ob_Obj *obj, void *visit_data,
+                            void (*push)(ql_Array *target, ob_Obj *obj));
+
+typedef struct {
+  ob_Obj prototype;
+  ob_FnVisit2 visit;
+  ob_FnDestroy finalizer;
+} ob_DataMap;
+
 struct ob_ObjCData {
+  ob_DataMap *map;
   ob_Obj prototype;
   ob_FnVisit visit;
   ob_FnDestroy destroy;
