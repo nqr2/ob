@@ -70,7 +70,7 @@ static bool act__dnuw(ob_Ctx ctx) {
 }
 
 void oblib_load_activation(ob_Ctx ctx) {
-  ob_add_methods(ctx, ctx->proto.slots,
+  ob_add_methods(ctx, ctx->proto.activation,
                  (ob_MethodEntry[]){{"var:is:", act__var},
                                     {"self", act__self},
                                     {"environment", act__env},

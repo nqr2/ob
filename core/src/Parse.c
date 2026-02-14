@@ -100,10 +100,10 @@ void rdr_emit_debug_column(ob_Reader *rdr, size_t cdelta) {
 
 void rdr_emit_debug_line(ob_Reader *rdr, size_t column, size_t ldelta) {
   auto eol = memchr(rdr->head, '\n', rdr->remaining);
-  auto len = (size_t)((const char *)eol - rdr->head);
+  auto len = (size_t)((const char *)eol - rdr->head) + 1;
 
   if (eol == NULL) {
-    len = strlen(rdr->head);
+    len = strlen(rdr->head) + 1;
   }
 
   auto tail = obbc_append_index(&rdr->output->bytecode, len);

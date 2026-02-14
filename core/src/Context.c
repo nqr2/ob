@@ -12,6 +12,8 @@
 #include <ql/Number.h>
 #include <ql/Table.h>
 
+#include <ql/Log.h>
+
 #include <ctype.h>
 #include <string.h>
 
@@ -506,6 +508,9 @@ void ob_send_ext(ob_Ctx ctx, ob_Obj recv, ob_Str selector, ob_SendFlags flags) {
   ob_Obj invoked = NULL;
 
   if (!ob_get_slot(ctx, &invoked, recv, selector)) {
+    QL_DEBUG("doesNotUnderstand: %.*s", selector->length,
+             obstr_get_data(ctx, selector));
+
     if (flags & OB_SEND_DNUW) {
       auto dnuw = obstr_create_literal(ctx, "doesNotUnderstand:with:");
 

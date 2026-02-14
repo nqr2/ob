@@ -61,19 +61,20 @@ void obbc_run(ob_Ctx ctx, size_t len, const uint8_t *code) {
     auto act = ob_cast_activation(ctx->this_activation);
     auto method = ob_cast_method(act->method);
 
-    ob_Obj literal =
-        *(ob_Obj *)ql_array_at(&method->literals, sizeof(ob_Obj), data);
-
-    QL_DEBUG("offset %ld: %02x with literal: %p", (code - start), byte,
-             literal);
+    QL_DEBUG("offset %ld: %02x with data %zu", (code - start), byte, data);
 
     switch (opcode) {
     case OB_OP_PUSH: {
-      // auto obj = ((ob_Obj *)method->literals.data)[data];
+      auto literal =
+          *(ob_Obj *)ql_array_at(&method->literals, sizeof(ob_Obj), data);
+
       ob_push(ctx, literal);
     }; break;
 
     case OB_OP_SEND: {
+      auto literal =
+          *(ob_Obj *)ql_array_at(&method->literals, sizeof(ob_Obj), data);
+
       auto selector = *ob_cast_symbol(literal);
 
       QL_DEBUG("send: #'%.*s'", obstr_get_length(selector),
@@ -92,6 +93,9 @@ void obbc_run(ob_Ctx ctx, size_t len, const uint8_t *code) {
     }; break;
 
     case OB_OP_IMPLICIT: {
+      auto literal =
+          *(ob_Obj *)ql_array_at(&method->literals, sizeof(ob_Obj), data);
+
       auto selector = *ob_cast_symbol(literal);
 
       ob_send(ctx, ctx->this_activation, selector);

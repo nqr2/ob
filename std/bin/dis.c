@@ -104,12 +104,12 @@ void dofile(const char *input_path, FILE *input_file, ob_Serial *srl) {
           } else {
             code += skip_leb(code);
             code += skip_leb(code);
-            code += data + 1;
+            code += data;
           }
           break;
         case OB_OP_FILENAME:
           name = "filename";
-          code += data + 1;
+          code += data;
           break;
         case OB_OP_EXTEND:
           break;
