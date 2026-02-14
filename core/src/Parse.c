@@ -1,7 +1,7 @@
-#include "ob/Core.h"
 #include <ob/core/Bytecode.h>
 #include <ob/core/Context.h>
 #include <ob/core/Object.h>
+#include <ob/core/Parse.h>
 #include <ob/core/Serial.h>
 #include <ob/core/String.h>
 
@@ -40,7 +40,7 @@ static bool is_word_tail(char chr) {
   return is_word_start(chr);
 }
 
-typedef struct {
+struct ob_Reader {
   ob_Ctx context;
   ob_ObjMethod *output;
   size_t remaining;
@@ -49,7 +49,7 @@ typedef struct {
   const char *path;
   size_t line;
   size_t column;
-} ob_Reader;
+};
 
 ob_Reader ob_reader_create(ob_Ctx context, ob_ObjMethod *output, size_t length,
                            const char *text) {
