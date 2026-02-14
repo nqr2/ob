@@ -84,11 +84,11 @@ static void write_int(ql_Array *arr, uint64_t n) {
 }
 
 void rdr_emit_debug_file(ob_Reader *rdr) {
-  auto len = strlen(rdr->path);
-  auto tail = obbc_append_index(&rdr->output->bytecode, len + 1);
+  auto len = strlen(rdr->path) + 1;
+  auto tail = obbc_append_index(&rdr->output->bytecode, len);
   obbc_append_insn(&rdr->output->bytecode, OBBC_MAKE(OB_OP_FILENAME, tail));
 
-  ql_array_push(&rdr->output->bytecode, len, rdr->path);
+  ql_array_push(&rdr->output->bytecode, len - 1, rdr->path);
   ql_array_push(&rdr->output->bytecode, 1, (char[]){0});
 }
 
@@ -100,11 +100,13 @@ void rdr_emit_debug_column(ob_Reader *rdr, size_t cdelta) {
 
 void rdr_emit_debug_line(ob_Reader *rdr, size_t column, size_t ldelta) {
   auto eol = memchr(rdr->head, '\n', rdr->remaining);
-  auto len = (size_t)((const char *)eol - rdr->head) + 1;
+  auto len = (size_t)((const char *)eol - rdr->head);
 
   if (eol == NULL) {
-    len = strlen(rdr->head) + 1;
+    len = strlen(rdr->head);
   }
+
+  len++;
 
   auto tail = obbc_append_index(&rdr->output->bytecode, len);
   obbc_append_insn(&rdr->output->bytecode, OBBC_MAKE(OB_OP_DEBUG, tail));
@@ -112,7 +114,7 @@ void rdr_emit_debug_line(ob_Reader *rdr, size_t column, size_t ldelta) {
   write_int(&rdr->output->bytecode, column);
   write_int(&rdr->output->bytecode, ldelta);
 
-  ql_array_push(&rdr->output->bytecode, len, rdr->head);
+  ql_array_push(&rdr->output->bytecode, len - 1, rdr->head);
   ql_array_push(&rdr->output->bytecode, 1, (char[]){0});
 }
 
