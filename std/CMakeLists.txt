@@ -17,14 +17,11 @@ target_link_libraries("dis" PRIVATE "ObCore")
 function(obc INPUT)
   get_filename_component(BASENAME ${INPUT} NAME_WE)
 
-  add_custom_command(
-    OUTPUT "${BASENAME}.obc"
-    COMMAND "obc" "${INPUT}" > "${CMAKE_CURRENT_BINARY_DIR}/${BASENAME}.obc"
-    DEPENDS "${INPUT}"
-    VERBATIM
+  add_custom_target(
+    "${BASENAME}.obc"
+    COMMAND "obc" "${INPUT}" > "${BASENAME}.obc"
+    SOURCES "${INPUT}"
   )
-
-  add_custom_target("${BASENAME}.obc" DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/${BASENAME}.obc")
 endfunction()
 
 ## Building ObStd itself
@@ -57,4 +54,8 @@ install(
 target_link_libraries("ObStd" PUBLIC "ObCore")
 
 target_include_directories("ObStd" PUBLIC "include")
-target_include_directories("ObStd" PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+
+# TODO: wait until cmake issue #26584 is solved
+# https://gitlab.kitware.com/cmake/cmake/-/issues/26584
+# it should be OK for GCC and clang
+target_compile_options("ObStd" PRIVATE "--embed-dir=${CMAKE_CURRENT_BINARY_DIR}")

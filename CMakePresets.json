@@ -9,6 +9,8 @@
             "binaryDir": ".build",
             "installDir": ".install",
 
+            "generator": "Ninja",
+
             "cacheVariables": {
               "QL_BUILD_TESTS": false,
               "QL_BUILD_DOCS": false,

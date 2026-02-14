@@ -4,6 +4,6 @@ pkgs.mkShell {
     gcc
     doxygen
     cmake
-    gnumake
+    ninja
   ];
 }
