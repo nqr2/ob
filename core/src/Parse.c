@@ -134,8 +134,14 @@ void rdr_next(ob_Reader *rdr) {
 }
 
 static void rdr_expect1(ob_Reader *rdr, char chr) {
+  if(rdr->remaining==0) {
+    QL_ASSERT(*rdr->head == chr, "at '%s' %zu:%zu: expected `%c`, got EOF",
+              rdr->path, rdr->line + 1, rdr->column + 1, chr, *rdr->head);
+  }
+
   QL_ASSERT(*rdr->head == chr, "at '%s' %zu:%zu: expected `%c`, got `%c`",
             rdr->path, rdr->line + 1, rdr->column + 1, chr, *rdr->head);
+
   rdr_next(rdr);
 }
 
