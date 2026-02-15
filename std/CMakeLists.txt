@@ -14,20 +14,26 @@ add_executable(
 
 target_link_libraries("dis" PRIVATE "ObCore")
 
-function(obc INPUT)
-  get_filename_component(BASENAME ${INPUT} NAME_WE)
+function(obc)
+  cmake_parse_arguments(PARSE_ARGV 0 arg "" OUTPUT INPUTS)
+
+  list(TRANSFORM arg_INPUTS PREPEND "${CMAKE_CURRENT_SOURCE_DIR}/lib/")
 
   add_custom_target(
-    "${BASENAME}.obc"
-    COMMAND "obc" "${INPUT}" > "${BASENAME}.obc"
-    SOURCES "${INPUT}"
+    "${arg_OUTPUT}"
+    COMMAND "obc" ${arg_INPUTS} > "${arg_OUTPUT}"
+    SOURCES ${arg_INPUTS}
   )
 endfunction()
 
 ## Building ObStd itself
 
-obc("lib/Shell.ob")
-obc("lib/Boolean.ob")
+obc(
+  OUTPUT "World.obc"
+  INPUTS
+    "Shell.ob"
+    "Boolean.ob"
+)
 
 add_library("ObStd" OBJECT
   "src/Std.c"
@@ -41,10 +47,7 @@ add_library("ObStd" OBJECT
   "src/World.c"
 )
 
-add_dependencies("ObStd"
-  "Shell.obc"
-  "Boolean.obc"
-)
+add_dependencies("ObStd" "World.obc")
 
 install(
   DIRECTORY "include/ob"
