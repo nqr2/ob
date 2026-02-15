@@ -205,7 +205,7 @@ ql_Number *ob_cast_number(ob_Obj obj) {
   return cast(obj, OB_NUMBER);
 }
 
-ql_ArrayT(ob_Obj) * ob_cast_array(ob_Obj obj) {
+ql_Array *ob_cast_array(ob_Obj obj) {
   return cast(obj, OB_ARRAY);
 }
 
