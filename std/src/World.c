@@ -5,7 +5,7 @@
 #include <ob/core/Object.h>
 #include <ob/core/String.h>
 
-static const uint8_t WORLD[] = {
+static uint8_t const WORLD[] = {
 #embed "World.obc"
 };
 

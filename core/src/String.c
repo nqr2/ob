@@ -14,7 +14,7 @@ typedef struct {
   size_t size;
 } StrAvailable;
 
-ob_Str obstr_create(ob_Ctx ctx, size_t len, const char *data) {
+ob_Str obstr_create(ob_Ctx ctx, size_t len, char const *data) {
   size_t target = 0;
   auto length = ql_array_length(&ctx->string_available, sizeof(StrAvailable));
 
@@ -56,8 +56,8 @@ size_t obstr_get_length(ob_Str str) {
   return str->length & STRING_LENGTH_MASK;
 }
 
-const char *obstr_get_data(ob_Ctx ctx, ob_Str str) {
-  return ((const char *)ctx->string_data.data) + str->offset;
+char const *obstr_get_data(ob_Ctx ctx, ob_Str str) {
+  return ((char const *)ctx->string_data.data) + str->offset;
 }
 
 uint64_t obstr_get_hash(ob_Ctx ctx, ob_Str str) {

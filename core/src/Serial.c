@@ -198,7 +198,7 @@ ob_Obj obsrl_read(ob_Serial *srl) {
       uint64_t length = 0;
       head = read_int(head, &length);
 
-      auto str = obstr_create(srl->ctx, length, (const char *)head);
+      auto str = obstr_create(srl->ctx, length, (char const *)head);
       head += length;
 
       result = ob_create_symbol(srl->ctx, str);
@@ -208,7 +208,7 @@ ob_Obj obsrl_read(ob_Serial *srl) {
       uint64_t length = 0;
       head = read_int(head, &length);
 
-      auto str = obstr_create(srl->ctx, length, (const char *)head);
+      auto str = obstr_create(srl->ctx, length, (char const *)head);
       head += length;
 
       result = ob_create_string(srl->ctx, str);
@@ -262,11 +262,11 @@ ob_Obj obsrl_read(ob_Serial *srl) {
   return result;
 }
 
-void obsrl_store(const ob_Serial *srl, size_t len, uint8_t *data) {
+void obsrl_store(ob_Serial const *srl, size_t len, uint8_t *data) {
   memcpy(data, srl->buffer.data, len);
 }
 
-void obsrl_load(ob_Serial *srl, size_t len, const uint8_t *data) {
+void obsrl_load(ob_Serial *srl, size_t len, uint8_t const *data) {
   ql_array_reserve(&srl->buffer, len);
   memcpy(srl->buffer.data, data, len);
   srl->buffer.size = len;

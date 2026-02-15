@@ -28,7 +28,7 @@ static size_t nargs_for_sel(ob_Ctx ctx, ob_Str selector) {
   return n_args;
 }
 
-static const uint8_t *read_int(const uint8_t *bytes, uint64_t *result) {
+static uint8_t const *read_int(uint8_t const *bytes, uint64_t *result) {
   auto shift = 0;
   auto byte = *bytes;
 
@@ -44,7 +44,7 @@ static const uint8_t *read_int(const uint8_t *bytes, uint64_t *result) {
   return bytes;
 }
 
-void obbc_run(ob_Ctx ctx, size_t len, const uint8_t *code) {
+void obbc_run(ob_Ctx ctx, size_t len, uint8_t const *code) {
   QL_DEBUG("running data from %p, length %zu", code, len);
 
   auto here = ob_cast_activation(ctx->this_activation);
@@ -118,7 +118,7 @@ void obbc_run(ob_Ctx ctx, size_t len, const uint8_t *code) {
         code = read_int(code, &col_delta);
         code = read_int(code, &line_delta);
 
-        here->this_line = (const char *)code;
+        here->this_line = (char const *)code;
         here->line += line_delta;
         here->column = col_delta;
 
@@ -127,7 +127,7 @@ void obbc_run(ob_Ctx ctx, size_t len, const uint8_t *code) {
       break;
 
     case OB_OP_FILENAME:
-      here->path = (const char *)code;
+      here->path = (char const *)code;
       here->line = 0;
       here->column = 0;
 
@@ -169,7 +169,7 @@ uint8_t obbc_append_index(ql_Array *out, uint64_t index) {
   return index;
 }
 
-const uint8_t *obbc_read_insn(const uint8_t *source, ob_Opcode *opcode,
+uint8_t const *obbc_read_insn(uint8_t const *source, ob_Opcode *opcode,
                               size_t *data) {
   size_t this_index = 0;
   size_t shift = 0;

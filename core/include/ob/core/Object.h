@@ -77,8 +77,8 @@ struct ob_ObjMethod {
 typedef bool (*ob_FnCMethod)(ob_Ctx ctx);
 
 struct ob_ObjActivation {
-  const char *path;
-  const char *this_line;
+  char const *path;
+  char const *this_line;
   size_t line;
   size_t column;
 

@@ -44,9 +44,9 @@ struct ob_Reader {
   ob_Ctx context;
   ob_ObjMethod *output;
   size_t remaining;
-  const char *head;
+  char const *head;
 
-  const char *path;
+  char const *path;
   size_t line;
   size_t column;
 };
@@ -84,7 +84,7 @@ void rdr_emit_debug_column(ob_Rdr rdr, size_t cdelta) {
 
 void rdr_emit_debug_line(ob_Rdr rdr, size_t column, size_t ldelta) {
   auto eol = memchr(rdr->head, '\n', rdr->remaining);
-  auto len = (size_t)((const char *)eol - rdr->head);
+  auto len = (size_t)((char const *)eol - rdr->head);
 
   if (eol == NULL) {
     len = strlen(rdr->head);
@@ -129,7 +129,7 @@ static void rdr_expect1(ob_Rdr rdr, char chr) {
   rdr_next(rdr);
 }
 
-static void rdr_expectn(ob_Rdr rdr, const char *chrs) {
+static void rdr_expectn(ob_Rdr rdr, char const *chrs) {
   while (*chrs != 0) {
     if (*rdr->head == *chrs) {
       rdr_next(rdr);
@@ -152,7 +152,7 @@ void rdr_takewhile(ob_Rdr rdr, bool (*pred)(char)) {
 
 static void push_literal(ob_Rdr rdr, ob_Obj obj) {
   auto index = ql_array_length(&rdr->output->literals, sizeof(ob_Obj));
-  ql_array_push(&rdr->output->literals, sizeof(ob_Obj), (const void *)&obj);
+  ql_array_push(&rdr->output->literals, sizeof(ob_Obj), (void const *)&obj);
 
   QL_DEBUG("push literal: %zu", index);
 
@@ -523,7 +523,7 @@ static bool p_unary_send(ob_Rdr rdr, bool explicitp) {
 
       auto index = ql_array_length(&rdr->output->literals, sizeof(ob_Obj));
       ql_array_push(&rdr->output->literals, sizeof(ob_Obj),
-                    (const void *)&objsel);
+                    (void const *)&objsel);
 
       emit_send(rdr, index, explicitp);
 
@@ -562,7 +562,7 @@ static bool p_binary_send(ob_Rdr rdr, bool explicitp) {
 
       auto index = ql_array_length(&rdr->output->literals, sizeof(ob_Obj));
       ql_array_push(&rdr->output->literals, sizeof(ob_Obj),
-                    (const void *)&objsel);
+                    (void const *)&objsel);
 
       emit_send(rdr, index, explicitp);
 
@@ -615,7 +615,7 @@ static bool p_keyword_send(ob_Rdr rdr, bool explicitp) {
 
     auto index = ql_array_length(&rdr->output->literals, sizeof(ob_Obj));
     ql_array_push(&rdr->output->literals, sizeof(ob_Obj),
-                  (const void *)&objsel);
+                  (void const *)&objsel);
 
     emit_send(rdr, index, explicitp);
   }
@@ -651,13 +651,13 @@ static void p_toplevel(ob_Rdr rdr) {
   rdr_expect1(rdr, '.');
 }
 
-ob_Obj ob_load_ext(ob_Ctx ctx, const char *file, size_t length,
-                   const char *text) {
+ob_Obj ob_load_ext(ob_Ctx ctx, char const *file, size_t length,
+                   char const *text) {
   if (strncmp(text, OB_SERIAL_HEADER, sizeof(OB_SERIAL_HEADER)) == 0) {
     auto srl = (ob_Serial){};
     obsrl_init(&srl, ctx);
 
-    obsrl_load(&srl, length, (const uint8_t *)text);
+    obsrl_load(&srl, length, (uint8_t const *)text);
     auto obj = obsrl_read(&srl);
 
     obsrl_free(&srl);
@@ -675,11 +675,11 @@ ob_Obj ob_load_ext(ob_Ctx ctx, const char *file, size_t length,
   return method;
 }
 
-ob_Obj ob_load(ob_Ctx ctx, size_t length, const char *text) {
+ob_Obj ob_load(ob_Ctx ctx, size_t length, char const *text) {
   return ob_load_ext(ctx, "*unknown*", length, text);
 }
 
-void ob_run_ext(ob_Ctx ctx, const char *file, size_t length, const char *text) {
+void ob_run_ext(ob_Ctx ctx, char const *file, size_t length, char const *text) {
   auto chunk = ob_load_ext(ctx, file, length, text);
   auto method = ob_cast_method(chunk);
 
@@ -690,7 +690,7 @@ void ob_run_ext(ob_Ctx ctx, const char *file, size_t length, const char *text) {
   obctx_leave_activation(ctx);
 }
 
-void ob_run(ob_Ctx ctx, size_t length, const char *text) {
+void ob_run(ob_Ctx ctx, size_t length, char const *text) {
   ob_run_ext(ctx, "*unknown*", length, text);
 }
 
@@ -712,7 +712,7 @@ void obrdr_free(ob_Rdr rdr) {
   // rdr->head and rdr->path are not managed by this
 }
 
-void obrdr_load(ob_Rdr rdr, const char *path, size_t length, const char *data) {
+void obrdr_load(ob_Rdr rdr, char const *path, size_t length, char const *data) {
   rdr->path = path;
   rdr->remaining = length;
   rdr->head = data;

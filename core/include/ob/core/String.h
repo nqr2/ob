@@ -34,13 +34,13 @@ struct ob_String {
   struct ob_String *next;
 };
 
-ob_Str obstr_create(ob_Ctx ctx, size_t len, const char *data);
+ob_Str obstr_create(ob_Ctx ctx, size_t len, char const *data);
 
 #define obstr_create_literal(Context, Literal)                                 \
   obstr_create((Context), sizeof(Literal) - 1, "" Literal "")
 
 size_t obstr_get_length(ob_Str str);
-const char *obstr_get_data(ob_Ctx ctx, ob_Str str);
+char const *obstr_get_data(ob_Ctx ctx, ob_Str str);
 uint64_t obstr_get_hash(ob_Ctx ctx, ob_Str str);
 
 void obstr_mark(ob_Str str);

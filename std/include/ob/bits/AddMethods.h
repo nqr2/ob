@@ -21,7 +21,7 @@
 #include <ob/Core.h>
 
 typedef struct {
-  const char *name;
+  char const *name;
   ob_FnCMethod method;
 } ob_MethodEntry;
 

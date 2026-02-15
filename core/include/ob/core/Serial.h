@@ -41,7 +41,7 @@ void obsrl_free(ob_Serial *srl);
 void obsrl_write(ob_Serial *srl, ob_Obj object);
 ob_Obj obsrl_read(ob_Serial *srl);
 
-void obsrl_store(const ob_Serial *srl, size_t len, uint8_t *data);
-void obsrl_load(ob_Serial *srl, size_t len, const uint8_t *data);
+void obsrl_store(ob_Serial const *srl, size_t len, uint8_t *data);
+void obsrl_load(ob_Serial *srl, size_t len, uint8_t const *data);
 
 #endif

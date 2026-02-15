@@ -227,17 +227,17 @@ ob_Exncode ob_pcall(ob_Ctx ctx, void (*inner)(ob_Ctx ctx, void *userdata),
                     void *userdata);
 
 /// Parse some text with a path, and return a unary closure
-ob_Obj ob_load_ext(ob_Ctx ctx, const char *file, size_t length,
-                   const char *text);
+ob_Obj ob_load_ext(ob_Ctx ctx, char const *file, size_t length,
+                   char const *text);
 
 /// Parse some text, and return a unary closure
-ob_Obj ob_load(ob_Ctx ctx, size_t length, const char *text);
+ob_Obj ob_load(ob_Ctx ctx, size_t length, char const *text);
 
 /// Call @ref ob_load_ext, and invoke the returned closure.
-void ob_run_ext(ob_Ctx ctx, const char *file, size_t length, const char *text);
+void ob_run_ext(ob_Ctx ctx, char const *file, size_t length, char const *text);
 
 /// Call @ref ob_load, and invoke the returned closure.
-void ob_run(ob_Ctx ctx, size_t length, const char *text);
+void ob_run(ob_Ctx ctx, size_t length, char const *text);
 
 #define OB_ISA(Obj, Tag) (ob_get_tag((Obj)) == (Tag))
 

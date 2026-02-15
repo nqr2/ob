@@ -14,7 +14,7 @@ struct Userdata {
   ob_Rdr reader;
 };
 
-void dofile(void *udata, const char *path) {
+void dofile(void *udata, char const *path) {
   auto data = (struct Userdata *)udata;
 
   auto ctx = data->context;
@@ -48,7 +48,7 @@ void dofile(void *udata, const char *path) {
   fclose(file);
 }
 
-void dostring(struct Userdata *data, const char *input) {
+void dostring(struct Userdata *data, char const *input) {
   auto ctx = data->context;
   auto rdr = data->reader;
 
@@ -57,7 +57,7 @@ void dostring(struct Userdata *data, const char *input) {
   obrdr_load(rdr, "*commandline*", length, input);
 }
 
-int main(int argn, const char *argv[]) {
+int main(int argn, char const *argv[]) {
   auto log = ql_log_create_handler();
   ql_log_set_handler(&log);
   ql_log_set_level(QL_LOG_DEBUG);
@@ -66,7 +66,7 @@ int main(int argn, const char *argv[]) {
 
   auto ctx = ob_create(&alloc);
 
-  const char *instr = NULL;
+  char const *instr = NULL;
 
   auto f_i = ql_create_flag('e', NULL, QL_FLAG_STRING, (void *)&instr);
 

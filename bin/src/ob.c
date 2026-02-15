@@ -12,7 +12,7 @@
 // TODO: now in std, move to core?
 void obj_print(ob_Ctx ctx, ob_Obj receiver);
 
-void dofile(ob_Ctx ctx, const char *path) {
+void dofile(ob_Ctx ctx, char const *path) {
   auto file = fopen(path, "r");
 
   if (file == NULL) {
@@ -87,13 +87,13 @@ void repl(ob_Ctx ctx) {
   ql_array_free(&line);
 }
 
-int main(int argn, const char *argv[]) {
+int main(int argn, char const *argv[]) {
   bool is_interactive = argn == 1;
-  const char *execute = NULL;
+  char const *execute = NULL;
 
-  const char *stdout_capture = nullptr;
-  const char *stderr_capture = nullptr;
-  const char *stdin_capture = nullptr;
+  char const *stdout_capture = nullptr;
+  char const *stderr_capture = nullptr;
+  char const *stdin_capture = nullptr;
 
   int loglevel = QL_LOG_ERROR;
 

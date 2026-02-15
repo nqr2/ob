@@ -318,7 +318,7 @@ void obctx_leave_activation(ob_Ctx ctx) {
 }
 
 void ob_push(ob_Ctx ctx, ob_Obj obj) {
-  ql_array_push(&ctx->stack, sizeof(ob_Obj), (const void *)&obj);
+  ql_array_push(&ctx->stack, sizeof(ob_Obj), (void const *)&obj);
 }
 
 ob_Obj ob_pop(ob_Ctx ctx) {
@@ -480,7 +480,7 @@ static void invoke(ob_Ctx ctx, ob_Obj invoked, ob_Obj recv, size_t n_args) {
   }
 }
 
-static size_t args_for_sel(size_t len, const char *data) {
+static size_t args_for_sel(size_t len, char const *data) {
   size_t n_args = 0;
 
   if (ispunct(data[0])) {

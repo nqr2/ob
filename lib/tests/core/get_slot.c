@@ -91,7 +91,7 @@ void read_known_after_gc() {
   }
 }
 
-const ql_Test suite[] = {QL_PASS(cannot_read_bogus), QL_PASS(read_known),
+ql_Test const suite[] = {QL_PASS(cannot_read_bogus), QL_PASS(read_known),
                          QL_PASS(read_known_after_gc), QL_SUITE_END};
 
 int core_get_slot() {

@@ -13,7 +13,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-size_t skip_leb(const uint8_t *data) {
+size_t skip_leb(uint8_t const *data) {
   size_t len = 0;
 
   for (len = 0; data[len] & 0x80; len++) {
@@ -22,7 +22,7 @@ size_t skip_leb(const uint8_t *data) {
   return len + 1;
 }
 
-void dofile(const char *input_path, FILE *input_file, ob_Serial *srl) {
+void dofile(char const *input_path, FILE *input_file, ob_Serial *srl) {
   size_t length = 0;
 
   auto data = (ql_Array){};
@@ -74,7 +74,7 @@ void dofile(const char *input_path, FILE *input_file, ob_Serial *srl) {
       ob_Opcode opcode = 0;
       size_t data = 0;
 
-      auto code = (const uint8_t *)method->bytecode.data;
+      auto code = (uint8_t const *)method->bytecode.data;
       auto start = code;
 
       while ((size_t)(code - start) < len) {
@@ -84,7 +84,7 @@ void dofile(const char *input_path, FILE *input_file, ob_Serial *srl) {
         auto offset = (size_t)(code - start);
         code = obbc_read_insn(code, &opcode, &data);
 
-        const char *name = "???";
+        char const *name = "???";
 
         switch (opcode) {
         case OB_OP_PUSH:
