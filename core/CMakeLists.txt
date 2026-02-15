@@ -1,4 +1,7 @@
 add_library("ObCore" OBJECT
+  "include/ob/bits/Begin.h"
+  "include/ob/bits/End.h"
+
   "include/ob/core/Bytecode.h"
   "include/ob/core/Context.h"
   "include/ob/core/Object.h"
@@ -24,3 +27,5 @@ install(
 target_include_directories("ObCore" PUBLIC "include")
 
 target_link_libraries("ObCore" PUBLIC ql::ql)
+
+target_compile_definitions("ObCore" PRIVATE OB_IMPLEMENTATION)

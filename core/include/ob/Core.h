@@ -27,6 +27,8 @@
  * in the @c ob/core directory for "lower-level" implementation details.
  */
 
+#include <ob/bits/Begin.h>
+
 #include <ql/Allocator.h>
 #include <ql/Array.h>
 #include <ql/Exn.h>
@@ -244,5 +246,7 @@ void ob_run(ob_Ctx ctx, size_t length, char const *text);
 #define OB_IS_INVOCABLE(Obj)                                                   \
   (OB_ISA((Obj), OB_METHOD) || OB_ISA((Obj), OB_LIGHTCMETHOD) ||               \
    OB_ISA((Obj), OB_CMETHOD))
+
+#include <ob/bits/End.h>
 
 #endif

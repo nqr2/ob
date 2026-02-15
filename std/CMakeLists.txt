@@ -62,3 +62,5 @@ target_include_directories("ObStd" PUBLIC "include")
 # https://gitlab.kitware.com/cmake/cmake/-/issues/26584
 # it should be OK for GCC and clang
 target_compile_options("ObStd" PRIVATE "--embed-dir=${CMAKE_CURRENT_BINARY_DIR}")
+
+target_compile_definitions("ObStd" PRIVATE OB_IMPLEMENTATION)
