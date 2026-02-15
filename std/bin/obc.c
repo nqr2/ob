@@ -1,4 +1,5 @@
 #include <ob/core/Context.h>
+#include <ob/core/Parse.h>
 #include <ob/core/Serial.h>
 
 #include <ql/Argparse.h>
@@ -8,15 +9,24 @@
 #include <stdio.h>
 #include <string.h>
 
+struct Userdata {
+  ob_Ctx context;
+  ob_Rdr reader;
+};
+
 void dofile(void *udata, const char *path) {
-  ob_Ctx ctx = udata;
+  auto data = (struct Userdata *)udata;
+
+  auto ctx = data->context;
+  auto rdr = data->reader;
+
   auto file = fopen(path, "r");
 
   if (file == NULL) {
     return;
   }
 
-  auto data = (ql_Array){};
+  auto contents = (ql_Array){};
   auto length = 0L;
 
   fseek(file, 0, SEEK_END);
@@ -25,39 +35,26 @@ void dofile(void *udata, const char *path) {
 
   rewind(file);
 
-  ql_array_init(&data, ctx->allocator);
-  ql_array_reserve(&data, length);
-  data.size = length;
+  ql_array_init(&contents, ctx->allocator);
+  ql_array_reserve(&contents, length);
+  contents.size = length;
 
-  fread(data.data, sizeof(char), data.size, file);
+  fread(contents.data, sizeof(char), contents.size, file);
 
-  auto method = ob_load_ext(ctx, path, data.size, data.data);
-
-  auto srl = (ob_Serial){};
-  obsrl_init(&srl, ctx);
-
-  obsrl_write(&srl, method);
-  fwrite(srl.buffer.data, sizeof(uint8_t), srl.buffer.size, stdout);
-
-  obsrl_free(&srl);
+  obrdr_load(rdr, path, contents.size, contents.data);
 
   // exit:
-  ql_array_free(&data);
+  ql_array_free(&contents);
   fclose(file);
 }
 
-void dostring(ob_Ctx ctx, const char *input) {
+void dostring(struct Userdata *data, const char *input) {
+  auto ctx = data->context;
+  auto rdr = data->reader;
+
   auto length = strlen(input);
 
-  auto method = ob_load_ext(ctx, "*command*", length, input);
-
-  auto srl = (ob_Serial){};
-  obsrl_init(&srl, ctx);
-
-  obsrl_write(&srl, method);
-  fwrite(srl.buffer.data, sizeof(uint8_t), srl.buffer.size, stdout);
-
-  obsrl_free(&srl);
+  obrdr_load(rdr, "*commandline*", length, input);
 }
 
 int main(int argn, const char *argv[]) {
@@ -73,8 +70,12 @@ int main(int argn, const char *argv[]) {
 
   auto f_i = ql_create_flag('e', NULL, QL_FLAG_STRING, (void *)&instr);
 
+  auto rdr = obrdr_create(ctx);
+
+  auto data = (struct Userdata){.context = ctx, .reader = rdr};
+
   auto parser = ql_create_parser((ql_Flag[]){f_i});
-  parser.userdata = ctx;
+  parser.userdata = &data;
   parser.positional_arg = dofile;
 
   size_t arg_index = 0;
@@ -83,10 +84,22 @@ int main(int argn, const char *argv[]) {
     arg_index = ql_parse(&parser, argn - arg_index, argv + arg_index);
 
     if (instr != NULL) {
-      dostring(ctx, instr);
+      dostring(&data, instr);
       instr = NULL;
     }
   } while (arg_index < (size_t)argn);
+
+  auto srl = (ob_Serial){};
+  obsrl_init(&srl, ctx);
+
+  obsrl_write(&srl, obrdr_get_method(rdr));
+  fwrite(srl.buffer.data, sizeof(uint8_t), srl.buffer.size, stdout);
+
+  obsrl_free(&srl);
+
+  obrdr_free(rdr);
+
+  // TODO: this
 
   ob_destroy(ctx);
 

@@ -668,19 +668,6 @@ ob_Obj ob_load_ext(ob_Ctx ctx, const char *file, size_t length,
   auto rdr = obrdr_create(ctx);
   obrdr_load(rdr, file, length, text);
 
-  while (rdr->remaining > 0) {
-    p_skip_blank(rdr);
-
-    if (rdr->remaining == 0) {
-      break;
-    }
-
-    auto previous = rdr->head;
-    p_toplevel(rdr);
-
-    QL_ASSERT(rdr->head != previous, "didn't read anything");
-  }
-
   auto method = obrdr_get_method(rdr);
 
   obrdr_free(rdr);
@@ -734,6 +721,19 @@ void obrdr_load(ob_Rdr rdr, const char *path, size_t length, const char *data) {
   rdr->column = 0;
 
   rdr_emit_debug_file(rdr);
+
+  while (rdr->remaining > 0) {
+    p_skip_blank(rdr);
+
+    if (rdr->remaining == 0) {
+      break;
+    }
+
+    auto previous = rdr->head;
+    p_toplevel(rdr);
+
+    QL_ASSERT(rdr->head != previous, "didn't read anything");
+  }
 }
 
 ob_Obj obrdr_get_method(ob_Rdr rdr) {
