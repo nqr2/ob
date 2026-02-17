@@ -70,11 +70,17 @@ static bool act__cmw(ob_Ctx ctx) {
   return false;
 }
 
+static bool act__frame(ob_Ctx ctx) {
+  ob_push(ctx, ctx->this_activation);
+  return true;
+}
+
 void oblib_load_activation(ob_Ctx ctx) {
   ob_add_methods(ctx, ctx->proto.activation,
                  (ob_MethodEntry[]){{"var:is:", act__var},
                                     {"self", act__self},
                                     {"environment", act__env},
                                     {"callMissing:with:", act__cmw},
+                                    {"thisFrame", act__frame},
                                     OB_METHODS_END});
 }
