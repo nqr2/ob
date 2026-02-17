@@ -17,12 +17,11 @@ target_link_libraries("dis" PRIVATE "ObCore")
 function(obc)
   cmake_parse_arguments(PARSE_ARGV 0 arg "" OUTPUT INPUTS)
 
-  list(TRANSFORM arg_INPUTS PREPEND "${CMAKE_CURRENT_SOURCE_DIR}/lib/")
-
   add_custom_target(
     "${arg_OUTPUT}"
-    COMMAND "obc" ${arg_INPUTS} > "${arg_OUTPUT}"
+    COMMAND "obc" ${arg_INPUTS} > "${CMAKE_CURRENT_BINARY_DIR}/${arg_OUTPUT}"
     SOURCES ${arg_INPUTS}
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
   )
 endfunction()
 
@@ -31,8 +30,8 @@ endfunction()
 obc(
   OUTPUT "World.obc"
   INPUTS
-    "Shell.ob"
-    "Boolean.ob"
+    "lib/Shell.ob"
+    "lib/Boolean.ob"
 )
 
 add_library("ObStd" OBJECT
