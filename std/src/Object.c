@@ -1,3 +1,4 @@
+#include "ob/Core.h"
 #include <ob/bits/AddMethods.h>
 #include <ob/lib/Object.h>
 
@@ -137,6 +138,17 @@ static bool o__send(ob_Ctx ctx) {
 
   return true;
 }
+static bool o__has_method(ob_Ctx ctx) {
+  auto receiver = ob_get_receiver(ctx);
+  auto selector = ob_pop(ctx);
+
+  auto sel = *ob_cast_symbol(selector);
+
+  bool got = ob_get_slot(ctx, NULL, receiver, sel);
+
+  ob_push(ctx, OB_BOOL_CAST(ctx, got));
+  return true;
+}
 
 void oblib_load_object(ob_Ctx ctx) {
   ob_add_methods(ctx, ctx->proto.object,
@@ -145,5 +157,6 @@ void oblib_load_object(ob_Ctx ctx) {
                                     {"prototype", o__prototype},
                                     {"self", o__self},
                                     {"send:with:", o__send},
+                                    {"hasMethod:", o__has_method},
                                     OB_METHODS_END});
 }

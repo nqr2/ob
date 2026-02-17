@@ -216,7 +216,8 @@ bool ob_get_slot(ob_Ctx ctx, ob_Obj *slot, ob_Obj obj, ob_Str selector);
 ob_Obj ob_get_receiver(ob_Ctx ctx);
 
 typedef enum {
-  OB_SEND_DNUW = 0x1, // Dispatch #doesNotUnderstand:with:
+  /// Dispatch #callMissing:with: if the method is not present.
+  OB_SEND_CMW = 0x1,
 } ob_SendFlags;
 
 void ob_send_ext(ob_Ctx ctx, ob_Obj recv, ob_Str selector, ob_SendFlags flags);

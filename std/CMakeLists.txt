@@ -30,8 +30,7 @@ endfunction()
 obc(
   OUTPUT "World.obc"
   INPUTS
-    "lib/Shell.ob"
-    "lib/Boolean.ob"
+    "World.ob"
 )
 
 add_library("ObStd" OBJECT

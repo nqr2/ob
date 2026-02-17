@@ -508,11 +508,10 @@ void ob_send_ext(ob_Ctx ctx, ob_Obj recv, ob_Str selector, ob_SendFlags flags) {
   ob_Obj invoked = NULL;
 
   if (!ob_get_slot(ctx, &invoked, recv, selector)) {
-    QL_DEBUG("doesNotUnderstand: %.*s", selector->length,
-             obstr_get_data(ctx, selector));
+    QL_DEBUG("missing: %.*s", selector->length, obstr_get_data(ctx, selector));
 
-    if (flags & OB_SEND_DNUW) {
-      auto dnuw = obstr_create_literal(ctx, "doesNotUnderstand:with:");
+    if (flags & OB_SEND_CMW) {
+      auto dnuw = obstr_create_literal(ctx, "callMissing:with:");
 
       auto args = ob_create_array(ctx);
       auto args_data = ob_cast_array(args);
@@ -531,7 +530,7 @@ void ob_send_ext(ob_Ctx ctx, ob_Obj recv, ob_Str selector, ob_SendFlags flags) {
       return;
     }
 
-    QL_ASSERT(false, "#<%p> (%d) doesNotUnderstand: #'%.*s'", recv,
+    QL_ASSERT(false, "#<%p> (%d) missing method: #'%.*s'", recv,
               ob_get_tag(recv), len, sel);
   }
 
@@ -553,7 +552,7 @@ void ob_send_ext(ob_Ctx ctx, ob_Obj recv, ob_Str selector, ob_SendFlags flags) {
 }
 
 void ob_send(ob_Ctx ctx, ob_Obj recv, ob_Str selector) {
-  ob_send_ext(ctx, recv, selector, OB_SEND_DNUW);
+  ob_send_ext(ctx, recv, selector, OB_SEND_CMW);
 }
 
 ql_Exncode ob_pcall(ob_Ctx ctx, void (*inner)(ob_Ctx ctx, void *userdata),

@@ -18,7 +18,8 @@ static bool act__var(ob_Ctx ctx) {
 
   ql_table_set(&env->slots, hash, value);
 
-  return false;
+  ob_push(ctx, value);
+  return true;
 }
 
 static bool act__self(ob_Ctx ctx) {
@@ -46,7 +47,7 @@ static void unpack(ob_Ctx ctx, ob_Obj args) {
   }
 }
 
-static bool act__dnuw(ob_Ctx ctx) {
+static bool act__cmw(ob_Ctx ctx) {
   auto act = ob_cast_activation(ob_get_receiver(ctx));
 
   auto selector = ob_pop(ctx);
@@ -74,6 +75,6 @@ void oblib_load_activation(ob_Ctx ctx) {
                  (ob_MethodEntry[]){{"var:is:", act__var},
                                     {"self", act__self},
                                     {"environment", act__env},
-                                    {"doesNotUnderstand:with:", act__dnuw},
+                                    {"callMissing:with:", act__cmw},
                                     OB_METHODS_END});
 }

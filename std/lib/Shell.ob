@@ -1,8 +1,0 @@
-var: #Nil    is: () prototype.
-var: #Symbol is: #'' prototype.
-var: #String is: '' prototype.
-var: #Slots  is: Nil prototype.
-var: #Number is: 0 prototype.
-var: #Array  is: [] prototype.
-var: #Method is: {} prototype.
-var: #Object is: Slots prototype.

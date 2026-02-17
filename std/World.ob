@@ -1,0 +1,28 @@
+var: #Nil    is: () prototype.
+var: #Symbol is: #'' prototype.
+var: #String is: '' prototype.
+var: #Slots  is: Nil prototype.
+var: #Number is: 0 prototype.
+var: #Array  is: [] prototype.
+var: #Method is: {} prototype.
+var: #Object is: Slots prototype.
+
+"Method at: #value put: { self call: [] }."
+
+'<<<' print.
+"Object at: #value put: {}."
+'>>>' print.
+
+true at: #print put: { 'true' print }.
+
+true at: #if: put: {|body| body value }.
+true at: #else: put: {}.
+
+true at: #if:else: put: {|t f| t value }.
+
+false at: #print put: { 'false' print }.
+
+false at: #if: put: {}.
+false at: #else: put: {|body| body value }.
+
+false at: #if:else: put: {|t f| f value }.
