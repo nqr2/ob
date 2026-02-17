@@ -178,6 +178,7 @@ static void p_expression(ob_Rdr rdr);
 
 static void p_skip_blank(ob_Rdr rdr) {
   auto stepped = false;
+  auto here = rdr->head;
   while (rdr->remaining > 0) {
     if (isspace(*rdr->head)) {
       stepped = true;
@@ -207,7 +208,7 @@ static void p_skip_blank(ob_Rdr rdr) {
   }
 
   if (stepped) {
-    rdr_emit_debug_column(rdr, 0);
+    rdr_emit_debug_column(rdr, rdr->head - here);
   }
 }
 
@@ -721,6 +722,7 @@ void obrdr_load(ob_Rdr rdr, char const *path, size_t length, char const *data) {
   rdr->column = 0;
 
   rdr_emit_debug_file(rdr);
+  rdr_emit_debug_line(rdr, 0, 0);
 
   while (rdr->remaining > 0) {
     p_skip_blank(rdr);

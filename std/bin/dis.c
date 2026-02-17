@@ -13,6 +13,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+static uint8_t const *read_int(uint8_t const *bytes, uint64_t *result) {
+  auto shift = 0;
+  auto byte = *bytes;
+
+  *result = 0;
+
+  do {
+    byte = *bytes;
+    *result |= (byte & 0x7f) << (shift * 7);
+    shift++;
+    bytes++;
+  } while ((byte & 0x80) != 0);
+
+  return bytes;
+}
+
 size_t skip_leb(uint8_t const *data) {
   size_t len = 0;
 
@@ -77,6 +93,11 @@ void dofile(char const *input_path, FILE *input_file, ob_Serial *srl) {
       auto code = (uint8_t const *)method->bytecode.data;
       auto start = code;
 
+      char const *path = "???";
+      char const *this_line = "";
+      size_t line = 0;
+      size_t column = 0;
+
       while ((size_t)(code - start) < len) {
         int size = stdc_bit_width(method->bytecode.size) / 4 + 1;
 
@@ -85,6 +106,37 @@ void dofile(char const *input_path, FILE *input_file, ob_Serial *srl) {
         code = obbc_read_insn(code, &opcode, &data);
 
         char const *name = "???";
+
+        if (opcode == OB_OP_FILENAME) {
+          path = code;
+          printf(" in file '%.*s'\n", data, path);
+          code += data;
+          continue;
+        }
+
+        if (opcode == OB_OP_DEBUG) {
+          uint64_t dline = 0;
+          uint64_t dcol = 0;
+
+          if (data == 0) {
+            code = read_int(code, &dcol);
+            column += dcol;
+          } else {
+            code = read_int(code, &dcol);
+            code = read_int(code, &dline);
+
+            line += dline;
+            column = dcol;
+
+            this_line = code;
+            code += data;
+          }
+
+          printf(" @ '%s' %lu:%lu - %s\n", path, line + 1, column + 1,
+                 this_line);
+
+          continue;
+        }
 
         switch (opcode) {
         case OB_OP_PUSH:
@@ -96,20 +148,6 @@ void dofile(char const *input_path, FILE *input_file, ob_Serial *srl) {
         case OB_OP_IMPLICIT:
           name = "implicit";
           break;
-        case OB_OP_DEBUG:
-          name = "debug";
-
-          if (data == 0) {
-            code += skip_leb(code);
-          } else {
-            code += skip_leb(code);
-            code += skip_leb(code);
-            code += data;
-          }
-          break;
-        case OB_OP_FILENAME:
-          name = "filename";
-          code += data;
           break;
         case OB_OP_EXTEND:
           break;
@@ -119,6 +157,11 @@ void dofile(char const *input_path, FILE *input_file, ob_Serial *srl) {
         case OB_OP_ARRAY:
           name = "array";
           break;
+        case OB_OP_DEBUG:
+          [[fallthrough]];
+        case OB_OP_FILENAME:
+          // handled above
+          [[fallthrough]];
         default:
           break;
         }

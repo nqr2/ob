@@ -9,6 +9,7 @@
 #include <ql/Log.h>
 
 #include <ctype.h>
+#include <stdbit.h>
 
 static size_t nargs_for_sel(ob_Ctx ctx, ob_Str selector) {
   size_t n_args = 0;
@@ -51,17 +52,20 @@ void obbc_run(ob_Ctx ctx, size_t len, uint8_t const *code) {
 
   auto start = code;
 
+  int size = stdc_bit_width(len) / 4 + 1;
+
   while ((size_t)(code - start) < len) {
     ob_Opcode opcode = 0;
     size_t data = 0;
 
     auto byte = *code;
+    auto offset = code - start;
     code = obbc_read_insn(code, &opcode, &data);
 
     auto act = ob_cast_activation(ctx->this_activation);
     auto method = ob_cast_method(act->method);
 
-    QL_DEBUG("offset %ld: %02x with data %zu", (code - start), byte, data);
+    QL_DEBUG("offset %.*x: %02x with data %zu", size, offset, byte, data);
 
     switch (opcode) {
     case OB_OP_PUSH: {
