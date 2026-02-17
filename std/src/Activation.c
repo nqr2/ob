@@ -1,10 +1,11 @@
-
 #include <ob/bits/AddMethods.h>
 #include <ob/lib/Activation.h>
 
 #include <ob/core/Context.h>
 #include <ob/core/Object.h>
 #include <ob/core/String.h>
+
+#include <ql/Assert.h>
 
 static bool act__var(ob_Ctx ctx) {
   auto receiver = ob_get_receiver(ctx);
@@ -49,23 +50,34 @@ static void unpack(ob_Ctx ctx, ob_Obj args) {
 
 static bool act__cmw(ob_Ctx ctx) {
   auto act = ob_cast_activation(ob_get_receiver(ctx));
-
   auto selector = ob_pop(ctx);
   auto args = ob_pop(ctx);
 
   auto sel = *ob_cast_symbol(selector);
 
-  if (ob_get_slot(ctx, NULL, act->env, sel)) {
-    unpack(ctx, args);
-    ob_send(ctx, act->env, sel);
-    return true;
+  while (act != NULL) {
+    if (ob_get_slot(ctx, NULL, act->env, sel)) {
+      unpack(ctx, args);
+      ob_send(ctx, act->env, sel);
+      return true;
+    }
+
+    if (ob_get_slot(ctx, NULL, act->receiver, sel)) {
+      unpack(ctx, args);
+      ob_send(ctx, act->receiver, sel);
+      return true;
+    }
+
+    if (act->parent != NULL) {
+      act = ob_cast_activation(act->parent);
+      continue;
+    }
+
+    break;
   }
 
-  if (ob_get_slot(ctx, NULL, act->receiver, sel)) {
-    unpack(ctx, args);
-    ob_send(ctx, act->receiver, sel);
-    return true;
-  }
+  QL_ASSERT(false, "method missing: #'%.*s'", sel->length,
+            obstr_get_data(ctx, sel));
 
   return false;
 }

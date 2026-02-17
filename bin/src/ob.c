@@ -1,4 +1,3 @@
-#include "ob/Core.h"
 #include <ob/core/Context.h>
 
 #include <ob/Std.h>
@@ -71,7 +70,7 @@ void repl(ob_Ctx ctx) {
       ql_array_push(&line, sizeof(char), &tmp2);
     }
 
-    ob_run(ctx, line.size, line.data);
+    ob_run_ext(ctx, "*repl*", line.size, line.data);
 
     if (ctx->stack.size > 0) {
       putchar('=');
