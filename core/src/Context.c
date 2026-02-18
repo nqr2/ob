@@ -482,7 +482,8 @@ void invoke(ob_Ctx ctx, ob_Obj invoked, ob_Obj recv, size_t n_args_passed) {
     }
 
     for (size_t i = 0; i < n_args_passed; i++) {
-      auto param = *(ob_Str *)ql_array_at(&data->parameters, sizeof(ob_Str), i);
+      auto param = *(ob_Str *)ql_array_at(&data->parameters, sizeof(ob_Str),
+                                          n_parameters - i - 1);
       auto item = ob_pop(ctx);
 
       QL_DEBUG("set env [%.*s] = %p", obstr_get_length(param),
