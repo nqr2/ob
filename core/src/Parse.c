@@ -272,6 +272,8 @@ static void p_method(ob_Rdr rdr) {
   auto new = ob_create_method(rdr->context);
   auto method = ob_cast_method(new);
 
+  // TODO: Handle self-referential objects in obj_visit, then uncomment this.
+  // method->parent = obrdr_get_method(rdr);
   rdr->output = method;
 
   // also record debug info here

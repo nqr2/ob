@@ -151,18 +151,15 @@ void ob_visit(ob_Obj obj, ob_VisitFlags flags, ob_FnVisit visit,
   case OB_METHOD: {
     ob_ObjMethod *data = ob_get_payload(obj);
 
+    QL_ASSERT(obj != data->parent, "uhhhh");
+
     for (size_t i = 0; i < data->literals.size / sizeof(ob_Obj); i++) {
       ob_Obj item = ((ob_Obj *)data->literals.data)[i];
 
       ob_visit(item, flags, visit, predicate, userdata);
     }
 
-    for (size_t i = 0; i < data->parameters.size / sizeof(ob_Obj); i++) {
-      auto item = ((ob_Str *)data->parameters.data)[i];
-      obstr_mark(item);
-    }
-
-    ob_visit(data->env, flags, visit, predicate, userdata);
+    ob_visit(data->parent, flags, visit, predicate, userdata);
   }; break;
 
   case OB_ACTIVATION: {

@@ -162,7 +162,7 @@ ob_Obj ob_create_method(ob_Ctx ctx) {
 
   ob_ObjMethod *method = ob_get_payload(obj);
 
-  method->env = ctx->this_activation;
+  method->parent = nullptr;
 
   ql_array_init(&method->bytecode, ctx->allocator);
   ql_array_init(&method->literals, ctx->allocator);

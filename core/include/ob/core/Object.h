@@ -68,7 +68,7 @@ struct ob_ObjSlots {
 };
 
 struct ob_ObjMethod {
-  ob_Obj env;
+  ob_Obj parent;
   ql_ArrayT(ob_Str) parameters;
   ql_ArrayT(uint8_t) bytecode;
   ql_ArrayT(ob_Obj) literals;

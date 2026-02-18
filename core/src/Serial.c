@@ -117,7 +117,8 @@ static void write_obj(ob_Obj object, void *userdata) {
   case OB_METHOD: {
     auto data = ob_cast_method(object);
 
-    write_ref(data->env, srl);
+    // parent
+    write_ref(data->parent, srl);
 
     auto len = data->literals.size / sizeof(ob_Obj);
     write_int(srl, len);
@@ -241,9 +242,9 @@ ob_Obj obsrl_read(ob_Serial *srl) {
       result = ob_create_method(srl->ctx);
       auto method = ob_cast_method(result);
 
-      // method->env
+      // method->parent
       head = read_int(head, &ident);
-      method->env = read_ref(srl, ident);
+      method->parent = read_ref(srl, ident);
 
       // method->literals
       head = read_int(head, &length);
