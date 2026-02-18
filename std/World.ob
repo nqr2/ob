@@ -15,10 +15,10 @@ Method at: #call put: (Method at: #value).
 
 '<<<' print.
 (Slots at: #at:put:) callIn: Object with: [
-  #five . 5
+  #Override:With: . (Slots at: #at:put:)
 ].
 
-"Object at: #value put: {}."
+Object Override: #value With: { self }.
 '>>>' print.
 
 true at: #print put: { 'true' print }.

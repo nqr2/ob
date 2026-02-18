@@ -157,6 +157,11 @@ void ob_visit(ob_Obj obj, ob_VisitFlags flags, ob_FnVisit visit,
       ob_visit(item, flags, visit, predicate, userdata);
     }
 
+    for (size_t i = 0; i < data->parameters.size / sizeof(ob_Obj); i++) {
+      auto item = ((ob_Str *)data->parameters.data)[i];
+      obstr_mark(item);
+    }
+
     ob_visit(data->env, flags, visit, predicate, userdata);
   }; break;
 

@@ -128,6 +128,18 @@ static void write_obj(ob_Obj object, void *userdata) {
       write_ref(item, srl);
     }
 
+    len = data->parameters.size / sizeof(ob_Str);
+
+    write_int(srl, len);
+    for (size_t i = 0; i < len; i++) {
+      auto str = *(ob_Str *)ql_array_at(&data->parameters, sizeof(ob_Str), i);
+      auto length = obstr_get_length(str);
+      auto data = obstr_get_data(srl->ctx, str);
+
+      write_int(srl, length);
+      ql_array_push(&srl->buffer, length, data);
+    }
+
     write_int(srl, data->bytecode.size);
     ql_array_push(&srl->buffer, data->bytecode.size, data->bytecode.data);
   }; break;
@@ -241,6 +253,19 @@ ob_Obj obsrl_read(ob_Serial *srl) {
         auto item = read_ref(srl, ident);
 
         ql_array_push(&method->literals, sizeof(ob_Obj), (void *)&item);
+      }
+
+      // method->parameters
+      head = read_int(head, &length);
+
+      for (uint64_t i = 0; i < length; i++) {
+        uint64_t len = 0;
+        head = read_int(head, &len);
+
+        auto str = obstr_create(srl->ctx, len, (char const *)head);
+        head += len;
+
+        ql_array_push(&method->parameters, sizeof(ob_Str), (void *)&str);
       }
 
       // method->bytecode

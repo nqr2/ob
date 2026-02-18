@@ -283,10 +283,8 @@ static void p_method(ob_Rdr rdr) {
 
   p_skip_blank(rdr);
 
+  QL_INFO("head here is: %c", *rdr->head);
   // | {word} |
-  auto buf = (ql_Array){};
-  ql_array_init(&buf, rdr->context->allocator);
-
   if (*rdr->head == '|') {
     rdr_next(rdr);
 
@@ -298,16 +296,17 @@ static void p_method(ob_Rdr rdr) {
         break;
       }
 
-      ql_array_clear(&buf);
-
       auto begin = rdr->head;
       rdr_takewhile(rdr, is_word_tail);
 
-      ql_array_push(&buf, sizeof(char) * (rdr->head - begin), begin);
-
       // TODO: also intern this
-      auto str = obstr_create(rdr->context, buf.size, buf.data);
+      auto str = obstr_create(rdr->context, (rdr->head - begin), begin);
+
+      QL_INFO("add parameter: '%.*s'", (rdr->head - begin), begin);
+
       ql_array_push(&rdr->output->parameters, sizeof(ob_Str), (void *)&str);
+
+      QL_INFO("post push: %zu", rdr->output->parameters.size);
 
       p_skip_blank(rdr);
 
@@ -317,8 +316,6 @@ static void p_method(ob_Rdr rdr) {
       }
     }
   }
-
-  ql_array_free(&buf);
 
   // expression { . expression }
   p_expression(rdr);
@@ -377,6 +374,7 @@ static ob_Str p_string_inner(ob_Rdr rdr) {
     rdr_next(rdr);
   }
 
+  QL_INFO("string: '%.*s'", (rdr->head - begin), begin);
   ql_array_push(&buf, sizeof(char) * (rdr->head - begin), begin);
 
   rdr_expect1(rdr, '\'');
@@ -426,6 +424,7 @@ static void p_symbol(ob_Rdr rdr) {
     }
   }
 
+  QL_INFO("symbol: '%.*s'", (rdr->head - begin), begin);
   ql_array_push(&sym, sizeof(char) * (rdr->head - begin), begin);
 
   sel = obstr_create(rdr->context, sym.size, sym.data);

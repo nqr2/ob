@@ -82,10 +82,20 @@ void dofile(char const *input_path, FILE *input_file, ob_Serial *srl) {
     }
 
     if (ob_get_tag(obj) == OB_METHOD) {
+      auto method = ob_cast_method(obj);
+
+      printf("param:\n");
+
+      auto len = ql_array_length(&method->parameters, sizeof(ob_Str));
+      for (size_t i = 0; i < len; i++) {
+        auto param = ql_array_at(&method->parameters, sizeof(ob_Str), i);
+        printf("  [%zu] = '%.*s'\n", i, (int)obstr_get_length(param),
+               obstr_get_data(srl->ctx, param));
+      }
+
       printf("bc:\n");
 
-      auto method = ob_cast_method(obj);
-      auto len = method->bytecode.size;
+      len = method->bytecode.size;
 
       ob_Opcode opcode = 0;
       size_t data = 0;

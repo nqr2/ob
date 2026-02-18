@@ -105,9 +105,7 @@ ob_Obj ob_create_symbol(ob_Ctx ctx, ob_Str symbol) {
 
   obj = obctx_allocate(ctx, OB_SYMBOL, sizeof(ob_Str));
 
-  auto sym = (ob_Str *)ob_get_payload(obj);
-  *sym = symbol;
-
+  *ob_cast_symbol(obj) = symbol;
   ql_table_set(&ctx->interned, hash, (void *)obj);
 
   return obj;
@@ -302,7 +300,7 @@ void obctx_enter_activation(ob_Ctx ctx, ob_Obj method, ob_Obj receiver) {
   data->parent = ctx->this_activation;
   data->method = method;
   data->receiver = receiver;
-  data->env = ob_create_slots(ctx, receiver);
+  data->env = ob_create_slots(ctx, nullptr);
 
   ctx->this_activation = act;
 }
@@ -427,7 +425,7 @@ bool ob_get_slot(ob_Ctx ctx, ob_Obj *slot, ob_Obj obj, ob_Str selector) {
   return false;
 }
 
-void invoke(ob_Ctx ctx, ob_Obj invoked, ob_Obj recv, size_t n_args) {
+void invoke(ob_Ctx ctx, ob_Obj invoked, ob_Obj recv, size_t n_args_passed) {
   auto tag = ob_get_tag(invoked);
 
   auto activation = ob_cast_activation(ctx->this_activation);
@@ -452,7 +450,8 @@ void invoke(ob_Ctx ctx, ob_Obj invoked, ob_Obj recv, size_t n_args) {
   case OB_CMETHOD: {
     ob_ObjCMethod *data = ob_get_payload(invoked);
 
-    QL_ASSERT(n_args == ql_array_length(&data->parameters, sizeof(ob_Str)),
+    QL_ASSERT(n_args_passed ==
+                  ql_array_length(&data->parameters, sizeof(ob_Str)),
               "not enough arguments to invoke C method");
 
     ctx->gc_state.enabled = false;
@@ -468,15 +467,32 @@ void invoke(ob_Ctx ctx, ob_Obj invoked, ob_Obj recv, size_t n_args) {
     auto data = ob_cast_method(invoked);
     auto env = ob_cast_slots(activation->env);
 
-    size_t length = ql_array_length(&data->parameters, sizeof(ob_Str));
-    QL_INFO("length is %zu, n_args is %zu", length, n_args);
-    QL_ASSERT(n_args >= length, "did not provide enough arguments to method");
+    size_t n_parameters = ql_array_length(&data->parameters, sizeof(ob_Str));
+    size_t n_remaining = 0;
 
-    for (size_t i = 0; i < n_args; i++) {
+    QL_INFO("n_parameters is %zu, n_arguments is %zu", n_parameters,
+            n_args_passed);
+
+    QL_ASSERT(n_args_passed >= n_parameters,
+              "did not provide enough arguments to method");
+
+    if (n_args_passed > n_parameters) {
+      n_remaining = n_args_passed - n_parameters;
+      n_args_passed = n_parameters;
+    }
+
+    for (size_t i = 0; i < n_args_passed; i++) {
       auto param = *(ob_Str *)ql_array_at(&data->parameters, sizeof(ob_Str), i);
       auto item = ob_pop(ctx);
 
+      QL_DEBUG("set env [%.*s] = %p", obstr_get_length(param),
+               obstr_get_data(ctx, param), item);
+
       ql_table_set(&env->slots, obstr_get_hash(ctx, param), item);
+    }
+
+    while (n_remaining-- > 0) {
+      (void)ob_pop(ctx);
     }
 
     obbc_run(ctx, data->bytecode.size, data->bytecode.data);
@@ -513,39 +529,57 @@ void ob_send_ext(ob_Ctx ctx, ob_Obj recv, ob_Str selector, ob_SendFlags flags) {
   QL_ASSERT(ob_checkstack(ctx, n_args),
             "expected to have %lu arguments on stack", n_args);
 
+  QL_DEBUG("in: #<%p> send %zu args to: #'%.*s'", recv, n_args, len, sel);
+
   ob_Obj invoked = NULL;
 
   if (!ob_get_slot(ctx, &invoked, recv, selector)) {
-    QL_DEBUG("missing: %.*s", selector->length, obstr_get_data(ctx, selector));
+    QL_DEBUG("missing: %.*s", len, sel);
 
     if (flags & OB_SEND_CMW) {
-      auto dnuw = obstr_create_literal(ctx, "callMissing:with:");
+      auto cmw = obstr_create_literal(ctx, "callMissing:with:");
+
+      if (!ob_get_slot(ctx, &invoked, recv, cmw)) {
+        QL_ASSERT(
+            false,
+            "#<%p> (%d) missing method: #'%.*s' and could not call missing",
+            recv, ob_get_tag(recv), len, sel);
+      }
+
+      QL_DEBUG("cmw returned %p", invoked);
 
       auto args = ob_create_array(ctx);
       auto args_data = ob_cast_array(args);
 
-      while (n_args > 0) {
-        ob_Obj obj = NULL;
-        obj = ob_pop(ctx);
-        ql_array_push(args_data, sizeof(ob_Obj), (void *)&obj);
-        n_args--;
+      auto len = ql_array_length(&ctx->stack, sizeof(ob_Obj));
+
+      if (n_args > 0) {
+        ql_array_push(
+            args_data, n_args * sizeof(ob_Obj),
+            ql_array_at(&ctx->stack, sizeof(ob_Obj), len - n_args - 1));
       }
 
       ob_push(ctx, args);
       ob_push(ctx, ob_create_symbol(ctx, selector));
 
-      ob_send_ext(ctx, recv, dnuw, 0);
-      return;
+      n_args = 2;
+    } else {
+      QL_ASSERT(false, "#<%p> (%d) missing method: #'%.*s'", recv,
+                ob_get_tag(recv), len, sel);
     }
-
-    QL_ASSERT(false, "#<%p> (%d) missing method: #'%.*s'", recv,
-              ob_get_tag(recv), len, sel);
   }
 
   bool is_invocable = OB_IS_INVOCABLE(invoked);
 
   if (n_args != 0) {
-    QL_ASSERT(is_invocable, "tried to invoke a non-method object %p", invoked);
+    if (ob_get_tag(invoked) == OB_STRING) {
+      auto is = *ob_cast_string(invoked);
+      QL_ERROR("tried to invoke: '%.*s'", obstr_get_length(is),
+               obstr_get_data(ctx, is));
+    }
+
+    QL_ASSERT(is_invocable, "tried to invoke a non-method object %p (%d)",
+              invoked, ob_get_tag(invoked));
   }
 
   if (is_invocable) {

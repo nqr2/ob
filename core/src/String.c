@@ -27,6 +27,7 @@ ob_Str obstr_create(ob_Ctx ctx, size_t len, char const *data) {
       memcpy((char *)(ctx->string_data.data) + target, data, len);
 
       avail->size -= len;
+      avail->offset += len;
 
       if (avail->size == 0) {
         ql_array_remove(&ctx->string_available, sizeof(StrAvailable), i);
@@ -81,6 +82,8 @@ static void str__delete(ob_Ctx ctx, ob_Str str) {
 
   avail.offset = str->offset;
   avail.size = str->length;
+
+  memset(((char *)ctx->string_data.data) + str->offset, 0, str->length);
 
   ql_array_push(&ctx->string_available, sizeof(StrAvailable), (void *)&avail);
 }
