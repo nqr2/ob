@@ -14,6 +14,10 @@ Method at: #value put: { self call: [] }.
 Method at: #call put: (Method at: #value).
 
 '<<<' print.
+(Slots at: #at:put:) callIn: Object with: [
+  #five . 5
+].
+
 "Object at: #value put: {}."
 '>>>' print.
 

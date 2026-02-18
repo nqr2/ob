@@ -6,6 +6,7 @@
 #include <ob/core/String.h>
 
 #include <ql/Assert.h>
+#include <ql/Log.h>
 
 static bool act__var(ob_Ctx ctx) {
   auto receiver = ob_get_receiver(ctx);
@@ -57,12 +58,14 @@ static bool act__cmw(ob_Ctx ctx) {
 
   while (act != NULL) {
     if (ob_get_slot(ctx, NULL, act->env, sel)) {
+      QL_INFO("found on env");
       unpack(ctx, args);
       ob_send(ctx, act->env, sel);
       return true;
     }
 
     if (ob_get_slot(ctx, NULL, act->receiver, sel)) {
+      QL_INFO("found on recv");
       unpack(ctx, args);
       ob_send(ctx, act->receiver, sel);
       return true;
@@ -87,6 +90,12 @@ static bool act__frame(ob_Ctx ctx) {
   return true;
 }
 
+static bool act__parent(ob_Ctx ctx) {
+  auto activation = ob_cast_activation(ctx->this_activation);
+  ob_push(ctx, activation->parent);
+  return true;
+}
+
 void oblib_load_activation(ob_Ctx ctx) {
   ob_add_methods(ctx, ctx->proto.activation,
                  (ob_MethodEntry[]){{"var:is:", act__var},
@@ -94,5 +103,6 @@ void oblib_load_activation(ob_Ctx ctx) {
                                     {"environment", act__env},
                                     {"callMissing:with:", act__cmw},
                                     {"thisFrame", act__frame},
+                                    {"parentFrame", act__parent},
                                     OB_METHODS_END});
 }

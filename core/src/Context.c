@@ -42,8 +42,8 @@ ob_Ctx ob_create(ql_Allocator *alloc) {
   ctx->proto.number = ob_create_slots(ctx, NULL);
   ctx->proto.array = ob_create_slots(ctx, NULL);
   ctx->proto.method = ob_create_slots(ctx, NULL);
-  ctx->proto.lightcmethod = ob_create_slots(ctx, NULL);
-  ctx->proto.cmethod = ob_create_slots(ctx, NULL);
+  ctx->proto.lightcmethod = ob_create_slots(ctx, ctx->proto.method);
+  ctx->proto.cmethod = ob_create_slots(ctx, ctx->proto.method);
   ctx->proto.lightcdata = ob_create_slots(ctx, NULL);
   ctx->proto.cdata = ob_create_slots(ctx, NULL);
   ctx->proto.activation = ob_create_slots(ctx, NULL);
@@ -427,8 +427,13 @@ bool ob_get_slot(ob_Ctx ctx, ob_Obj *slot, ob_Obj obj, ob_Str selector) {
   return false;
 }
 
-static void invoke(ob_Ctx ctx, ob_Obj invoked, ob_Obj recv, size_t n_args) {
+void invoke(ob_Ctx ctx, ob_Obj invoked, ob_Obj recv, size_t n_args) {
   auto tag = ob_get_tag(invoked);
+
+  auto activation = ob_cast_activation(ctx->this_activation);
+  auto previous = activation->receiver;
+
+  activation->receiver = recv;
 
   switch (tag) {
   case OB_LIGHTCMETHOD: {
@@ -461,12 +466,13 @@ static void invoke(ob_Ctx ctx, ob_Obj invoked, ob_Obj recv, size_t n_args) {
 
   case OB_METHOD: {
     auto data = ob_cast_method(invoked);
-    ob_ObjActivation *act = ob_get_payload(ctx->this_activation);
-    auto env = ob_cast_slots(act->env);
+    auto env = ob_cast_slots(activation->env);
 
     size_t length = ql_array_length(&data->parameters, sizeof(ob_Str));
+    QL_INFO("length is %zu, n_args is %zu", length, n_args);
+    QL_ASSERT(n_args >= length, "did not provide enough arguments to method");
 
-    for (size_t i = 0; i < length; i++) {
+    for (size_t i = 0; i < n_args; i++) {
       auto param = *(ob_Str *)ql_array_at(&data->parameters, sizeof(ob_Str), i);
       auto item = ob_pop(ctx);
 
@@ -478,6 +484,8 @@ static void invoke(ob_Ctx ctx, ob_Obj invoked, ob_Obj recv, size_t n_args) {
   default:
     QL_ASSERT(false, "should not be able to invoke this object");
   }
+
+  activation->receiver = previous;
 }
 
 static size_t args_for_sel(size_t len, char const *data) {
