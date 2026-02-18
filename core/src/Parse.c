@@ -33,11 +33,29 @@ static bool is_operator(char chr) {
 }
 
 static bool is_word_start(char chr) {
-  return isalpha(chr);
+  switch (chr) {
+  case '.':
+  case ':':
+  case '|':
+  case '\'':
+  case '"':
+  case '(':
+  case ')':
+  case '[':
+  case ']':
+  case '{':
+  case '}':
+    return false;
+  default:
+    return !isspace(chr);
+  }
 }
 
 static bool is_word_tail(char chr) {
-  return is_word_start(chr);
+  switch (chr) {
+  default:
+    return is_word_start(chr);
+  }
 }
 
 struct ob_Reader {
@@ -403,7 +421,7 @@ static void p_symbol(ob_Rdr rdr) {
 
   auto begin = rdr->head;
 
-  if (isalpha(*rdr->head)) {
+  if (is_word_start(*rdr->head)) {
     while (true) {
       rdr_takewhile(rdr, is_word_tail);
 
@@ -418,12 +436,6 @@ static void p_symbol(ob_Rdr rdr) {
   else if (*rdr->head == '\'') {
     sel = p_string_inner(rdr);
     goto after_str;
-  }
-
-  else {
-    while (is_operator(*rdr->head)) {
-      rdr_next(rdr);
-    }
   }
 
   QL_DEBUG("symbol: '%.*s'", (rdr->head - begin), begin);

@@ -8,31 +8,28 @@ var: #Method is: {} prototype.
 var: #Object is: Slots prototype.
 
 var: #nil is: ().
-Nil at: #isNil put: true.
+Nil at: #nil? put: true.
 
 Method at: #value put: { self call: [] }.
 Method at: #call put: (Method at: #value).
 
-'<<<' print.
 (Slots at: #at:put:) callIn: Object with: [
-  #Override:With: . (Slots at: #at:put:)
+  #Override_:With_: . (Slots at: #at:put:)
 ].
 
-Object Override: #value With: { self }.
-Object Override: #isNil With: false.
-
-'>>>' print.
+Object Override_: #value With_: { self }.
+Object Override_: #nil? With_: false.
 
 true at: #print put: { 'true' print }.
 
-true at: #if: put: {|body| body value }.
-true at: #else: put: {}.
+true at: #then: put: {|t f| t value }.
+true at: #else: put: { self }.
 
-true at: #if:else: put: {|t f| t value }.
+true at: #then:else: put: {|t f| t value }.
 
 false at: #print put: { 'false' print }.
 
-false at: #if: put: {}.
-false at: #else: put: {|body| body value }.
+false at: #then: put: {|t f|}.
+false at: #else: put: {|t f| f value }.
 
-false at: #if:else: put: {|t f| f value }.
+false at: #then:else: put: {|t f| f value }.
