@@ -19,6 +19,8 @@ Method at: #call put: (Method at: #value).
 ].
 
 Object Override: #value With: { self }.
+Object Override: #isNil With: false.
+
 '>>>' print.
 
 true at: #print put: { 'true' print }.

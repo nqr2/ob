@@ -24,7 +24,9 @@ static bool method_call(ob_Ctx ctx) {
     ob_push(ctx, item);
   }
 
+  obctx_enter_activation(ctx, receiver, nullptr);
   invoke(ctx, receiver, nullptr, length);
+  obctx_leave_activation(ctx);
 
   return true;
 }
@@ -48,9 +50,11 @@ static bool method_callin(ob_Ctx ctx) {
     ob_push(ctx, item);
   }
 
+  obctx_enter_activation(ctx, receiver, recv);
   QL_INFO("begin invoke");
   invoke(ctx, receiver, recv, length);
   QL_INFO("end invoke");
+  obctx_leave_activation(ctx);
 
   return true;
 }
