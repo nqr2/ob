@@ -76,7 +76,7 @@ void ob_mark(ob_Obj obj) {
     break;
   }
 
-  ob_visit(obj, OB_VISIT_AFTER, mark_inner, mark_pred, NULL);
+  ob_visit(obj, OB_VISIT_BEFORE, mark_inner, mark_pred, NULL);
 }
 
 void obobj_destroy(ob_Obj obj) {

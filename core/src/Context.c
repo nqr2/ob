@@ -212,8 +212,6 @@ static void deallocate(ob_Ctx ctx, ob_Obj object) {
 }
 
 static void gc_mark(ob_Ctx ctx) {
-  ob_mark(ctx->this_activation);
-
   ob_mark(ctx->proto.object);
 
   ob_mark(ctx->proto.nil);
@@ -232,6 +230,8 @@ static void gc_mark(ob_Ctx ctx) {
   ob_mark(ctx->known.shell);
   ob_mark(ctx->known.o_false);
   ob_mark(ctx->known.o_true);
+
+  ob_mark(ctx->this_activation);
 
   auto data = (ob_Obj *)ctx->stack.data;
 
@@ -460,17 +460,17 @@ static void invoke(ob_Ctx ctx, ob_Obj invoked, ob_Obj recv, size_t n_args) {
   }; break;
 
   case OB_METHOD: {
-    ob_ObjMethod *data = ob_get_payload(invoked);
+    auto data = ob_cast_method(invoked);
     ob_ObjActivation *act = ob_get_payload(ctx->this_activation);
-    ob_ObjSlots *env = ob_get_payload(act->env);
+    auto env = ob_cast_slots(act->env);
 
     size_t length = ql_array_length(&data->parameters, sizeof(ob_Str));
 
     for (size_t i = 0; i < length; i++) {
-      auto param = (ob_Str *)ql_array_at(&data->parameters, sizeof(ob_Str), i);
+      auto param = *(ob_Str *)ql_array_at(&data->parameters, sizeof(ob_Str), i);
       auto item = ob_pop(ctx);
 
-      ql_table_set(&env->slots, obstr_get_hash(ctx, *param), item);
+      ql_table_set(&env->slots, obstr_get_hash(ctx, param), item);
     }
 
     obbc_run(ctx, data->bytecode.size, data->bytecode.data);

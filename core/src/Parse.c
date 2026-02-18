@@ -267,16 +267,21 @@ static void p_array(ob_Rdr rdr) {
 }
 
 static void p_method(ob_Rdr rdr) {
-  rdr_next(rdr);
-
-  p_skip_blank(rdr);
-
   auto original = rdr->output;
 
   auto new = ob_create_method(rdr->context);
   auto method = ob_cast_method(new);
 
   rdr->output = method;
+
+  // also record debug info here
+  rdr_emit_debug_file(rdr);
+  rdr_emit_debug_line(rdr, rdr->column, rdr->line);
+
+  // we jump AFTER recording debug info to capture the whole closure's source
+  rdr_next(rdr);
+
+  p_skip_blank(rdr);
 
   // | {word} |
   auto buf = (ql_Array){};

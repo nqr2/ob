@@ -15,4 +15,7 @@ void oblib_load_shell(ob_Ctx ctx) {
   auto sym_false = obstr_create_literal(ctx, "false");
   ql_table_set(&shell->slots, obstr_get_hash(ctx, sym_false),
                ctx->known.o_false);
+
+  auto sym_shell = obstr_create_literal(ctx, "shell");
+  ql_table_set(&shell->slots, obstr_get_hash(ctx, sym_shell), ctx->known.shell);
 }

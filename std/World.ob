@@ -7,7 +7,11 @@ var: #Array  is: [] prototype.
 var: #Method is: {} prototype.
 var: #Object is: Slots prototype.
 
-"Method at: #value put: { self call: [] }."
+var: #nil is: ().
+Nil at: #isNil put: true.
+
+Method at: #value put: { self call: [] }.
+Method at: #call put: (Method at: #value).
 
 '<<<' print.
 "Object at: #value put: {}."
