@@ -11,8 +11,10 @@ project(
 set(CMAKE_C_STANDARD 23 REQUIRED)
 set(CMAKE_C_EXTENSIONS NO)
 
-option(OB_BUILD_DOCS "Build the documentation with Doxygen" ON)
-option(OB_BUILD_TESTS "Build the tests" ON)
+option(OB_BUILD_DOCS     "Build the documentation with Doxygen" ON)
+option(OB_BUILD_TESTS    "Build the tests"                      ON)
+option(OB_ENABLE_ASSERTS "Enable the OB_ASSERT macro"           ON)
+option(OB_ENABLE_LOG     "Enable the OB_LOG macro"              ON)
 
 if(OB_BUILD_DOCS)
   add_subdirectory("doc")
@@ -24,9 +26,6 @@ if(OB_BUILD_TESTS)
 endif()
 
 add_subdirectory("base")
-
-add_subdirectory("ql")
-
 add_subdirectory("core")
 add_subdirectory("std")
 add_subdirectory("lib")

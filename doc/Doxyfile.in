@@ -1,11 +1,11 @@
 PROJECT_NAME = "@PROJECT_NAME@"
 PROJECT_NUMBER = "@PROJECT_VERSION@"
 OUTPUT_DIRECTORY = "@OUTPUT_DIR@"
-INPUT += "bin/"
-INPUT += "core/"
-INPUT += "lib/"
-INPUT += "std/"
-INPUT += "base/"
+INPUT += "@SOURCE_DIR@/bin/"
+INPUT += "@SOURCE_DIR@/core/"
+INPUT += "@SOURCE_DIR@/lib/"
+INPUT += "@SOURCE_DIR@/std/"
+INPUT += "@SOURCE_DIR@/base/"
 EXCLUDE = "*/tests/*"
 RECURSIVE = YES
 TAB_SIZE = 4
