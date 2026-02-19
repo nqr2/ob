@@ -25,16 +25,19 @@ endif()
 
 include(FetchContent)
 
-FetchContent_Declare(
-  "ql"
-  GIT_REPOSITORY         "https://github.com/nqr2/ql"
-  GIT_TAG                "main"
-  GIT_SUBMODULES_RECURSE NO
-)
+#FetchContent_Declare(
+#  "ql"
+#  GIT_REPOSITORY         "https://github.com/nqr2/ql"
+#  GIT_TAG                "main"
+#  GIT_SUBMODULES_RECURSE NO
+#)
 
-FetchContent_MakeAvailable("ql")
+#FetchContent_MakeAvailable("ql")
 
 add_subdirectory("base")
+
+add_subdirectory("ql")
+
 add_subdirectory("core")
 add_subdirectory("std")
 add_subdirectory("lib")
