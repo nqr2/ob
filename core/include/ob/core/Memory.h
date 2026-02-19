@@ -50,6 +50,7 @@ typedef struct {
   char data[];
 } ob_Page;
 
+typedef struct ob_Memory ob_Memory;
 typedef struct ob_Memory *ob_Mem;
 
 /** @brief Allocate managed memory, and return it's address.
@@ -93,19 +94,7 @@ typedef ob_Address (*ob_FnMemTranslatePointer)(ob_Mem self,
 /// Obtain the page allocated for this address.
 typedef ob_Page *(*ob_FnMemGetPage)(ob_Mem self, ob_Address addr);
 
-/** @brief Perform a garbage collection, from an address "forward".
- *
- * @note
- * - The marking process is done independently of this.
- * - It must not perform a collection on addresses lower than @p from. It is not
- *   guaranteed that objects on these addresses are marked properly.
- * - Any collected live objects must have their mark cleared, and their
- *   finalizer must be called when destroyed (@ref obobj_destroy in
- *   core/Object.h)
- */
-typedef void (*ob_FnMemCollect)(ob_Mem self, ob_Address from);
-
-/// A memory allocator and garbage collector.
+/// A memory allocator.
 struct ob_Memory {
   ob_FnMemAllocate allocate;
 
@@ -115,8 +104,6 @@ struct ob_Memory {
   } translate;
 
   ob_FnMemGetPage get_page;
-
-  ob_FnMemCollect collect;
 
   struct {
     /// A measure of all currently used (live and garbage) memory.
@@ -138,12 +125,15 @@ static_assert(OB_MIN_PAGE_SIZE >= sizeof(ob_Page));
 
 constexpr ob_Address OB_ADDRESS_NULL = 0;
 
+/// Construct an allocator that calls malloc/free on every allocation, and
+/// performs a mark/sweep collection.
+ob_Memory obmem_create_malloc1();
+
 ob_Address obmem_allocate(ob_Mem self, ob_Address source, size_t old_size,
                           size_t new_size, ob_MemUsage usage);
 void *obmem_translate_address(ob_Mem self, ob_Address addr);
 ob_Address obmem_translate_pointer(ob_Mem self, void const *pointer);
 ob_Page *obmem_get_page(ob_Mem self, ob_Address addr);
-void obmem_collect(ob_Mem self, ob_Address from);
 
 ob_Address obmem_address_create(uint32_t page, uint32_t offset);
 uint64_t obmem_get_page_offset(ob_Address addr);

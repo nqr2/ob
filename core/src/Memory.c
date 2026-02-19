@@ -1,5 +1,6 @@
 #include <ob/core/Memory.h>
 
+#include <ql/Array.h>
 #include <ql/Assert.h>
 
 #include <string.h>
@@ -49,11 +50,6 @@ ob_Page *obmem_get_page(ob_Mem self, ob_Address addr) {
   return self->get_page(self, addr);
 }
 
-void obmem_collect(ob_Mem self, ob_Address from) {
-  QL_ASSERT(self->collect != nullptr, "unexpected null");
-  self->collect(self, from);
-}
-
 ob_Address obmem_address_create(uint32_t page, uint32_t offset) {
   QL_ASSERT(page <= OB_MAX_PAGE_INDEX, "page index larger than allowed");
   QL_ASSERT(offset <= OB_MAX_PAGE_SIZE, "page offset larger than page size");
@@ -70,4 +66,17 @@ uint64_t obmem_get_page_offset(ob_Address addr) {
 
 uint64_t obmem_get_page_index(ob_Address addr) {
   return (addr & OB_ADDRESS_MASK) >> 32;
+}
+
+//* ------------------------------------------------------------------------ *//
+// implementing malloc1
+
+struct malloc1 {};
+
+ob_Memory obmem_create_malloc1() {
+  auto mem = (ob_Memory){
+
+  };
+
+  return mem;
 }
