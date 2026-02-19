@@ -23,17 +23,6 @@ if(OB_BUILD_TESTS)
   enable_testing()
 endif()
 
-include(FetchContent)
-
-#FetchContent_Declare(
-#  "ql"
-#  GIT_REPOSITORY         "https://github.com/nqr2/ql"
-#  GIT_TAG                "main"
-#  GIT_SUBMODULES_RECURSE NO
-#)
-
-#FetchContent_MakeAvailable("ql")
-
 add_subdirectory("base")
 
 add_subdirectory("ql")

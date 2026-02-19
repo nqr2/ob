@@ -3,13 +3,18 @@
 add_executable(
   "obc"
   "bin/obc.c"
+  $<TARGET_OBJECTS:ql>
+  $<TARGET_OBJECTS:ObCore>
 )
 
-target_link_libraries("obc" PRIVATE "ObCore")
+target_link_libraries("obc" PRIVATE "ObCore"
+)
 
 add_executable(
   "dis"
   "bin/dis.c"
+  $<TARGET_OBJECTS:ql>
+  $<TARGET_OBJECTS:ObCore>
 )
 
 target_link_libraries("dis" PRIVATE "ObCore")

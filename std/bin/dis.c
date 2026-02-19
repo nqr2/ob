@@ -88,7 +88,9 @@ void dofile(char const *input_path, FILE *input_file, ob_Serial *srl) {
 
       auto len = ql_array_length(&method->parameters, sizeof(ob_Str));
       for (size_t i = 0; i < len; i++) {
-        auto param = ql_array_at(&method->parameters, sizeof(ob_Str), i);
+        auto param =
+            *(ob_Str *)ql_array_at(&method->parameters, sizeof(ob_Str), i);
+
         printf("  [%zu] = '%.*s'\n", i, (int)obstr_get_length(param),
                obstr_get_data(srl->ctx, param));
       }

@@ -5,6 +5,7 @@ INPUT += "bin/"
 INPUT += "core/"
 INPUT += "lib/"
 INPUT += "std/"
+INPUT += "base/"
 EXCLUDE = "*/tests/*"
 RECURSIVE = YES
 TAB_SIZE = 4
