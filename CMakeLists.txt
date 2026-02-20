@@ -15,6 +15,7 @@ option(OB_BUILD_DOCS     "Build the documentation with Doxygen" ON)
 option(OB_BUILD_TESTS    "Build the tests"                      ON)
 option(OB_ENABLE_ASSERTS "Enable the OB_ASSERT macro"           ON)
 option(OB_ENABLE_LOG     "Enable the OB_LOG macro"              ON)
+option(OB_INSTALL        "Install the library"                  ON)
 
 if(OB_BUILD_DOCS)
   add_subdirectory("doc")
@@ -25,25 +26,29 @@ if(OB_BUILD_TESTS)
   enable_testing()
 endif()
 
+if(OB_INSTALL)
+  include(GNUInstallDirs)
+endif()
+
 add_subdirectory("base")
 add_subdirectory("core")
 add_subdirectory("std")
 add_subdirectory("lib")
 add_subdirectory("bin")
 
-include(GNUInstallDirs)
-export(
-  TARGETS ob
-  NAMESPACE ob::
-  FILE "${CMAKE_CURRENT_BINARY_DIR}/ob-config.cmake"
-)
-
-install(
-  EXPORT ob-config
-  DESTINATION "${CMAKE_INSTALL_DATADIR}/"
-  NAMESPACE ob::
-)
-
 if(OB_BUILD_TESTS)
   add_subdirectory("tests")
+endif()
+
+if(OB_INSTALL)
+  install(
+    FILES "${CMAKE_SOURCE_DIR}/.cmake/ob-config.cmake"
+    DESTINATION "${CMAKE_INSTALL_DATADIR}"
+  )
+
+  install(
+    EXPORT ob
+    DESTINATION "${CMAKE_INSTALL_DATADIR}/"
+    NAMESPACE ob::
+  )
 endif()

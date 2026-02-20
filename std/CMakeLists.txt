@@ -3,23 +3,16 @@
 add_executable(
   "obc"
   "bin/obc.c"
-  #$<TARGET_OBJECTS:ql>
-  $<TARGET_OBJECTS:ObCore>
 )
 
-target_link_libraries("obc" PRIVATE "ObCore")
-target_include_directories("obc" PRIVATE $<TARGET_PROPERTY:ql,INCLUDE_DIRECTORIES>)
-target_include_directories("obc" PRIVATE $<TARGET_PROPERTY:ObCore,INCLUDE_DIRECTORIES>)
+target_link_libraries("obc" PRIVATE ob::base ob::core)
 
 add_executable(
   "dis"
   "bin/dis.c"
-#  $<TARGET_OBJECTS:ql>
-  $<TARGET_OBJECTS:ObCore>
 )
 
-target_link_libraries("dis" PRIVATE "ObCore")
-target_include_directories("dis" PRIVATE $<TARGET_PROPERTY:ql,INCLUDE_DIRECTORIES>)
+target_link_libraries("dis" PRIVATE ob::base ob::core)
 
 function(obc)
   cmake_parse_arguments(PARSE_ARGV 0 arg "" OUTPUT INPUTS)
@@ -32,7 +25,7 @@ function(obc)
   )
 endfunction()
 
-## Building ObStd itself
+## Building std itself
 
 obc(
   OUTPUT "World.obc"
@@ -40,7 +33,7 @@ obc(
     "World.ob"
 )
 
-add_library("ObStd" OBJECT
+add_library("std" OBJECT
   "src/Std.c"
   "src/AddMethods.c"
   "src/Activation.c"
@@ -52,35 +45,38 @@ add_library("ObStd" OBJECT
   "src/World.c"
 )
 
-add_library(ob::std ALIAS "ObStd")
+add_library(ob::std ALIAS "std")
 
-add_dependencies("ObStd" "World.obc")
+add_dependencies("std" "World.obc")
 
-target_link_libraries("ObStd" PUBLIC "ObCore")
+target_sources("std" PUBLIC
+  FILE_SET HEADERS
+  BASE_DIRS "include"
+  FILES
+    "include/ob/Std.h"
+)
 
-target_include_directories("ObStd" PUBLIC
+target_link_libraries("std" PRIVATE ob::core)
+
+target_include_directories("std" PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
-target_include_directories("ObStd" PRIVATE $<TARGET_PROPERTY:ql,INCLUDE_DIRECTORIES>)
+#target_include_directories("ob-std" PRIVATE $<TARGET_PROPERTY:ql,INCLUDE_DIRECTORIES>)
 
 # TODO: wait until cmake issue #26584 is solved
 # https://gitlab.kitware.com/cmake/cmake/-/issues/26584
 # it should be OK for GCC and clang
-target_compile_options("ObStd" PRIVATE "--embed-dir=${CMAKE_CURRENT_BINARY_DIR}")
+target_compile_options("std" PRIVATE "--embed-dir=${CMAKE_CURRENT_BINARY_DIR}")
 
-target_compile_definitions("ObStd" PRIVATE OB_IMPLEMENTATION)
+target_compile_definitions("std" PRIVATE OB_IMPLEMENTATION)
 
-install(
-  DIRECTORY "include/ob"
-  TYPE INCLUDE
-)
-
-install(
-  TARGETS "ObStd"
-  EXPORT ob-config
-  INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
-#  ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-#  LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-)
+if(OB_INSTALL)
+  install(
+    TARGETS "std"
+    EXPORT ob
+    FILE_SET HEADERS
+      DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+  )
+endif()

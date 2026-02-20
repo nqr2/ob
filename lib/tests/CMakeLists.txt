@@ -14,10 +14,7 @@ add_executable(
   ${OB_TEST_DRIVER}
 )
 
-target_link_libraries(test_driver PRIVATE ob::ob)
-target_include_directories(test_driver PRIVATE
-$<TARGET_PROPERTY:ObCore,INCLUDE_DIRECTORIES>
-)
+target_link_libraries(test_driver PUBLIC ob::static)
 
 foreach(test ${OB_TESTS})
   get_filename_component(basename ${test} NAME_WE)

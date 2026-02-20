@@ -1,17 +1,24 @@
-add_library("ObCore" OBJECT
-  "include/ob/bits/Begin.h"
-  "include/ob/bits/End.h"
+add_library("core" OBJECT)
 
-  "include/ob/core/Bytecode.h"
-  "include/ob/core/Context.h"
-  "include/ob/core/Memory.h"
-  "include/ob/core/Object.h"
-  "include/ob/core/Parse.h"
-  "include/ob/core/Serial.h"
-  "include/ob/core/String.h"
+target_sources("core" PUBLIC
+  FILE_SET HEADERS
+  BASE_DIRS "include"
+  FILES
+    "include/ob/bits/Begin.h"
+    "include/ob/bits/End.h"
 
-  "include/ob/Core.h"
+    "include/ob/core/Bytecode.h"
+    "include/ob/core/Context.h"
+    "include/ob/core/Memory.h"
+    "include/ob/core/Object.h"
+    "include/ob/core/Parse.h"
+    "include/ob/core/Serial.h"
+    "include/ob/core/String.h"
 
+    "include/ob/Core.h"
+)
+
+target_sources("core" PRIVATE
   "src/Bytecode.c"
   "src/Context.c"
   "src/Memory.c"
@@ -21,26 +28,21 @@ add_library("ObCore" OBJECT
   "src/String.c"
 )
 
-target_include_directories("ObCore" PUBLIC
+add_library(ob::core ALIAS "core")
+
+target_include_directories("core" PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
-target_link_libraries("ObCore" PRIVATE $<TARGET_OBJECTS:ql>)
-target_include_directories("ObCore" PRIVATE $<TARGET_PROPERTY:ql,INCLUDE_DIRECTORIES>)
+target_link_libraries("core" PUBLIC ob::base)
 
-target_compile_definitions("ObCore" PRIVATE OB_IMPLEMENTATION)
+target_compile_definitions("core" PRIVATE OB_IMPLEMENTATION)
 
-install(
-  DIRECTORY "include/ob"
-  TYPE INCLUDE
-)
-
-
-install(
-  TARGETS "ObCore"
-  EXPORT ob-config
-  INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
-#  ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-#  LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-)
+if(OB_INSTALL)
+  install(
+    TARGETS "core"
+    EXPORT ob
+    FILE_SET HEADERS DESTINATION "${CMAKE_INSTALL_DIR}"
+  )
+endif()

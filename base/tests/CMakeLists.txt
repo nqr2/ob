@@ -17,10 +17,9 @@ foreach(T ${QL_TESTS})
   add_executable(
     "test__ql_${T}"
     "${T}.c"
-    $<TARGET_OBJECTS:ql>
   )
 
-  target_link_libraries("test__ql_${T}" PRIVATE ql::ql)
+  target_link_libraries("test__ql_${T}" PRIVATE ob::base)
 
   add_test(
     NAME "ql::${T}"
@@ -32,10 +31,9 @@ foreach(T ${TAP_TESTS})
   add_executable(
     "test__ql_tap_${T}"
     "${T}.c"
-    $<TARGET_OBJECTS:ql>
   )
 
-  target_link_libraries("test__ql_tap_${T}" PRIVATE ql::ql)
+  target_link_libraries("test__ql_tap_${T}" PRIVATE ob::base)
 
   add_test(
     NAME "ql_tap::${T}"
