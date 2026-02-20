@@ -3,20 +3,23 @@
 add_executable(
   "obc"
   "bin/obc.c"
-  $<TARGET_OBJECTS:ql>
+  #$<TARGET_OBJECTS:ql>
   $<TARGET_OBJECTS:ObCore>
 )
 
 target_link_libraries("obc" PRIVATE "ObCore")
+target_include_directories("obc" PRIVATE $<TARGET_PROPERTY:ql,INCLUDE_DIRECTORIES>)
+target_include_directories("obc" PRIVATE $<TARGET_PROPERTY:ObCore,INCLUDE_DIRECTORIES>)
 
 add_executable(
   "dis"
   "bin/dis.c"
-  $<TARGET_OBJECTS:ql>
+#  $<TARGET_OBJECTS:ql>
   $<TARGET_OBJECTS:ObCore>
 )
 
 target_link_libraries("dis" PRIVATE "ObCore")
+target_include_directories("dis" PRIVATE $<TARGET_PROPERTY:ql,INCLUDE_DIRECTORIES>)
 
 function(obc)
   cmake_parse_arguments(PARSE_ARGV 0 arg "" OUTPUT INPUTS)
@@ -49,16 +52,18 @@ add_library("ObStd" OBJECT
   "src/World.c"
 )
 
-add_dependencies("ObStd" "World.obc")
+add_library(ob::std ALIAS "ObStd")
 
-install(
-  DIRECTORY "include/ob"
-  TYPE INCLUDE
-)
+add_dependencies("ObStd" "World.obc")
 
 target_link_libraries("ObStd" PUBLIC "ObCore")
 
-target_include_directories("ObStd" PUBLIC "include")
+target_include_directories("ObStd" PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
+
+target_include_directories("ObStd" PRIVATE $<TARGET_PROPERTY:ql,INCLUDE_DIRECTORIES>)
 
 # TODO: wait until cmake issue #26584 is solved
 # https://gitlab.kitware.com/cmake/cmake/-/issues/26584
@@ -66,3 +71,16 @@ target_include_directories("ObStd" PUBLIC "include")
 target_compile_options("ObStd" PRIVATE "--embed-dir=${CMAKE_CURRENT_BINARY_DIR}")
 
 target_compile_definitions("ObStd" PRIVATE OB_IMPLEMENTATION)
+
+install(
+  DIRECTORY "include/ob"
+  TYPE INCLUDE
+)
+
+install(
+  TARGETS "ObStd"
+  EXPORT ob-config
+  INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+#  ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+#  LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+)

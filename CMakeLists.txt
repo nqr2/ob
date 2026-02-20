@@ -31,6 +31,19 @@ add_subdirectory("std")
 add_subdirectory("lib")
 add_subdirectory("bin")
 
+include(GNUInstallDirs)
+export(
+  TARGETS ob
+  NAMESPACE ob::
+  FILE "${CMAKE_CURRENT_BINARY_DIR}/ob-config.cmake"
+)
+
+install(
+  EXPORT ob-config
+  DESTINATION "${CMAKE_INSTALL_DATADIR}/"
+  NAMESPACE ob::
+)
+
 if(OB_BUILD_TESTS)
   add_subdirectory("tests")
 endif()

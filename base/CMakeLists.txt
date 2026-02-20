@@ -24,20 +24,32 @@ add_library("ql" OBJECT
   "src/Tap.c"
 )
 
-install(
-  DIRECTORY "include/ql"
-  TYPE INCLUDE
+target_include_directories("ql" PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
-
-install(
-  TARGETS "ql"
-  ARCHIVE
-)
-
-target_include_directories("ql" PUBLIC "include")
 
 add_library(ql::ql ALIAS "ql")
 
 if(OB_BUILD_TESTS)
   add_subdirectory("tests")
 endif()
+
+
+install(
+  DIRECTORY "include/ql"
+  TYPE INCLUDE
+)
+
+#install(
+#  TARGETS "ql"
+#  ARCHIVE
+#)
+
+install(
+  TARGETS "ql"
+  EXPORT ob-config
+  INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+  #ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+#  LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+)
