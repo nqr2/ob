@@ -17,7 +17,7 @@ foreach(test ${HOSTED_TESTS})
   add_test(
     NAME "capture/${basename}"
     COMMAND
-       exe_ob
+       ob
        --capture-stdout "${CMAKE_CURRENT_BINARY_DIR}/${basename}.stdout"
        --capture-stderr "${CMAKE_CURRENT_BINARY_DIR}/${basename}.stderr"
        "${test}"
