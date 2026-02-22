@@ -1,5 +1,5 @@
-#ifndef QL_TAP_H_INCLUDED
-#define QL_TAP_H_INCLUDED
+#ifndef OB_BASE_TAP_H_INCLUDED
+#define OB_BASE_TAP_H_INCLUDED
 
 #include <stddef.h>
 

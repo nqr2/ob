@@ -1,4 +1,4 @@
-#define QL_LOG_MODULE "Bytecode"
+#define OB_LOG_MODULE "Bytecode"
 
 #include <ob/base/Array.h>
 #include <ob/base/Log.h>

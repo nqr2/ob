@@ -1,44 +1,33 @@
-#ifndef QL_LOG_H_INCLUDED
-#define QL_LOG_H_INCLUDED
-
-/*
- * Copyright (C) 2025-2026 nqr2
- *
- * This library is free software: you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by the
- * Free Software Foundation, either version 3 of the License, or (at your
- * option) any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License
- * for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this library. If not, see <https://www.gnu.org/licenses/>.
- */
+#ifndef OB_BASE_LOG_H_INCLUDED
+#define OB_BASE_LOG_H_INCLUDED
 
 #include <stdarg.h>
 #include <time.h>
 
-#ifndef QL_LOG_MODULE
-#define QL_LOG_MODULE "*unknown*"
+#ifdef QL_LOG_MODULE
+#warning "define OB_LOG_MODULE instead"
 #endif
 
-#ifndef QL_LOG_DISABLE
-#define QL_LOG(Level, Message, ...)                                            \
+#ifndef OB_LOG_MODULE
+#define OB_LOG_MODULE "*unknown*"
+#endif
+
+#ifndef OB_LOG_DISABLE
+#define OB_LOG(Level, Message, ...)                                            \
   do {                                                                         \
-    ql_log__handle((Level), QL_LOG_MODULE, __FILE__, __LINE__, __func__,       \
+    ql_log__handle((Level), OB_LOG_MODULE, __FILE__, __LINE__, __func__,       \
                    Message __VA_OPT__(, ) __VA_ARGS__);                        \
   } while (0)
 #else
-#define QL_LOG(Level, Message, ...)
+#define OB_LOG(Level, Message, ...)
 #endif
 
-#define QL_DEBUG(M, ...) QL_LOG(QL_LOG_DEBUG, M __VA_OPT__(, ) __VA_ARGS__)
-#define QL_INFO(M, ...) QL_LOG(QL_LOG_INFO, M __VA_OPT__(, ) __VA_ARGS__)
-#define QL_WARN(M, ...) QL_LOG(QL_LOG_WARN, M __VA_OPT__(, ) __VA_ARGS__)
-#define QL_ERROR(M, ...) QL_LOG(QL_LOG_ERROR, M __VA_OPT__(, ) __VA_ARGS__)
+#define QL_LOG(...) OB_LOG(__VA_ARGS__)
+
+#define QL_DEBUG(M, ...) OB_LOG(QL_LOG_DEBUG, M __VA_OPT__(, ) __VA_ARGS__)
+#define QL_INFO(M, ...) OB_LOG(QL_LOG_INFO, M __VA_OPT__(, ) __VA_ARGS__)
+#define QL_WARN(M, ...) OB_LOG(QL_LOG_WARN, M __VA_OPT__(, ) __VA_ARGS__)
+#define QL_ERROR(M, ...) OB_LOG(QL_LOG_ERROR, M __VA_OPT__(, ) __VA_ARGS__)
 
 typedef enum {
   QL_LOG_DEBUG = 4,

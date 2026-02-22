@@ -37,13 +37,13 @@ void *ql_allocate(ql_Allocator *alloc, size_t size) {
 }
 
 void *ql_reallocate(ql_Allocator *alloc, size_t old, void *source, size_t new) {
-  QL_ASSERT_NONNULL(alloc);
+  OB_ASSERT_NONNULL(alloc);
+  OB_ASSERT_NONNULL(alloc->allocate);
 
-  QL_ASSERT_NONNULL(alloc->allocate);
   void *ptr = alloc->allocate(alloc->userdata, old, source, new);
 
   if (new != 0) {
-    QL_ASSERT_NONNULL(ptr);
+    OB_ASSERT_NONNULL(ptr);
   }
 
   if (old < new) {

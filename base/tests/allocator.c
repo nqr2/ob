@@ -10,7 +10,7 @@ ql_Allocator libc;
 
 void alloc_0_returns_null() {
   auto null = ql_allocate(&libc, 0);
-  QL_ASSERT_NULL(null);
+  OB_ASSERT_NULL(null);
 }
 
 ql_Test const SUITE[] = {

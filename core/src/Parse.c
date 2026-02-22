@@ -1,4 +1,4 @@
-#define QL_LOG_MODULE "Parse"
+#define OB_LOG_MODULE "Parse"
 
 #include <ob/base/Array.h>
 #include <ob/base/Assert.h>

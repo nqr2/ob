@@ -1,4 +1,4 @@
-#define QL_LOG_MODULE "dis"
+#define OB_LOG_MODULE "dis"
 
 #include <ob/base/Assert.h>
 #include <ob/base/Log.h>

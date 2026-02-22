@@ -1,29 +1,12 @@
-#ifndef QL_ASSERT_H_INCLUDED
-#define QL_ASSERT_H_INCLUDED
-
-/*
- * Copyright (C) 2025-2026 nqr2
- *
- * This library is free software: you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by the
- * Free Software Foundation, either version 3 of the License, or (at your
- * option) any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License
- * for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this library. If not, see <https://www.gnu.org/licenses/>.
- */
+#ifndef OB_BASE_ASSERT_H_INCLUDED
+#define OB_BASE_ASSERT_H_INCLUDED
 
 /** @file
  *
  * @brief Assertions.
  */
 
-#define QL_ASSERT(Condition, Message, ...)                                     \
+#define OB_ASSERT(Condition, Message, ...)                                     \
   do {                                                                         \
     if (!(Condition)) {                                                        \
       ql_assert__report(__FILE__, __LINE__, __func__, #Condition);             \
@@ -32,9 +15,11 @@
     }                                                                          \
   } while (false)
 
-#define QL_ASSERT_NONNULL(P) QL_ASSERT((P) != NULL, "unexpected NULL: %p", (P))
+#define QL_ASSERT(...) OB_ASSERT(__VA_ARGS__)
 
-#define QL_ASSERT_NULL(P) QL_ASSERT((P) == NULL, "unexpected non-NULL: %p", (P))
+#define OB_ASSERT_NONNULL(P) OB_ASSERT((P) != NULL, "unexpected NULL for " #P)
+
+#define OB_ASSERT_NULL(P) OB_ASSERT((P) == NULL, "unexpected non-NULL: %p", (P))
 
 typedef void (*ql_FnAssertFailure)();
 
