@@ -1,18 +1,15 @@
-#include "ob/Core.h"
+#include <ob/base/Allocator.h>
+#include <ob/base/Array.h>
+#include <ob/base/Assert.h>
+#include <ob/base/Exn.h>
+#include <ob/base/Hash.h>
+#include <ob/base/Log.h>
+#include <ob/base/Number.h>
+#include <ob/base/Table.h>
 #include <ob/core/Bytecode.h>
 #include <ob/core/Context.h>
 #include <ob/core/Object.h>
 #include <ob/core/String.h>
-
-#include <ql/Allocator.h>
-#include <ql/Array.h>
-#include <ql/Assert.h>
-#include <ql/Exn.h>
-#include <ql/Hash.h>
-#include <ql/Number.h>
-#include <ql/Table.h>
-
-#include <ql/Log.h>
 
 #include <ctype.h>
 #include <string.h>

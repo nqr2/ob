@@ -1,6 +1,6 @@
-#include <ql/Assert.h>
-#include <ql/Hash.h>
-#include <ql/Tap.h>
+#include <ob/base/Assert.h>
+#include <ob/base/Hash.h>
+#include <ob/base/Tap.h>
 
 #include <inttypes.h>
 
@@ -23,7 +23,7 @@ void known_results() {
 
   // From the author:
   // http://www.isthe.com/chongo/tech/comp/fnv/index.html
-  const uint8_t bytes[] = {0xd5, 0x6b, 0xb9, 0x53, 0x42, 0x87, 0x08, 0x36};
+  uint8_t const bytes[] = {0xd5, 0x6b, 0xb9, 0x53, 0x42, 0x87, 0x08, 0x36};
   ASSERT_HASH_EQ(ql_hash_start(8, bytes), 0);
 }
 
@@ -34,7 +34,7 @@ void hash_continue_works() {
   ASSERT_HASH_EQ(foobar, ql_hash_literal("foobar"));
 }
 
-const ql_Test SUITE[] = {
+ql_Test const SUITE[] = {
     {"known results", known_results, false},
 
     {"hash_continue works", hash_continue_works, false},

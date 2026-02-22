@@ -1,6 +1,6 @@
-#include <ql/Argparse.h>
-#include <ql/Assert.h>
-#include <ql/Tap.h>
+#include <ob/base/Argparse.h>
+#include <ob/base/Assert.h>
+#include <ob/base/Tap.h>
 
 void assert_failure() {
   ql_fail_with("assertion failed");
@@ -20,16 +20,16 @@ void f_set_unset() {
       QL_FLAGS_END,
   });
 
-  ql_parse(&parser, 2, (const char *[]){"arg", "-s"});
+  ql_parse(&parser, 2, (char const *[]){"arg", "-s"});
   QL_ASSERT(flag == true, "expected FLAG_SET to set a flag to true");
 
-  ql_parse(&parser, 2, (const char *[]){"arg", "-u"});
+  ql_parse(&parser, 2, (char const *[]){"arg", "-u"});
   QL_ASSERT(flag == false, "expected FLAG_UNSET to set a flag to false");
 
-  ql_parse(&parser, 2, (const char *[]){"arg", "--set"});
+  ql_parse(&parser, 2, (char const *[]){"arg", "--set"});
   QL_ASSERT(flag == true, "expected long FLAG_SET to set a flag to true");
 
-  ql_parse(&parser, 2, (const char *[]){"arg", "--unset"});
+  ql_parse(&parser, 2, (char const *[]){"arg", "--unset"});
   QL_ASSERT(flag == false, "expected long FLAG_UNSET to set a flag to false");
 }
 
@@ -41,44 +41,44 @@ void f_int() {
       QL_FLAGS_END,
   });
 
-  ql_parse(&parser, 3, (const char *[]){"arg", "-i", "1"});
+  ql_parse(&parser, 3, (char const *[]){"arg", "-i", "1"});
   QL_ASSERT(flag == 1, "expected FLAG_INT to set a value to 1");
 
-  ql_parse(&parser, 3, (const char *[]){"arg", "--int", "11"});
+  ql_parse(&parser, 3, (char const *[]){"arg", "--int", "11"});
   QL_ASSERT(flag == 11, "expected long FLAG_INT to set a value to 11");
 }
 
-static void pos_arg__pa(void *udata, const char *arg) {
-  *((const char **)udata) = arg;
+static void pos_arg__pa(void *udata, char const *arg) {
+  *((char const **)udata) = arg;
 }
 
 void pos_arg() {
-  const char *known = "this is a known value!";
-  const char *arg = NULL;
+  char const *known = "this is a known value!";
+  char const *arg = NULL;
 
   auto parser = ql_create_parser((ql_Flag[]){QL_FLAGS_END});
   parser.userdata = (void *)&arg;
   parser.positional_arg = pos_arg__pa;
 
-  ql_parse(&parser, 2, (const char *[]){"arg", known});
+  ql_parse(&parser, 2, (char const *[]){"arg", known});
   QL_ASSERT(arg == known, "expected a positional argument to be set");
 }
 
 void f_string() {
-  const char *k_short = "this is short";
-  const char *k_long = "this is long";
+  char const *k_short = "this is short";
+  char const *k_long = "this is long";
 
-  const char *arg = NULL;
+  char const *arg = NULL;
 
   auto parser = ql_create_parser((ql_Flag[]){
       ql_create_flag('s', "string", QL_FLAG_STRING, (void *)&arg),
       QL_FLAGS_END,
   });
 
-  ql_parse(&parser, 3, (const char *[]){"arg", "-s", k_short});
+  ql_parse(&parser, 3, (char const *[]){"arg", "-s", k_short});
   QL_ASSERT(arg == k_short, "expected FLAG_STRING to set a value");
 
-  ql_parse(&parser, 3, (const char *[]){"arg", "--string", k_long});
+  ql_parse(&parser, 3, (char const *[]){"arg", "--string", k_long});
   QL_ASSERT(arg == k_long, "expected long FLAG_STRING to set a value");
 }
 
@@ -96,16 +96,16 @@ void f_subcommand() {
       QL_FLAGS_END,
   });
 
-  ql_parse(&parser, 3, (const char *[]){"arg", "-S", "--set"});
+  ql_parse(&parser, 3, (char const *[]){"arg", "-S", "--set"});
   QL_ASSERT(flag == true,
             "expected a FLAG_SET in FLAG_SUBCOMMAND to set a flag");
 
-  ql_parse(&parser, 3, (const char *[]){"arg", "-S", "--unset"});
+  ql_parse(&parser, 3, (char const *[]){"arg", "-S", "--unset"});
   QL_ASSERT(flag == false,
             "expected a FLAG_UNSET in FLAG_SUBCOMMAND to unset a flag");
 }
 
-const ql_Test SUITE[] = {
+ql_Test const SUITE[] = {
     {"empty flag list", empty_flags, false},
     {"FLAG_SET and FLAG_UNSET", f_set_unset, false},
     {"FLAG_INT", f_int, false},

@@ -1,9 +1,9 @@
-#include <ql/Argparse.h>
+#include <ob/base/Argparse.h>
 
 #include <stdlib.h>
 #include <string.h>
 
-ql_Flag ql_create_flag(char short_name, const char *long_name, ql_FlagType kind,
+ql_Flag ql_create_flag(char short_name, char const *long_name, ql_FlagType kind,
                        void *pointer) {
   return (ql_Flag){
       .short_name = short_name,
@@ -14,7 +14,7 @@ ql_Flag ql_create_flag(char short_name, const char *long_name, ql_FlagType kind,
   };
 }
 
-ql_Parser ql_create_parser(const ql_Flag *flags) {
+ql_Parser ql_create_parser(ql_Flag const *flags) {
   size_t length = 0;
 
   if (flags != NULL) {
@@ -29,8 +29,8 @@ ql_Parser ql_create_parser(const ql_Flag *flags) {
   return (ql_Parser){.description = NULL, .length = length, .flags = flags};
 }
 
-void run_flag(const ql_Flag *flag, size_t *idx, const char *next_arg,
-              const ql_Parser **parser) {
+void run_flag(ql_Flag const *flag, size_t *idx, char const *next_arg,
+              ql_Parser const **parser) {
   switch (flag->type) {
   case QL_FLAG_SET:
     *(bool *)(flag->target) = true;
@@ -46,7 +46,7 @@ void run_flag(const ql_Flag *flag, size_t *idx, const char *next_arg,
 
   case QL_FLAG_STRING:
     *idx += 1;
-    *(const char **)(flag->target) = next_arg;
+    *(char const **)(flag->target) = next_arg;
     break;
 
   case QL_FLAG_SUBCOMMAND:
@@ -55,8 +55,8 @@ void run_flag(const ql_Flag *flag, size_t *idx, const char *next_arg,
   }
 }
 
-static const ql_Flag *parse_arg(const ql_Parser *parser, const char *arg,
-                                const char **next) {
+static ql_Flag const *parse_arg(ql_Parser const *parser, char const *arg,
+                                char const **next) {
   for (size_t i = 0; i < parser->length; i++) {
     auto flag = &parser->flags[i];
 
@@ -65,7 +65,7 @@ static const ql_Flag *parse_arg(const ql_Parser *parser, const char *arg,
         auto len = strlen(flag->long_name);
 
         if (strncmp(flag->long_name, arg + 2, len) == 0) {
-          const char *val = memchr(arg, '=', strlen(arg));
+          char const *val = memchr(arg, '=', strlen(arg));
 
           if (val != NULL) {
             *next = val + 1;
@@ -86,22 +86,22 @@ static const ql_Flag *parse_arg(const ql_Parser *parser, const char *arg,
   }
 
   if (arg[0] != '-' && (parser->positional_arg != NULL)) {
-    return (const ql_Flag *)1;
+    return (ql_Flag const *)1;
   }
 
   return NULL;
 }
 
-size_t ql_parse(const ql_Parser *parser, size_t length, const char **args) {
+size_t ql_parse(ql_Parser const *parser, size_t length, char const **args) {
   for (size_t i = 1; i < length; i++) {
     if (parser == NULL) {
       return i;
     }
 
-    const char *next = args[i + 1];
+    char const *next = args[i + 1];
     auto flag = parse_arg(parser, args[i], &next);
 
-    if (flag == (const ql_Flag *)1) {
+    if (flag == (ql_Flag const *)1) {
       parser->positional_arg(parser->userdata, args[i]);
     } else if (flag != NULL) {
       run_flag(flag, &i, next, &parser);

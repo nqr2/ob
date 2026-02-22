@@ -37,7 +37,7 @@ void ql_array_free(ql_Array *arr);
 
 void ql_array_reserve(ql_Array *arr, size_t newcap);
 
-void ql_array_push(ql_Array *arr, size_t len, const void *data);
+void ql_array_push(ql_Array *arr, size_t len, void const *data);
 
 void ql_array_clear(ql_Array *arr);
 

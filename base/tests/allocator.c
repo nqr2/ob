@@ -1,6 +1,6 @@
-#include <ql/Allocator.h>
-#include <ql/Assert.h>
-#include <ql/Tap.h>
+#include <ob/base/Allocator.h>
+#include <ob/base/Assert.h>
+#include <ob/base/Tap.h>
 
 void assert_failure() {
   ql_fail_with("assertion failed");
@@ -13,7 +13,7 @@ void alloc_0_returns_null() {
   QL_ASSERT_NULL(null);
 }
 
-const ql_Test SUITE[] = {
+ql_Test const SUITE[] = {
     {"allocate(0) returns NULL", alloc_0_returns_null, false},
 
     QL_SUITE_END,

@@ -1,5 +1,5 @@
-#include <ql/Assert.h>
-#include <ql/Tap.h>
+#include <ob/base/Assert.h>
+#include <ob/base/Tap.h>
 
 void assert_failure() {
   ql_fail_with("assertion failed");
@@ -13,7 +13,7 @@ void assert_true_succeeds() {
   QL_ASSERT(true, "This never fails");
 }
 
-const ql_Test SUITE[] = {
+ql_Test const SUITE[] = {
     {"assert(false) fails", assert_false_fails, true},
     {"assert(true) succeeds", assert_true_succeeds, false},
     QL_SUITE_END,

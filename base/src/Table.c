@@ -1,4 +1,4 @@
-#include <ql/Table.h>
+#include <ob/base/Table.h>
 
 #include <stdbit.h>
 #include <string.h>

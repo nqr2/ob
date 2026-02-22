@@ -4,16 +4,16 @@ target_sources("base" PUBLIC
   FILE_SET HEADERS
   BASE_DIRS "include"
   FILES
-    "include/ql/Allocator.h"
-    "include/ql/Argparse.h"
-    "include/ql/Array.h"
-    "include/ql/Assert.h"
-    "include/ql/Exn.h"
-    "include/ql/Hash.h"
-    "include/ql/Log.h"
-    "include/ql/Number.h"
-    "include/ql/Table.h"
-    "include/ql/Tap.h"
+    "include/ob/base/Allocator.h"
+    "include/ob/base/Argparse.h"
+    "include/ob/base/Array.h"
+    "include/ob/base/Assert.h"
+    "include/ob/base/Exn.h"
+    "include/ob/base/Hash.h"
+    "include/ob/base/Log.h"
+    "include/ob/base/Number.h"
+    "include/ob/base/Table.h"
+    "include/ob/base/Tap.h"
 )
 
 target_sources("base" PRIVATE

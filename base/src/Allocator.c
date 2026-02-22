@@ -1,5 +1,5 @@
-#include <ql/Allocator.h>
-#include <ql/Assert.h>
+#include <ob/base/Allocator.h>
+#include <ob/base/Assert.h>
 
 #include <stdint.h>
 #include <stdlib.h>

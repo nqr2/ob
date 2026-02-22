@@ -8,7 +8,7 @@
 
 #include <ob/Core.h>
 
-#include <ql/Table.h>
+#include <ob/base/Table.h>
 
 #define OB_SERIAL_HEADER "\x0bOB"
 

@@ -1,8 +1,7 @@
-#include <ql/Tap.h>
-
-#include <ql/Allocator.h>
-#include <ql/Assert.h>
-#include <ql/Table.h>
+#include <ob/base/Allocator.h>
+#include <ob/base/Assert.h>
+#include <ob/base/Table.h>
+#include <ob/base/Tap.h>
 
 void assert_failure() {
   ql_fail_with("assertion failed");
@@ -88,7 +87,7 @@ void can_iterate() {
   ql_table_free(&tbl);
 }
 
-const ql_Test SUITE[] = {
+ql_Test const SUITE[] = {
     QL_PASS(can_create),
     QL_PASS(can_add_an_element),
     QL_PASS(can_get_an_element),

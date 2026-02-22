@@ -38,10 +38,10 @@
 
 typedef void (*ql_FnAssertFailure)();
 
-void ql_assert__report(const char *file, int line, const char *function,
-                       const char *condition);
+void ql_assert__report(char const *file, int line, char const *function,
+                       char const *condition);
 
-void ql_assert__message(const char *message, ...);
+void ql_assert__message(char const *message, ...);
 
 [[noreturn]]
 void ql_assert__fail();

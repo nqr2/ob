@@ -1,12 +1,9 @@
 #include <ob/bits/AddMethods.h>
-#include <ob/lib/Method.h>
-
 #include <ob/core/Bytecode.h>
 #include <ob/core/Context.h>
 #include <ob/core/Object.h>
 #include <ob/core/String.h>
-
-#include <ql/Log.h>
+#include <ob/lib/Method.h>
 
 extern void invoke(ob_Ctx ctx, ob_Obj invoked, ob_Obj recv, size_t n_args);
 
@@ -36,10 +33,6 @@ static bool method_callin(ob_Ctx ctx) {
   auto operand = ob_pop(ctx);
   auto recv = ob_pop(ctx);
 
-  QL_INFO("tag of args: %d", ob_get_tag(operand));
-  QL_INFO("tag of recv: %d", ob_get_tag(recv));
-  QL_INFO("tag of method: %d", ob_get_tag(receiver));
-
   auto args = ob_cast_array(operand);
 
   size_t length = ql_array_length(args, sizeof(ob_Obj));
@@ -51,9 +44,7 @@ static bool method_callin(ob_Ctx ctx) {
   }
 
   obctx_enter_activation(ctx, receiver, recv);
-  QL_INFO("begin invoke");
   invoke(ctx, receiver, recv, length);
-  QL_INFO("end invoke");
   obctx_leave_activation(ctx);
 
   return true;

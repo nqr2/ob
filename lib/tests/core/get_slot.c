@@ -1,10 +1,9 @@
 #include <ob/Core.h>
+#include <ob/base/Assert.h>
+#include <ob/base/Hash.h>
+#include <ob/base/Tap.h>
 #include <ob/core/Object.h>
 #include <ob/core/String.h>
-
-#include <ql/Assert.h>
-#include <ql/Hash.h>
-#include <ql/Tap.h>
 
 ql_Allocator libc;
 ob_Ctx ctx;

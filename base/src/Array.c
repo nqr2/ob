@@ -1,5 +1,5 @@
-#include <ql/Array.h>
-#include <ql/Assert.h>
+#include <ob/base/Array.h>
+#include <ob/base/Assert.h>
 
 #include <stdbit.h>
 #include <string.h>
@@ -28,7 +28,7 @@ void ql_array_reserve(ql_Array *arr, size_t newcap) {
   }
 }
 
-void ql_array_push(ql_Array *arr, size_t len, const void *data) {
+void ql_array_push(ql_Array *arr, size_t len, void const *data) {
   ql_array_reserve(arr, arr->size + len);
 
   memcpy(((uint8_t *)arr->data) + arr->size, data, len);

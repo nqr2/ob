@@ -1,10 +1,10 @@
-#include <ql/Tap.h>
+#include <ob/base/Tap.h>
 
 void one() {
   ql_fail_with("failed!");
 }
 
-const ql_Test SUITE[] = {
+ql_Test const SUITE[] = {
     {"one", one, true},
     QL_SUITE_END,
 };

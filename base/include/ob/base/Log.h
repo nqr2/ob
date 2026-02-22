@@ -51,11 +51,11 @@ typedef enum {
 typedef struct {
   ql_LogLevel level;
   time_t time;
-  const char *module;
-  const char *file;
+  char const *module;
+  char const *file;
   int line;
-  const char *function;
-  const char *message;
+  char const *function;
+  char const *message;
   va_list *arguments;
 } ql_LogData;
 
@@ -71,7 +71,7 @@ ql_LogHandler ql_log_create_handler();
 void ql_log_set_handler(ql_LogHandler *handler);
 void ql_log_set_level(ql_LogLevel level);
 
-void ql_log__handle(ql_LogLevel level, const char *module, const char *file,
-                    int line, const char *function, const char *message, ...);
+void ql_log__handle(ql_LogLevel level, char const *module, char const *file,
+                    int line, char const *function, char const *message, ...);
 
 #endif

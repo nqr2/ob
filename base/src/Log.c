@@ -1,4 +1,4 @@
-#include <ql/Log.h>
+#include <ob/base/Log.h>
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -12,7 +12,7 @@ static void dflt_handle(void *userdata, ql_LogData *data) {
 
   char buffer[256];
 
-  const char *level_name = "???";
+  char const *level_name = "???";
 
   switch (data->level) {
   case QL_LOG_DEBUG:
@@ -56,9 +56,9 @@ void ql_log_set_level(ql_LogLevel level) {
   cur_level = level;
 }
 
-void ql_log__handle(const ql_LogLevel level, const char *module,
-                    const char *file, int line, const char *function,
-                    const char *message, ...) {
+void ql_log__handle(ql_LogLevel const level, char const *module,
+                    char const *file, int line, char const *function,
+                    char const *message, ...) {
   if (cur_handler == NULL) {
     return;
   }

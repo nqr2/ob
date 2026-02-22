@@ -8,7 +8,7 @@
 
 #include <ob/Core.h>
 
-#include <ql/Array.h>
+#include <ob/base/Array.h>
 
 #include <stddef.h>
 #include <stdint.h>

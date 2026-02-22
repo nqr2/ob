@@ -52,10 +52,10 @@ typedef struct {
   char short_name;
 
   /// The name in a long option (starting with a @--), or @c NULL to not parse.
-  const char *long_name;
+  char const *long_name;
 
   /// A description for this option.
-  const char *description;
+  char const *description;
 
   /// A value to be set when handled. @see ob_FlagKind for what pointers to use.
   void *target;
@@ -66,10 +66,10 @@ typedef struct {
 typedef void (*ql_FnPositionalArgument)(void *userdata, const char *argument);
 
 typedef struct {
-  const char *description;
+  char const *description;
 
   size_t length;
-  const ql_Flag *flags;
+  ql_Flag const *flags;
 
   /// A callback for positional arguments.
   ql_FnPositionalArgument positional_arg;
@@ -80,17 +80,17 @@ typedef struct {
 
 /** @brief Constructs a flag.
  */
-ql_Flag ql_create_flag(char short_name, const char *long_name, ql_FlagType kind,
+ql_Flag ql_create_flag(char short_name, char const *long_name, ql_FlagType kind,
                        void *pointer);
 
 /** @brief Constructs a parser.
  *  @param flags An array of flags, that must have @ref OB_FLAGS_END at the end.
  */
-ql_Parser ql_create_parser(const ql_Flag *flags);
+ql_Parser ql_create_parser(ql_Flag const *flags);
 
 /** @brief Parses an argument list.
  * @returns The index of the first invalid argument, or @p length if successful.
  */
-size_t ql_parse(const ql_Parser *parser, size_t length, const char **args);
+size_t ql_parse(ql_Parser const *parser, size_t length, char const **args);
 
 #endif

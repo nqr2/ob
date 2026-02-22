@@ -1,4 +1,4 @@
-#include <ql/Assert.h>
+#include <ob/base/Assert.h>
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -6,8 +6,8 @@
 
 ql_FnAssertFailure handler = NULL;
 
-void ql_assert__report(const char *file, int line, const char *function,
-                       const char *condition) {
+void ql_assert__report(char const *file, int line, char const *function,
+                       char const *condition) {
   fprintf(stderr,
           "```\n"
           "Assertion failed\n"
@@ -17,7 +17,7 @@ void ql_assert__report(const char *file, int line, const char *function,
           file, line, function, condition);
 }
 
-void ql_assert__message(const char *message, ...) {
+void ql_assert__message(char const *message, ...) {
   va_list args;
   va_start(args, message);
 

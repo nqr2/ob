@@ -1,9 +1,9 @@
-#include <ql/Tap.h>
+#include <ob/base/Tap.h>
 
 void one() {
 }
 
-const ql_Test SUITE[] = {
+ql_Test const SUITE[] = {
     {"pass", one, false},
     QL_SUITE_END,
 };

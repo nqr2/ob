@@ -1,9 +1,8 @@
 #include <ob/bits/AddMethods.h>
-#include <ob/lib/String.h>
-
 #include <ob/core/Context.h>
 #include <ob/core/Object.h>
 #include <ob/core/String.h>
+#include <ob/lib/String.h>
 
 static bool str_intern(ob_Ctx ctx) {
   auto receiver = ob_get_receiver(ctx);

@@ -1,12 +1,10 @@
 #include <ob/Std.h>
-
 #include <ob/lib/Activation.h>
 #include <ob/lib/Method.h>
 #include <ob/lib/Object.h>
 #include <ob/lib/Shell.h>
 #include <ob/lib/Slots.h>
 #include <ob/lib/String.h>
-
 #include <ob/lib/World.h>
 
 void oblib_load_all(ob_Ctx ctx) {

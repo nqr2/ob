@@ -6,7 +6,7 @@
 typedef void (*ql_FnTest)();
 
 typedef struct {
-  const char *name;
+  char const *name;
   ql_FnTest body;
   bool should_fail;
 } ql_Test;
@@ -23,13 +23,13 @@ typedef struct {
 #define QL_SUITE_END {.name = NULL, .body = NULL, .should_fail = false}
 
 void ql_skip();
-void ql_skip_with(const char *reason);
+void ql_skip_with(char const *reason);
 
 void ql_fail();
-void ql_fail_with(const char *reason);
+void ql_fail_with(char const *reason);
 
 void ql_bailout();
 
-bool ql_test(const ql_Test *suite);
+bool ql_test(ql_Test const *suite);
 
 #endif

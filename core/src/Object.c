@@ -1,9 +1,8 @@
+#include <ob/base/Array.h>
+#include <ob/base/Assert.h>
+#include <ob/base/Table.h>
 #include <ob/core/Object.h>
 #include <ob/core/String.h>
-
-#include <ql/Array.h>
-#include <ql/Assert.h>
-#include <ql/Table.h>
 
 ob_ObjectTag ob_get_tag(ob_Obj obj) {
   if (obj == NULL) {

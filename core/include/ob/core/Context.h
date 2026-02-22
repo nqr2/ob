@@ -8,11 +8,11 @@
 
 #include <ob/Core.h>
 
-#include <ql/Allocator.h>
-#include <ql/Array.h>
-#include <ql/Exn.h>
-#include <ql/Number.h>
-#include <ql/Table.h>
+#include <ob/base/Allocator.h>
+#include <ob/base/Array.h>
+#include <ob/base/Exn.h>
+#include <ob/base/Number.h>
+#include <ob/base/Table.h>
 
 /** @details
  *

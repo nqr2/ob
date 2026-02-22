@@ -55,7 +55,7 @@ void ql_exn__end(ql_Exnbuf *buf);
 void ql_exn_init(ql_Exnbuf *buf, ql_Allocator *alloc);
 void ql_exn_free(ql_Exnbuf *buf);
 
-const ql_Exndata *ql_exn_get_data(ql_Exnbuf *buf);
+ql_Exndata const *ql_exn_get_data(ql_Exnbuf *buf);
 ql_Exncode ql_exn_get_code(ql_Exnbuf *buf);
 
 void ql_exn_throw(ql_Exnbuf *buf, ql_Exncode code, ql_Exndata data);

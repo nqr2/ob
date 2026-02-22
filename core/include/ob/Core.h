@@ -12,10 +12,10 @@
 
 #include <ob/bits/Begin.h>
 
-#include <ql/Allocator.h>
-#include <ql/Array.h>
-#include <ql/Exn.h>
-#include <ql/Number.h>
+#include <ob/base/Allocator.h>
+#include <ob/base/Array.h>
+#include <ob/base/Exn.h>
+#include <ob/base/Number.h>
 
 #include <stdint.h>
 

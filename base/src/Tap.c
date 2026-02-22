@@ -1,4 +1,4 @@
-#include <ql/Tap.h>
+#include <ob/base/Tap.h>
 
 #include <setjmp.h>
 #include <stdio.h>
@@ -11,13 +11,13 @@ enum {
 };
 
 jmp_buf thisbuf;
-const char *thisreason;
+char const *thisreason;
 
 void ql_skip() {
   longjmp(thisbuf, SKIP);
 }
 
-void ql_skip_with(const char *reason) {
+void ql_skip_with(char const *reason) {
   thisreason = reason;
   ql_skip();
 }
@@ -26,7 +26,7 @@ void ql_fail() {
   longjmp(thisbuf, FAIL);
 }
 
-void ql_fail_with(const char *reason) {
+void ql_fail_with(char const *reason) {
   thisreason = reason;
   ql_fail();
 }
@@ -35,7 +35,7 @@ void ql_bailout() {
   longjmp(thisbuf, BAILOUT);
 }
 
-bool runtest(const ql_Test *test, int index) {
+bool runtest(ql_Test const *test, int index) {
   thisreason = NULL;
 
   auto pass = true;
@@ -85,7 +85,7 @@ bool runtest(const ql_Test *test, int index) {
   return pass;
 }
 
-bool ql_test(const ql_Test *suite) {
+bool ql_test(ql_Test const *suite) {
   int count = 0;
 
   for (;; count++) {

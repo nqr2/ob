@@ -1,4 +1,4 @@
-#include <ql/Exn.h>
+#include <ob/base/Exn.h>
 
 #include <string.h>
 
@@ -26,7 +26,7 @@ void ql_exn_free(ql_Exnbuf *buf) {
   ql_array_free(&buf->entries);
 }
 
-const ql_Exndata *ql_exn_get_data(ql_Exnbuf *buf) {
+ql_Exndata const *ql_exn_get_data(ql_Exnbuf *buf) {
   struct Entry *entry = ql_array_last(&buf->entries, sizeof(struct Entry));
 
   if (entry) {

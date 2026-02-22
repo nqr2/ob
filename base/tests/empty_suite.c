@@ -1,6 +1,6 @@
-#include <ql/Tap.h>
+#include <ob/base/Tap.h>
 
-const ql_Test SUITE[] = {
+ql_Test const SUITE[] = {
     QL_SUITE_END,
 };
 
