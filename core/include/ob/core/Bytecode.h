@@ -36,9 +36,9 @@ typedef enum {
   /** @brief Runs an instruction taking 0 arguments, "indexed" by the payload.
    *
    * The list of instructions is:
-   * 0. @c OP_RETURN    (The implementation of `^`)
-   * 1. @c OP_DUPLICATE (Duplicate top of stack)
-   * 2. @c OP_POP       (Pop top of stack)
+   * 0. @c OP_EXT_RETURN    (The implementation of `^`)
+   * 1. @c OP_EXT_DUPLICATE (Duplicate top of stack)
+   * 2. @c OP_EXT_POP       (Pop top of stack)
    */
   OB_OP_EXTRA = 4,
 
@@ -79,6 +79,12 @@ typedef enum {
   OB_OP_RESERVEDe = 14,
   OB_OP_RESERVEDf = 15,
 } ob_Opcode;
+
+typedef enum {
+  OB_OP_EXT_RETURN = 0,
+  OB_OP_EXT_DUPLICATE = 1,
+  OB_OP_EXT_POP = 2,
+} ob_ExtOpcode;
 
 void obbc_run(ob_Ctx ctx, size_t len, uint8_t const *code);
 

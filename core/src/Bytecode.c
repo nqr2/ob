@@ -1,3 +1,4 @@
+#include "ob/Core.h"
 #define OB_LOG_MODULE "Bytecode"
 
 #include <ob/base/Array.h>
@@ -137,7 +138,22 @@ void obbc_run(ob_Ctx ctx, size_t len, uint8_t const *code) {
       code += data;
       break;
 
-      // TODO: OP_RETURN
+    case OB_OP_EXTRA: {
+      switch (data) {
+      case OB_OP_EXT_RETURN:
+        break; // TODO: OP_RETURN
+      case OB_OP_EXT_DUPLICATE: {
+        auto top = ob_pop(ctx);
+        ob_push(ctx, top);
+        ob_push(ctx, top);
+      } break;
+      case OB_OP_EXT_POP:
+        (void)ob_pop(ctx);
+        break;
+      default:
+        break;
+      }
+    }; break;
 
     case OB_OP_ARRAY: {
       auto obj = ob_create_array(ctx);

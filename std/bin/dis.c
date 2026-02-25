@@ -163,9 +163,22 @@ void dofile(char const *input_path, FILE *input_file, ob_Serial *srl) {
           break;
         case OB_OP_EXTEND:
           break;
-        case OB_OP_EXTRA:
-          name = "extra";
-          break;
+        case OB_OP_EXTRA: {
+          switch (data) {
+          case 0:
+            name = "return";
+            break;
+          case 1:
+            name = "duplicate";
+            break;
+          case 2:
+            name = "pop";
+            break;
+          default:
+            name = "extra (?)";
+            break;
+          }
+        } break;
         case OB_OP_ARRAY:
           name = "array";
           break;
