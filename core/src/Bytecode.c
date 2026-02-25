@@ -180,9 +180,9 @@ void obbc_append_insn(ql_Array *out, ob_Instruction insn) {
 }
 
 uint8_t obbc_append_index(ql_Array *out, uint64_t index) {
-  while (index > 15) {
-    obbc_append_insn(out, OBBC_MAKE(OB_OP_EXTEND, index & 0xf));
-    index >>= 4;
+  while (index > 31) {
+    obbc_append_insn(out, OBBC_MAKE(OB_OP_EXTEND, index & 0x1f));
+    index >>= 5;
   }
 
   return index;
@@ -200,7 +200,7 @@ uint8_t const *obbc_read_insn(uint8_t const *source, ob_Opcode *opcode,
     size_t payload = OBBC_GET_DATA(insn);
     code = OBBC_GET_OPCODE(insn);
 
-    this_index |= (payload << 4 * shift);
+    this_index |= (payload << 5 * shift);
 
     source++;
     shift++;

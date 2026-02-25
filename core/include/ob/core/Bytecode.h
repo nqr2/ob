@@ -15,10 +15,10 @@
 
 typedef uint8_t ob_Instruction;
 
-#define OBBC_GET_OPCODE(I) ((I) & 0xf)
-#define OBBC_GET_DATA(I) ((I) >> 4)
+#define OBBC_GET_OPCODE(I) ((I) & 0x7)
+#define OBBC_GET_DATA(I) ((I) >> 3)
 
-#define OBBC_MAKE(I, D) ((I) | ((D) << 4))
+#define OBBC_MAKE(I, D) ((I) | ((D) << 3))
 
 typedef enum {
   /// Push a literal
@@ -69,15 +69,6 @@ typedef enum {
    * sets the line and column to 0.
    */
   OB_OP_FILENAME = 7,
-
-  OB_OP_RESERVED8 = 8,
-  OB_OP_RESERVED9 = 9,
-  OB_OP_RESERVEDa = 10,
-  OB_OP_RESERVEDb = 11,
-  OB_OP_RESERVEDc = 12,
-  OB_OP_RESERVEDd = 13,
-  OB_OP_RESERVEDe = 14,
-  OB_OP_RESERVEDf = 15,
 } ob_Opcode;
 
 typedef enum {
