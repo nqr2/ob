@@ -163,8 +163,8 @@ void dofile(char const *input_path, FILE *input_file, ob_Serial *srl) {
           break;
         case OB_OP_EXTEND:
           break;
-        case OB_OP_RETURN:
-          name = "return";
+        case OB_OP_EXTRA:
+          name = "extra";
           break;
         case OB_OP_ARRAY:
           name = "array";

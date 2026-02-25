@@ -33,8 +33,14 @@ typedef enum {
   /// Extend the payload by prepending 4 bits
   OB_OP_EXTEND = 3,
 
-  /// Implements @c ^
-  OB_OP_RETURN = 4,
+  /** @brief Runs an instruction taking 0 arguments, "indexed" by the payload.
+   *
+   * The list of instructions is:
+   * 0. @c OP_RETURN    (The implementation of `^`)
+   * 1. @c OP_DUPLICATE (Duplicate top of stack)
+   * 2. @c OP_POP       (Pop top of stack)
+   */
+  OB_OP_EXTRA = 4,
 
   /// Construct an @c Array from @c index items in the stack.
   OB_OP_ARRAY = 5,

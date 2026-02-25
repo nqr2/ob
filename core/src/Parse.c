@@ -656,7 +656,7 @@ static void p_expression(ob_Rdr rdr) {
     rdr_next(rdr);
     p_expression(rdr);
 
-    obbc_append_insn(&rdr->output->bytecode, OB_OP_RETURN);
+    obbc_append_insn(&rdr->output->bytecode, OBBC_MAKE(OB_OP_EXTRA, 0));
     return;
   }
 
