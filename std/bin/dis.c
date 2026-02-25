@@ -150,45 +150,10 @@ void dofile(char const *input_path, FILE *input_file, ob_Serial *srl) {
           continue;
         }
 
-        switch (opcode) {
-        case OB_OP_PUSH:
-          name = "literal";
-          break;
-        case OB_OP_SEND:
-          name = "send";
-          break;
-        case OB_OP_IMPLICIT:
-          name = "implicit";
-          break;
-          break;
-        case OB_OP_EXTEND:
-          break;
-        case OB_OP_EXTRA: {
-          switch (data) {
-          case 0:
-            name = "return";
-            break;
-          case 1:
-            name = "duplicate";
-            break;
-          case 2:
-            name = "pop";
-            break;
-          default:
-            name = "extra (?)";
-            break;
-          }
-        } break;
-        case OB_OP_ARRAY:
-          name = "array";
-          break;
-        case OB_OP_DEBUG:
-          [[fallthrough]];
-        case OB_OP_FILENAME:
-          // handled above
-          [[fallthrough]];
-        default:
-          break;
+        if (opcode == OB_OP_EXTRA) {
+          name = obbc_extopcode_name(data);
+        } else {
+          name = obbc_opcode_name(opcode);
         }
 
         printf("  %.*zx : %02x", size, offset, byte);

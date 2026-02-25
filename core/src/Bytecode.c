@@ -45,6 +45,43 @@ static uint8_t const *read_int(uint8_t const *bytes, uint64_t *result) {
   return bytes;
 }
 
+char const *obbc_opcode_name(int operation) {
+  switch (operation) {
+  case OB_OP_PUSH:
+    return "PUSH";
+  case OB_OP_SEND:
+    return "SEND";
+  case OB_OP_IMPLICIT:
+    return "IMPLICIT";
+  case OB_OP_EXTEND:
+    return "EXTEND";
+  case OB_OP_EXTRA:
+    return "EXTRA";
+  case OB_OP_ARRAY:
+    return "ARRAY";
+  case OB_OP_DEBUG:
+    return "DEBUG";
+  case OB_OP_FILENAME:
+    return "FILENAME";
+
+  default:
+    return "???";
+  }
+}
+
+char const *obbc_extopcode_name(int ext) {
+  switch (ext) {
+  case OB_OP_EXT_RETURN:
+    return "RETURN";
+  case OB_OP_EXT_DUPLICATE:
+    return "DUPLICATE";
+  case OB_OP_EXT_POP:
+    return "POP";
+  default:
+    return "???";
+  }
+}
+
 void obbc_run(ob_Ctx ctx, size_t len, uint8_t const *code) {
   QL_DEBUG("running data from %p, length %zu", code, len);
 
