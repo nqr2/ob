@@ -1,3 +1,17 @@
+add_library(harness2 OBJECT
+  "lib/Test.h"
+  "lib/Test.c"
+)
+
+target_include_directories("harness2" PUBLIC "lib")
+target_link_libraries("harness2" PUBLIC "ob::base")
+
+add_executable("driver"
+  "src/suite.c"
+)
+
+target_link_libraries("driver" PUBLIC "harness2" "ob::base")
+
 file(GLOB HOSTED_TESTS
   "entries/*.ob"
 )
