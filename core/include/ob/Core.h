@@ -36,8 +36,8 @@ typedef enum : ql_Exncode {
   OB_OK = 0,
 
   /// An object did not understand a message and could not dispatch
-  /// doesNotUnderstand.
-  OB_DOES_NOT_UNDERSTAND,
+  /// @c #call-missing:with:.
+  OB_CALLED_MISSING,
 } ob_Exncode;
 
 /// Object tags. @sa ob_Object::proto for details on "containing" data.

@@ -72,14 +72,17 @@ typedef enum {
   /// The implementation of `^`
   OB_OP_EXT_RETURN = 0,
 
-  /// Duplicate top of stack
+  /// Duplicate top of stack.
   OB_OP_EXT_DUPLICATE = 1,
 
-  /// Pop top of stack
+  /// Pop top of stack.
   OB_OP_EXT_POP = 2,
 } ob_ExtOpcode;
 
+/// @returns A string containing the name of a value from @ref ob_Opcode.
 char const *obbc_opcode_name(int operation);
+
+/// @returns A string containing the name of a value from @ref ob_ExtOpcode.
 char const *obbc_extopcode_name(int ext);
 
 void obbc_run(ob_Ctx ctx, size_t len, uint8_t const *code);
