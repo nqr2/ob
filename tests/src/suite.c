@@ -24,5 +24,5 @@ DEFTEST(fixture_must_run) {
   OB_ASSERT(value_set == true, "`value_set` must be set to true by a fixture");
 }
 
-DEFSUITE(SUITE){TEST(always_pass),  TEST(fail_always),      TEST(skipped),
-                FIXTURE(a_fixture), TEST(fixture_must_run), SUITE_END};
+DEFSUITE(SUITE, {}, TEST(always_pass), TEST(fail_always), TEST(skipped),
+         FIXTURE(a_fixture), TEST(fixture_must_run), SUITE_END);

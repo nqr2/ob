@@ -10,10 +10,8 @@
 #include <threads.h>
 
 enum {
-  PASS = 0,
-  FAIL = -1,
-  SKIP = -2,
-  BAILOUT = -3,
+  PASS = -1,
+  FAIL = -2,
 };
 
 jmp_buf buf;
@@ -38,17 +36,17 @@ int run_entry(Entry const *entry) {
   case FAIL:
     status = FAIL;
     break;
-  case SKIP:
-    return SKIP;
-  case BAILOUT:
-    return BAILOUT;
-  default: {
+  case PASS:
+    return PASS;
+  case 0: {
     if (entry->is_test) { // test case
       entry->test();
     } else { // suite
       // uhhh run every test in the suite?
     }
   } break;
+  default:
+    return FAIL;
   }
 
   if (entry->name != NULL) {
@@ -81,16 +79,18 @@ int main(int n_args, char const *argv[]) {
 
   // bool passed = true;
 
+  auto entries = SUITE.entries;
+
   if (options.run_test != nullptr) {
     auto found = false;
 
     // uhhhmmm
-    for (int i = 0; !SUITE[i].is_end; i++) {
-      auto entry = SUITE + i;
+    for (int i = 0; !entries[i].is_end; i++) {
+      auto entry = entries + i;
 
       QL_WARN("at index: %d", i);
 
-      if (SUITE[i].is_fixture) {
+      if (entries[i].is_fixture) {
         QL_INFO("running fixture: '%s", entry->name);
         entry->fixture();
         continue;
@@ -116,9 +116,9 @@ int main(int n_args, char const *argv[]) {
   }
 
   if (options.list_tests) {
-    for (int i = 0; !SUITE[i].is_end; i++) {
-      if (SUITE[i].is_test) {
-        puts(SUITE[i].name);
+    for (int i = 0; !entries[i].is_end; i++) {
+      if (entries[i].is_test) {
+        puts(entries[i].name);
       }
     }
   }
@@ -131,7 +131,7 @@ static void throw(int val) {
 }
 
 void skip() {
-  throw(SKIP);
+  throw(PASS);
 }
 
 void skip_with(char const *rsn) {
@@ -148,9 +148,6 @@ void fail_with(char const *rsn) {
   fail();
 }
 
-void bailout() {
-  throw(BAILOUT);
-}
 /*
 bool runtest(Test const *test, int index) {
   thisreason = NULL;
