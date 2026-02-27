@@ -13,7 +13,6 @@ target_sources("base" PUBLIC
     "include/ob/base/Log.h"
     "include/ob/base/Number.h"
     "include/ob/base/Table.h"
-    "include/ob/base/Tap.h"
 )
 
 target_sources("base" PRIVATE
@@ -26,7 +25,6 @@ target_sources("base" PRIVATE
   "src/Log.c"
   "src/Number.c"
   "src/Table.c"
-  "src/Tap.c"
 )
 
 target_include_directories("base" PUBLIC
@@ -35,10 +33,6 @@ target_include_directories("base" PUBLIC
 )
 
 add_library(ob::base ALIAS "base")
-
-if(OB_BUILD_TESTS)
-  add_subdirectory("tests")
-endif()
 
 if(OB_INSTALL)
   install(

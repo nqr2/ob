@@ -9,10 +9,6 @@ target_include_directories("static" PUBLIC
 
 add_library(ob::static ALIAS "static")
 
-if(OB_BUILD_TESTS)
-  add_subdirectory("tests")
-endif()
-
 if(OB_INSTALL)
   install(
     TARGETS "static"

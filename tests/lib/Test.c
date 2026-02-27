@@ -1,6 +1,7 @@
 #include <Test.h>
 
 #include <ob/base/Argparse.h>
+#include <ob/base/Assert.h>
 #include <ob/base/Log.h>
 
 #include <setjmp.h>
@@ -50,7 +51,13 @@ void list_tests(Suite const *suite) {
   prefix_top--;
 }
 
+static void assert_failure() {
+  fail_with("assertion failed");
+}
+
 bool run_entry(Entry const *entry) {
+  ql_assert_add_handler(assert_failure);
+
   switch (setjmp(jbuf)) {
   case FAIL:
     return false;

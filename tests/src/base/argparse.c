@@ -1,17 +1,14 @@
+#include <Test.h>
+
 #include <ob/base/Argparse.h>
 #include <ob/base/Assert.h>
-#include <ob/base/Tap.h>
 
-void assert_failure() {
-  ql_fail_with("assertion failed");
-}
-
-void empty_flags() {
+DEFTEST(empty_flags) {
   auto parser = ql_create_parser(NULL);
   ql_parse(&parser, 0, NULL);
 }
 
-void f_set_unset() {
+DEFTEST(f_set_unset) {
   auto flag = false;
 
   auto parser = ql_create_parser((ql_Flag[]){
@@ -33,7 +30,7 @@ void f_set_unset() {
   QL_ASSERT(flag == false, "expected long FLAG_UNSET to set a flag to false");
 }
 
-void f_int() {
+DEFTEST(f_int) {
   auto flag = 0;
 
   auto parser = ql_create_parser((ql_Flag[]){
@@ -52,7 +49,7 @@ static void pos_arg__pa(void *udata, char const *arg) {
   *((char const **)udata) = arg;
 }
 
-void pos_arg() {
+DEFTEST(pos_arg) {
   char const *known = "this is a known value!";
   char const *arg = NULL;
 
@@ -64,7 +61,7 @@ void pos_arg() {
   QL_ASSERT(arg == known, "expected a positional argument to be set");
 }
 
-void f_string() {
+DEFTEST(f_string) {
   char const *k_short = "this is short";
   char const *k_long = "this is long";
 
@@ -82,7 +79,7 @@ void f_string() {
   QL_ASSERT(arg == k_long, "expected long FLAG_STRING to set a value");
 }
 
-void f_subcommand() {
+DEFTEST(f_subcommand) {
   auto flag = false;
 
   auto subparser = ql_create_parser((ql_Flag[]){
@@ -105,20 +102,6 @@ void f_subcommand() {
             "expected a FLAG_UNSET in FLAG_SUBCOMMAND to unset a flag");
 }
 
-ql_Test const SUITE[] = {
-    {"empty flag list", empty_flags, false},
-    {"FLAG_SET and FLAG_UNSET", f_set_unset, false},
-    {"FLAG_INT", f_int, false},
-    {"positional arguments", pos_arg, false},
-    {"FLAG_STRING", f_string, false},
-    {"FLAG_SUBCOMMAND", f_subcommand, false},
-    QL_SUITE_END,
-};
-
-int main() {
-  ql_assert_add_handler(assert_failure);
-
-  ql_test(SUITE);
-
-  return 0;
-}
+DEFSUITE(argparse, SUITES(),
+         TESTS(TEST(empty_flags), TEST(f_set_unset), TEST(f_int), TEST(pos_arg),
+               TEST(f_string), TEST(f_subcommand)));

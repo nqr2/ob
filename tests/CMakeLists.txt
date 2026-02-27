@@ -8,11 +8,20 @@ target_link_libraries("drv" PUBLIC "ob::base")
 
 add_executable("driver"
   "src/drv.c"
-
   "src/suite.c"
+
+  "src/base/suite.c"
+  "src/base/allocator.c"
+  "src/base/argparse.c"
+  "src/base/assert.c"
+  "src/base/hash.c"
+  "src/base/table.c"
+
+  "src/core/suite.c"
+  "src/core/get_slot.c"
 )
 
-target_link_libraries("driver" PUBLIC "drv" "ob::base")
+target_link_libraries("driver" PUBLIC "drv" "ob::static")
 
 add_custom_command(
   TARGET "driver" POST_BUILD

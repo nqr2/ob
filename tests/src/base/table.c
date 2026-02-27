@@ -1,22 +1,19 @@
+#include <Test.h>
+
 #include <ob/base/Allocator.h>
 #include <ob/base/Assert.h>
 #include <ob/base/Table.h>
-#include <ob/base/Tap.h>
 
-void assert_failure() {
-  ql_fail_with("assertion failed");
-}
+static ql_Allocator libc;
 
-ql_Allocator libc;
-
-void can_create() {
+DEFTEST(can_create) {
   auto tbl = (ql_Table){};
   ql_table_init(&tbl, &libc);
 
   ql_table_free(&tbl);
 }
 
-void can_add_an_element() {
+DEFTEST(can_add_an_element) {
   auto tbl = (ql_Table){};
   ql_table_init(&tbl, &libc);
 
@@ -30,7 +27,7 @@ void can_add_an_element() {
   ql_table_free(&tbl);
 }
 
-void can_get_an_element() {
+DEFTEST(can_get_an_element) {
   auto tbl = (ql_Table){};
   ql_table_init(&tbl, &libc);
 
@@ -50,7 +47,7 @@ void can_get_an_element() {
   ql_table_free(&tbl);
 }
 
-void can_iterate() {
+DEFTEST(can_iterate) {
   auto tbl = (ql_Table){};
   ql_table_init(&tbl, &libc);
 
@@ -87,19 +84,11 @@ void can_iterate() {
   ql_table_free(&tbl);
 }
 
-ql_Test const SUITE[] = {
-    QL_PASS(can_create),
-    QL_PASS(can_add_an_element),
-    QL_PASS(can_get_an_element),
-    QL_PASS(can_iterate),
-    QL_SUITE_END,
-};
-
-int main() {
+DEFFIXTURE(init_alloc) {
   libc = ql_alloc_create();
-
-  ql_assert_add_handler(assert_failure);
-  ql_test(SUITE);
-
-  return 0;
+  return true;
 }
+
+DEFSUITE(table, SUITES(),
+         TESTS(FIXTURE(init_alloc), TEST(can_create), TEST(can_add_an_element),
+               TEST(can_get_an_element), TEST(can_iterate)));

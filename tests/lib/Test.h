@@ -31,8 +31,8 @@ typedef struct Entry {
   };
 } Entry;
 
-#define DEFTEST(N) void N()
-#define DEFFIXTURE(N) bool N()
+#define DEFTEST(N) static void N()
+#define DEFFIXTURE(N) static bool N()
 
 #define TEST(F) {.is_test = true, .name = #F, .test = (F)}
 #define FIXTURE(F) {.is_fixture = true, .name = #F, .fixture = (F)}
