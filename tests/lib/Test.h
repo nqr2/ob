@@ -1,6 +1,8 @@
 #ifndef TEST_H_INCLUDED
 #define TEST_H_INCLUDED
 
+#include <stddef.h>
+
 typedef void (*TestBody)();
 typedef bool (*FixtureBody)();
 
@@ -10,7 +12,7 @@ struct Entry;
 typedef struct Suite {
   char const *name;
 
-  struct Suite const *suites;
+  struct Suite const **suites;
   struct Entry const *entries;
 } Suite;
 
@@ -36,12 +38,24 @@ typedef struct Entry {
 #define FIXTURE(F) {.is_fixture = true, .name = #F, .fixture = (F)}
 #define SUITE_END {.is_end = true}
 
-#define DEFSUITE(Name, Suites, ...)                                            \
-  Suite const Name = {.name = #Name,                                           \
-                      .suites = (Suite[])Suites,                               \
-                      .entries = (Entry[]){__VA_ARGS__}}
+#define SUITES(...)                                                            \
+  (Suite const *[]) {                                                          \
+    __VA_ARGS__ __VA_OPT__(, ) nullptr                                         \
+  }
 
-extern Suite const SUITE;
+#define TESTS(...)                                                             \
+  (Entry[]) {                                                                  \
+    __VA_ARGS__ __VA_OPT__(, ) SUITE_END                                       \
+  }
+
+#define DEFSUITE(Name, Suites, Tests)                                          \
+  const Suite SUITE_##Name = {                                                 \
+      .name = #Name, .suites = (Suites), .entries = (Tests)}
+
+extern const Suite SUITE_;
+
+extern Suite const *top_suites[];
+extern size_t top_suites_length;
 
 void skip();
 void skip_with(char const *reason);

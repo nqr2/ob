@@ -7,15 +7,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <threads.h>
 
 enum {
   PASS = -1,
   FAIL = -2,
 };
 
-jmp_buf buf;
-char const *reason;
+jmp_buf jbuf;
+char const *throw_message;
 
 struct {
   bool list_tests;
@@ -23,43 +22,113 @@ struct {
   int log_level;
 } options = {};
 
-int run_entry(Entry const *entry) {
-  if (entry->is_end) {
-    return PASS;
+char const *prefix_stack[16] = {};
+int prefix_top = 0;
+
+void print_prefix() {
+  for (int i = 0; i < prefix_top; i++) {
+    printf("%s/", prefix_stack[i]);
+  }
+}
+
+void list_tests(Suite const *suite) {
+  auto entries = suite->entries;
+
+  prefix_stack[prefix_top++] = suite->name;
+
+  for (int i = 0; suite->suites[i] != nullptr; i++) {
+    list_tests(suite->suites[i]);
   }
 
-  QL_INFO("running entry named '%s'", entry->name);
-
-  auto status = PASS;
-
-  switch (setjmp(buf)) {
-  case FAIL:
-    status = FAIL;
-    break;
-  case PASS:
-    return PASS;
-  case 0: {
-    if (entry->is_test) { // test case
-      entry->test();
-    } else { // suite
-      // uhhh run every test in the suite?
+  for (int i = 0; !entries[i].is_end; i++) {
+    if (entries[i].is_test) {
+      print_prefix();
+      puts(entries[i].name);
     }
-  } break;
-  default:
-    return FAIL;
   }
 
-  if (entry->name != NULL) {
-    if (strncmp(entry->name, "fail_", 5) == 0) {
-      if (status == FAIL) {
-        status = PASS;
-      } else if (status == PASS) {
-        status = FAIL;
+  prefix_top--;
+}
+
+bool run_entry(Entry const *entry) {
+  switch (setjmp(jbuf)) {
+  case FAIL:
+    return false;
+  case PASS:
+    return true;
+
+  case 0: {
+    entry->test();
+  }; break;
+
+  default:
+    break;
+  }
+
+  return true;
+}
+
+typedef enum {
+  OK,
+  TEST_FAILED,
+  FIXTURE_FAILED,
+  TEST_NOT_FOUND,
+  SUITE_NOT_FOUND,
+} Status;
+
+Status run_named(char const *test, Suite const *suite) {
+  auto len = strlen(test);
+  char const *prefix = memchr(test, '/', len);
+
+  if (prefix == nullptr) {
+    bool found = false;
+    for (int i = 0; !suite->entries[i].is_end; i++) {
+      auto entry = &suite->entries[i];
+
+      if (entry->is_fixture) {
+        auto pass = entry->fixture();
+
+        if (!pass) {
+          return FIXTURE_FAILED;
+        }
+      }
+
+      if (strcmp(test, entry->name) == 0) {
+        found = true;
+        auto pass = run_entry(entry);
+
+        if (!pass) {
+          return TEST_FAILED;
+        }
+
+        break;
       }
     }
+
+    if (!found) {
+      return TEST_NOT_FOUND;
+    }
+
+    return OK;
   }
 
-  return status;
+  prefix++;
+  len = prefix - test - 1;
+
+  Suite const *inner = nullptr;
+
+  for (int i = 0; suite->suites[i] != nullptr; i++) {
+    if (strncmp(test, suite->suites[i]->name, len) == 0) {
+      inner = suite->suites[i];
+      break;
+    }
+  }
+
+  if (suite != nullptr) {
+    return run_named(prefix, suite);
+  }
+
+  return SUITE_NOT_FOUND;
 }
 
 int main(int n_args, char const *argv[]) {
@@ -69,7 +138,8 @@ int main(int n_args, char const *argv[]) {
   auto f_verbosity =
       ql_create_flag('v', nullptr, QL_FLAG_INT, &options.log_level);
 
-  auto parser = ql_create_parser((ql_Flag[]){f_list, f_run, f_verbosity});
+  auto parser =
+      ql_create_parser((ql_Flag[]){f_list, f_run, f_verbosity, QL_FLAGS_END});
 
   ql_parse(&parser, n_args, argv);
 
@@ -77,57 +147,44 @@ int main(int n_args, char const *argv[]) {
   ql_log_set_handler(&log);
   ql_log_set_level(options.log_level);
 
-  // bool passed = true;
-
-  auto entries = SUITE.entries;
+  auto exit = EXIT_SUCCESS;
 
   if (options.run_test != nullptr) {
-    auto found = false;
+    auto status = run_named(options.run_test, &SUITE_);
 
-    // uhhhmmm
-    for (int i = 0; !entries[i].is_end; i++) {
-      auto entry = entries + i;
-
-      QL_WARN("at index: %d", i);
-
-      if (entries[i].is_fixture) {
-        QL_INFO("running fixture: '%s", entry->name);
-        entry->fixture();
-        continue;
-      }
-
-      QL_WARN("name: %s", entry->name);
-
-      if (strcmp(entry->name, options.run_test) == 0) {
-        auto status = run_entry(entry);
-
-        if (status == FAIL) {
-          exit(EXIT_FAILURE);
-        }
-
-        found = true;
-      }
-    }
-
-    if (!found) {
-      QL_ERROR("entry not found: '%s'", options.run_test);
-      exit(EXIT_FAILURE);
+    switch (status) {
+    case OK:
+      break;
+    case TEST_FAILED:
+      puts("test failed");
+      exit = EXIT_FAILURE;
+      break;
+    case FIXTURE_FAILED:
+      puts("fixture failed");
+      exit = EXIT_FAILURE;
+      break;
+    case TEST_NOT_FOUND:
+      puts("test not found");
+      exit = EXIT_FAILURE;
+      break;
+    case SUITE_NOT_FOUND:
+      puts("suite not found");
+      exit = EXIT_FAILURE;
+      break;
     }
   }
 
   if (options.list_tests) {
-    for (int i = 0; !entries[i].is_end; i++) {
-      if (entries[i].is_test) {
-        puts(entries[i].name);
-      }
+    for (int i = 0; SUITE_.suites[i] != nullptr; i++) {
+      list_tests(SUITE_.suites[i]);
     }
   }
 
-  return 0;
+  return exit;
 }
 
 static void throw(int val) {
-  longjmp(buf, val);
+  longjmp(jbuf, val);
 }
 
 void skip() {
@@ -135,7 +192,7 @@ void skip() {
 }
 
 void skip_with(char const *rsn) {
-  reason = rsn;
+  throw_message = rsn;
   skip();
 }
 
@@ -144,86 +201,6 @@ void fail() {
 }
 
 void fail_with(char const *rsn) {
-  reason = rsn;
+  throw_message = rsn;
   fail();
 }
-
-/*
-bool runtest(Test const *test, int index) {
-  thisreason = NULL;
-
-  auto pass = true;
-  auto skipped = false;
-
-  switch (setjmp(thisbuf)) {
-  case FAIL:
-    pass = false;
-    break;
-  case SKIP:
-    skipped = true;
-    break;
-  case BAILOUT:
-    puts("Bail out!");
-    return false;
-  case 0: {
-    test->body();
-  } break;
-  }
-
-  if (!pass && test->should_fail) {
-    pass = true;
-  }
-
-  if (!pass) {
-    printf("not ");
-  }
-
-  printf("ok %d - %s", index + 1, test->name);
-
-  if (test->should_fail || skipped) {
-    printf(" #");
-
-    if (test->should_fail) {
-      printf(" TODO");
-    } else if (skipped) {
-      printf(" SKIP");
-    }
-  }
-
-  if (thisreason != NULL) {
-    printf(" # %s", thisreason);
-  }
-
-  putchar('\n');
-
-  return pass;
-}
-
-bool ql_test(Test const *suite) {
-  int count = 0;
-
-  for (;; count++) {
-    if (suite[count].body == NULL) {
-      break;
-    }
-  }
-
-  printf("TAP version 13\n1..%d\n", count);
-
-  auto passed = true;
-
-  for (int i = 0;; i++) {
-    if (suite[i].body == NULL) {
-      break;
-    }
-
-    auto this_passed = runtest(&suite[i], i);
-
-    if (!this_passed) {
-      passed = false;
-    }
-  }
-
-  return passed;
-}
-*/

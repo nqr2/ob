@@ -7,6 +7,8 @@ target_include_directories("drv" PUBLIC "lib")
 target_link_libraries("drv" PUBLIC "ob::base")
 
 add_executable("driver"
+  "src/drv.c"
+
   "src/suite.c"
 )
 
