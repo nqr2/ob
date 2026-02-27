@@ -1,28 +1,16 @@
 #include <Test.h>
 
 #include <ob/base/Argparse.h>
+#include <ob/base/Log.h>
 
 #include <setjmp.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <threads.h>
 
-int main(int n_args, char const *argv[]) {
-  auto list = false;
-
-  auto f_list = ql_create_flag('l', "list", QL_FLAG_SET, &list);
-
-  auto parser = ql_create_parser((ql_Flag[]){f_list});
-
-  ql_parse(&parser, n_args, argv);
-
-  if (list) {
-    for (int i = 0; !SUITE[i].is_end; i++) {
-      puts(SUITE[i].name);
-    }
-  }
-}
-
 enum {
+  PASS = 0,
   FAIL = -1,
   SKIP = -2,
   BAILOUT = -3,
@@ -30,6 +18,113 @@ enum {
 
 jmp_buf buf;
 char const *reason;
+
+struct {
+  bool list_tests;
+  char const *run_test;
+  int log_level;
+} options = {};
+
+int run_entry(Entry const *entry) {
+  if (entry->is_end) {
+    return PASS;
+  }
+
+  QL_INFO("running entry named '%s'", entry->name);
+
+  auto status = PASS;
+
+  switch (setjmp(buf)) {
+  case FAIL:
+    status = FAIL;
+    break;
+  case SKIP:
+    return SKIP;
+  case BAILOUT:
+    return BAILOUT;
+  default: {
+    if (entry->is_test) { // test case
+      entry->test();
+    } else { // suite
+      // uhhh run every test in the suite?
+    }
+  } break;
+  }
+
+  if (entry->name != NULL) {
+    if (strncmp(entry->name, "fail_", 5) == 0) {
+      if (status == FAIL) {
+        status = PASS;
+      } else if (status == PASS) {
+        status = FAIL;
+      }
+    }
+  }
+
+  return status;
+}
+
+int main(int n_args, char const *argv[]) {
+  auto f_list = ql_create_flag('l', "list", QL_FLAG_SET, &options.list_tests);
+  auto f_run =
+      ql_create_flag('r', "run", QL_FLAG_STRING, (void *)&options.run_test);
+  auto f_verbosity =
+      ql_create_flag('v', nullptr, QL_FLAG_INT, &options.log_level);
+
+  auto parser = ql_create_parser((ql_Flag[]){f_list, f_run, f_verbosity});
+
+  ql_parse(&parser, n_args, argv);
+
+  auto log = ql_log_create_handler();
+  ql_log_set_handler(&log);
+  ql_log_set_level(options.log_level);
+
+  // bool passed = true;
+
+  if (options.run_test != nullptr) {
+    auto found = false;
+
+    // uhhhmmm
+    for (int i = 0; !SUITE[i].is_end; i++) {
+      auto entry = SUITE + i;
+
+      QL_WARN("at index: %d", i);
+
+      if (SUITE[i].is_fixture) {
+        QL_INFO("running fixture: '%s", entry->name);
+        entry->fixture();
+        continue;
+      }
+
+      QL_WARN("name: %s", entry->name);
+
+      if (strcmp(entry->name, options.run_test) == 0) {
+        auto status = run_entry(entry);
+
+        if (status == FAIL) {
+          exit(EXIT_FAILURE);
+        }
+
+        found = true;
+      }
+    }
+
+    if (!found) {
+      QL_ERROR("entry not found: '%s'", options.run_test);
+      exit(EXIT_FAILURE);
+    }
+  }
+
+  if (options.list_tests) {
+    for (int i = 0; !SUITE[i].is_end; i++) {
+      if (SUITE[i].is_test) {
+        puts(SUITE[i].name);
+      }
+    }
+  }
+
+  return 0;
+}
 
 static void throw(int val) {
   longjmp(buf, val);

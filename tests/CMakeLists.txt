@@ -1,16 +1,34 @@
-add_library(harness2 OBJECT
+add_library("drv" OBJECT
   "lib/Test.h"
   "lib/Test.c"
 )
 
-target_include_directories("harness2" PUBLIC "lib")
-target_link_libraries("harness2" PUBLIC "ob::base")
+target_include_directories("drv" PUBLIC "lib")
+target_link_libraries("drv" PUBLIC "ob::base")
 
 add_executable("driver"
   "src/suite.c"
 )
 
-target_link_libraries("driver" PUBLIC "harness2" "ob::base")
+target_link_libraries("driver" PUBLIC "drv" "ob::base")
+
+add_custom_command(
+  TARGET "driver" POST_BUILD
+  COMMAND "driver" "-l" ">" "test_list.txt"
+  COMMENT "listing every unit test"
+)
+
+configure_file(
+  "${CMAKE_SOURCE_DIR}/.cmake/unit-test-script.cmake.in"
+  "unit-test-script.cmake"
+  @ONLY
+)
+
+set_property(
+  DIRECTORY APPEND
+  PROPERTY TEST_INCLUDE_FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/unit-test-script.cmake"
+)
 
 file(GLOB HOSTED_TESTS
   "entries/*.ob"
