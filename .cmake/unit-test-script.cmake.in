@@ -1,8 +1,20 @@
 file(STRINGS "@CMAKE_CURRENT_BINARY_DIR@/test_list.txt" LINES)
 
 foreach(L ${LINES})
+  set(FAILS NO)
+
+  if(${L} MATCHES "/fail_.*$")
+    set(FAILS YES)
+  endif()
+
   add_test(
     "${L}"
     "driver" "-r" ${L}
+  )
+
+  set_tests_properties(
+    TEST "${L}"
+    PROPERTIES
+      WILL_FAIL ${FAILS}
   )
 endforeach()

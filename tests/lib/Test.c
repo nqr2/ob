@@ -81,7 +81,6 @@ Status run_named(char const *test, Suite const *suite) {
   char const *prefix = memchr(test, '/', len);
 
   if (prefix == nullptr) {
-    bool found = false;
     for (int i = 0; !suite->entries[i].is_end; i++) {
       auto entry = &suite->entries[i];
 
@@ -93,23 +92,19 @@ Status run_named(char const *test, Suite const *suite) {
         }
       }
 
+      puts(entry->name);
       if (strcmp(test, entry->name) == 0) {
-        found = true;
         auto pass = run_entry(entry);
 
         if (!pass) {
           return TEST_FAILED;
         }
 
-        break;
+        return OK;
       }
     }
 
-    if (!found) {
-      return TEST_NOT_FOUND;
-    }
-
-    return OK;
+    return TEST_NOT_FOUND;
   }
 
   prefix++;
@@ -125,7 +120,7 @@ Status run_named(char const *test, Suite const *suite) {
   }
 
   if (suite != nullptr) {
-    return run_named(prefix, suite);
+    return run_named(prefix, inner);
   }
 
   return SUITE_NOT_FOUND;
