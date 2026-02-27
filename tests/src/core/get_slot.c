@@ -1,4 +1,3 @@
-#include "ob/base/Allocator.h"
 #include <Test.h>
 
 #include <ob/Core.h>
@@ -7,14 +6,13 @@
 #include <ob/core/Object.h>
 #include <ob/core/String.h>
 
-ql_Allocator libc;
-ob_Ctx ctx;
-
 void assert__failure() {
   fail_with("assertion failed");
 }
 
 DEFTEST(cannot_read_bogus) {
+  auto ctx = context();
+
   ob_Obj nil = nullptr;
   ob_Obj slot = nullptr;
 
@@ -26,6 +24,8 @@ DEFTEST(cannot_read_bogus) {
 }
 
 DEFTEST(read_known) {
+  auto ctx = context();
+
   ob_Obj slots = ob_create_slots(ctx, nullptr);
   ob_Obj five = ob_create_integer(ctx, 5);
 
@@ -51,6 +51,8 @@ DEFTEST(read_known) {
 }
 
 DEFTEST(read_known_after_gc) {
+  auto ctx = context();
+
   ob_Obj slots = ob_create_slots(ctx, nullptr);
   ob_Obj five = ob_create_integer(ctx, 5);
 
@@ -92,13 +94,7 @@ DEFTEST(read_known_after_gc) {
   }
 }
 
-DEFFIXTURE(setup) {
-  libc = ql_alloc_create();
-  ctx = ob_create(&libc);
-
-  return true;
-}
-
 DEFSUITE(get_slot, SUITES(),
-         TESTS(FIXTURE(setup), TEST(cannot_read_bogus), TEST(read_known),
-               TEST(read_known_after_gc)));
+         TESTS(TEST(cannot_read_bogus), TEST(read_known),
+               TEST(read_known_after_gc)),
+         .request_context = true);

@@ -8,14 +8,14 @@ static ql_Allocator libc;
 
 DEFTEST(can_create) {
   auto tbl = (ql_Table){};
-  ql_table_init(&tbl, &libc);
+  ql_table_init(&tbl, allocator());
 
   ql_table_free(&tbl);
 }
 
 DEFTEST(can_add_an_element) {
   auto tbl = (ql_Table){};
-  ql_table_init(&tbl, &libc);
+  ql_table_init(&tbl, allocator());
 
   uint64_t hash = 0;
   void *pointer = (void *)0xbabacafedeadbeef;
@@ -29,7 +29,7 @@ DEFTEST(can_add_an_element) {
 
 DEFTEST(can_get_an_element) {
   auto tbl = (ql_Table){};
-  ql_table_init(&tbl, &libc);
+  ql_table_init(&tbl, allocator());
 
   uint64_t hash = 0;
   void *original = (void *)0xbabacafedeadbeef;
@@ -49,7 +49,7 @@ DEFTEST(can_get_an_element) {
 
 DEFTEST(can_iterate) {
   auto tbl = (ql_Table){};
-  ql_table_init(&tbl, &libc);
+  ql_table_init(&tbl, allocator());
 
   auto first = -1;
   auto second = -1;
@@ -84,11 +84,7 @@ DEFTEST(can_iterate) {
   ql_table_free(&tbl);
 }
 
-DEFFIXTURE(init_alloc) {
-  libc = ql_alloc_create();
-  return true;
-}
-
 DEFSUITE(table, SUITES(),
-         TESTS(FIXTURE(init_alloc), TEST(can_create), TEST(can_add_an_element),
-               TEST(can_get_an_element), TEST(can_iterate)));
+         TESTS(TEST(can_create), TEST(can_add_an_element),
+               TEST(can_get_an_element), TEST(can_iterate)),
+         .request_allocator = true);

@@ -1,3 +1,5 @@
+#include "ob/Core.h"
+#include "ob/base/Allocator.h"
 #include <Test.h>
 
 #include <ob/base/Argparse.h>
@@ -8,6 +10,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+static ql_Allocator *alloc = nullptr;
+static ob_Ctx ctx = nullptr;
+
+ql_Allocator *allocator() {
+  return alloc;
+}
+
+ob_Ctx context() {
+  return ctx;
+}
 
 enum {
   PASS = -1,
@@ -83,11 +96,31 @@ typedef enum {
   SUITE_NOT_FOUND,
 } Status;
 
+static void setup_allocator() {
+  auto allocator = ql_alloc_create();
+
+  alloc = ql_allocate(&allocator, sizeof(ql_Allocator));
+  *alloc = allocator;
+}
+
+static void setup_context() {
+  ctx = ob_create(allocator());
+}
+
 Status run_named(char const *test, Suite const *suite) {
   auto len = strlen(test);
   char const *prefix = memchr(test, '/', len);
 
   if (prefix == nullptr) {
+    if (suite->request_allocator) {
+      setup_allocator();
+    }
+
+    if (suite->request_context) {
+      setup_allocator();
+      setup_context();
+    }
+
     for (int i = 0; !suite->entries[i].is_end; i++) {
       auto entry = &suite->entries[i];
 
@@ -180,6 +213,15 @@ int main(int n_args, char const *argv[]) {
     for (int i = 0; SUITE_.suites[i] != nullptr; i++) {
       list_tests(SUITE_.suites[i]);
     }
+  }
+
+  if (ctx != nullptr) {
+    ob_destroy(ctx);
+  }
+
+  // TODO: check leaks and fail accordingly
+  if (alloc != nullptr) {
+    ql_deallocate(alloc, sizeof(ql_Allocator), alloc);
   }
 
   return exit;

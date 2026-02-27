@@ -3,6 +3,9 @@
 
 #include <stddef.h>
 
+#include <ob/base/Allocator.h>
+#include <ob/Core.h>
+
 typedef void (*TestBody)();
 typedef bool (*FixtureBody)();
 
@@ -11,6 +14,11 @@ struct Entry;
 
 typedef struct Suite {
   char const *name;
+
+  struct {
+    bool request_allocator : 1;
+    bool request_context : 1;
+  };
 
   struct Suite const **suites;
   struct Entry const *entries;
@@ -48,9 +56,10 @@ typedef struct Entry {
     __VA_ARGS__ __VA_OPT__(, ) SUITE_END                                       \
   }
 
-#define DEFSUITE(Name, Suites, Tests)                                          \
-  const Suite SUITE_##Name = {                                                 \
-      .name = #Name, .suites = (Suites), .entries = (Tests)}
+#define DEFSUITE(Name, Suites, Tests, ...)                                     \
+  const Suite SUITE_##Name = {.name = #Name,                                   \
+                              .suites = (Suites),                              \
+                              .entries = (Tests)__VA_OPT__(, ) __VA_ARGS__}
 
 extern const Suite SUITE_;
 
@@ -62,5 +71,8 @@ void skip_with(char const *reason);
 
 void fail();
 void fail_with(char const *reason);
+
+ql_Allocator* allocator();
+ob_Ctx context();
 
 #endif

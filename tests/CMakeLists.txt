@@ -4,7 +4,7 @@ add_library("drv" OBJECT
 )
 
 target_include_directories("drv" PUBLIC "lib")
-target_link_libraries("drv" PUBLIC "ob::base")
+target_link_libraries("drv" PUBLIC "ob::base" "ob::core")
 
 add_executable("driver"
   "src/drv.c"
