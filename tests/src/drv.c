@@ -18,7 +18,6 @@ DEFTEST(skipped) {
 
 DEFFIXTURE(a_fixture) {
   value_set = true;
-  return true;
 }
 
 DEFTEST(fixture_must_run) {

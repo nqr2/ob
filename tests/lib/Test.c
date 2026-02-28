@@ -1,5 +1,3 @@
-#include "ob/Core.h"
-#include "ob/base/Allocator.h"
 #include <Test.h>
 
 #include <ob/base/Argparse.h>
@@ -14,38 +12,30 @@
 static ql_Allocator *alloc = nullptr;
 static ob_Ctx ctx = nullptr;
 
-ql_Allocator *allocator() {
-  return alloc;
-}
-
-ob_Ctx context() {
-  return ctx;
-}
-
 enum {
   PASS = -1,
   FAIL = -2,
 };
 
-jmp_buf jbuf;
-char const *throw_message;
+static jmp_buf jbuf;
+static char const *throw_message;
 
-struct {
+static struct {
   bool list_tests;
   char const *run_test;
   int log_level;
 } options = {};
 
-char const *prefix_stack[16] = {};
-int prefix_top = 0;
+static char const *prefix_stack[16] = {};
+static int prefix_top = 0;
 
-void print_prefix() {
+static void print_prefix() {
   for (int i = 0; i < prefix_top; i++) {
     printf("%s/", prefix_stack[i]);
   }
 }
 
-void list_tests(Suite const *suite) {
+static void list_tests(Suite const *suite) {
   auto entries = suite->entries;
 
   prefix_stack[prefix_top++] = suite->name;
@@ -54,7 +44,7 @@ void list_tests(Suite const *suite) {
     list_tests(suite->suites[i]);
   }
 
-  for (int i = 0; !entries[i].is_end; i++) {
+  for (int i = 0; entries[i].name != nullptr; i++) {
     if (entries[i].is_test) {
       print_prefix();
       puts(entries[i].name);
@@ -68,7 +58,7 @@ static void assert_failure() {
   fail_with("assertion failed");
 }
 
-bool run_entry(Entry const *entry) {
+static bool run_entry(Entry const *entry) {
   ql_assert_add_handler(assert_failure);
 
   switch (setjmp(jbuf)) {
@@ -78,7 +68,7 @@ bool run_entry(Entry const *entry) {
     return true;
 
   case 0: {
-    entry->test();
+    entry->body();
   }; break;
 
   default:
@@ -107,7 +97,7 @@ static void setup_context() {
   ctx = ob_create(allocator());
 }
 
-Status run_named(char const *test, Suite const *suite) {
+static Status run_named(char const *test, Suite const *suite) {
   auto len = strlen(test);
   char const *prefix = memchr(test, '/', len);
 
@@ -121,15 +111,17 @@ Status run_named(char const *test, Suite const *suite) {
       setup_context();
     }
 
-    for (int i = 0; !suite->entries[i].is_end; i++) {
+    for (int i = 0; suite->entries[i].name != nullptr; i++) {
       auto entry = &suite->entries[i];
 
-      if (entry->is_fixture) {
-        auto pass = entry->fixture();
+      if (!entry->is_test) {
+        auto pass = run_entry(entry);
 
         if (!pass) {
           return FIXTURE_FAILED;
         }
+
+        continue;
       }
 
       puts(entry->name);
@@ -164,6 +156,36 @@ Status run_named(char const *test, Suite const *suite) {
   }
 
   return SUITE_NOT_FOUND;
+}
+
+static void throw(int val) {
+  longjmp(jbuf, val);
+}
+
+void skip() {
+  throw(PASS);
+}
+
+void skip_with(char const *reason) {
+  throw_message = reason;
+  skip();
+}
+
+void fail() {
+  throw(FAIL);
+}
+
+void fail_with(char const *reason) {
+  throw_message = reason;
+  fail();
+}
+
+ql_Allocator *allocator() {
+  return alloc;
+}
+
+ob_Ctx context() {
+  return ctx;
 }
 
 int main(int n_args, char const *argv[]) {
@@ -225,26 +247,4 @@ int main(int n_args, char const *argv[]) {
   }
 
   return exit;
-}
-
-static void throw(int val) {
-  longjmp(jbuf, val);
-}
-
-void skip() {
-  throw(PASS);
-}
-
-void skip_with(char const *rsn) {
-  throw_message = rsn;
-  skip();
-}
-
-void fail() {
-  throw(FAIL);
-}
-
-void fail_with(char const *rsn) {
-  throw_message = rsn;
-  fail();
 }

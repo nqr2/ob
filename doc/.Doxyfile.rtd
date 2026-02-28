@@ -3,12 +3,11 @@
 PROJECT_NAME = "ob"
 PROJECT_NUMBER = "0.0.0"
 OUTPUT_DIRECTORY = ".build"
-INPUT += "bin/"
 INPUT += "core/"
 INPUT += "lib/"
 INPUT += "std/"
 INPUT += "base/"
-EXCLUDE = "*/tests/*"
+INPUT += "tests/lib/"
 RECURSIVE = YES
 TAB_SIZE = 4
 OPTIMIZE_OUTPUT_FOR_C = YES
