@@ -33,28 +33,25 @@ static bool is_operator(char chr) {
 }
 
 static bool is_word_start(char chr) {
-  switch (chr) {
-  case '.':
-  case ':':
-  case '|':
-  case '\'':
-  case '"':
-  case '(':
-  case ')':
-  case '[':
-  case ']':
-  case '{':
-  case '}':
-    return false;
-  default:
-    return !isspace(chr);
-  }
+  return isalpha(chr) || chr == '_';
 }
 
 static bool is_word_tail(char chr) {
   switch (chr) {
+  case '(':
+  case ')':
+  case '{':
+  case '}':
+  case '[':
+  case ']':
+  case '.':
+  case '\'':
+  case '"':
+  case ':':
+  case '|':
+    return false;
   default:
-    return is_word_start(chr);
+    return is_word_start(chr) || isdigit(chr) || is_operator(chr);
   }
 }
 

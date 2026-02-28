@@ -85,6 +85,7 @@ int main(int argn, char const *argv[]) {
     if (instr != NULL) {
       dostring(&data, instr);
       instr = NULL;
+      arg_index++;
     }
   } while (arg_index < (size_t)argn);
 
