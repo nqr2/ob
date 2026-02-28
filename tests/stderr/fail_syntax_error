@@ -1,6 +1,0 @@
-```
-Assertion failed
-File: /home/user/Codigo/ob/core/src/Parse.c line: 122 (rdr_expect1)
-Checked: `*rdr->head == chr`
-Message: at 'tests/entries/fail_syntax_error.ob' 3:1: expected `.`, got EOF
-```

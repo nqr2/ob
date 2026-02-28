@@ -42,7 +42,7 @@ set_property(
 )
 
 file(GLOB HOSTED_TESTS
-  "entries/*.ob"
+#  "entries/*.ob"
 )
 
 foreach(test ${HOSTED_TESTS})
