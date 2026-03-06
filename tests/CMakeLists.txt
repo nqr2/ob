@@ -1,3 +1,5 @@
+# Unit tests
+
 add_library("drv" OBJECT
   "lib/Test.h"
   "lib/Test.c"
@@ -40,6 +42,11 @@ set_property(
   PROPERTY TEST_INCLUDE_FILES
     "${CMAKE_CURRENT_BINARY_DIR}/unit-test-script.cmake"
 )
+
+# Hosted tests (expect/snapshot tests on scripts)
+
+add_executable("xd" "bin/xd.c")
+target_link_libraries("xd" PRIVATE ob::base)
 
 file(GLOB HOSTED_TESTS
 #  "entries/*.ob"

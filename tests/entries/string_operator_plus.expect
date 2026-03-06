@@ -1,0 +1,5 @@
+-- PROGRAM string_operator_plus.ob --
+('a' + 'b') print.
+-- STDOUT --
+'ab'
+-- STDERR --

@@ -1,0 +1,11 @@
+-- PROGRAM fail_syntax_error.ob --
+'This statement is not terminated by a dot' print;
+
+-- STDOUT --
+-- STDERR --
+```
+Assertion failed
+File: ob/core/src/Parse.c line: ... (rdr_expect1) (any)
+Checked: `*rdr->head == chr`
+Message: at 'tests/entries/fail_syntax_error.ob' 3:1: expected `.`, got EOF
+```
