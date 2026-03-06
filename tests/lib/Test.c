@@ -124,7 +124,6 @@ static Status run_named(char const *test, Suite const *suite) {
         continue;
       }
 
-      puts(entry->name);
       if (strcmp(test, entry->name) == 0) {
         auto pass = run_entry(entry);
 
