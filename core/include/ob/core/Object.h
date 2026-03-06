@@ -71,9 +71,18 @@ struct ob_ObjActivation {
   ob_Obj env;      // this context's environment
 };
 
+typedef enum : uint64_t {
+  OB_CMETHOD_PRIMITIVE = 0x1,
+} ob_CMethodFlags;
+
 struct ob_ObjCMethod {
   ql_ArrayT(ob_Str) parameters;
-  ob_FnCMethod method;
+  ob_CMethodFlags flags;
+
+  union {
+    ob_FnCMethod method;
+    size_t primitive_index;
+  };
 };
 
 typedef void (*ob_FnDestroy)(ob_Obj obj);
