@@ -124,36 +124,25 @@ int main(int argn, char const *argv[]) {
   ql_parse(&parser, argn, argv);
 
   if (stdin_capture != nullptr) {
-    auto new_stdin = freopen(stdin_capture, "r", stdin);
-
-    if (new_stdin == NULL) {
-      perror("failed to capture stdin");
+    if (freopen(stdin_capture, "r", stdin) == NULL) {
+      perror("cannot capture stdin");
       return 1;
     }
-
-    stdin = new_stdin;
   }
 
   if (stderr_capture != nullptr) {
-    auto new_stderr = freopen(stderr_capture, "w", stderr);
 
-    if (new_stderr == NULL) {
+    if (freopen(stderr_capture, "w", stderr) == NULL) {
       perror("cannot capture stderr");
       return 1;
     }
-
-    stderr = new_stderr;
   }
 
   if (stdout_capture != nullptr) {
-    auto new_stdout = freopen(stdout_capture, "w", stdout);
-
-    if (new_stdout == NULL) {
+    if (freopen(stdout_capture, "w", stdout) == NULL) {
       perror("cannot capture stdout");
       return 1;
     }
-
-    stdout = new_stdout;
   }
 
   auto log = ql_log_create_handler();
@@ -181,15 +170,19 @@ int main(int argn, char const *argv[]) {
 
   ob_destroy(ctx);
 
+  // freopen is needed here, else CMake fails with SIGPIPEs when testing
   if (stdin_capture != nullptr) {
+    freopen(nullptr, "r", stdin);
     fclose(stdin);
   }
 
   if (stderr_capture != nullptr) {
+    freopen(nullptr, "w", stderr);
     fclose(stderr);
   }
 
   if (stdout_capture != nullptr) {
+    freopen(nullptr, "w", stdout);
     fclose(stdout);
   }
 

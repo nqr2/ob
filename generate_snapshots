@@ -9,17 +9,19 @@ then
   cmake --workflow --preset debug
 fi
 
-for f in tests/entries/*.ob
+cd tests
+
+for f in expect/*.ob
 do
-  echo "Generating expects for $f"
+  echo "Generating expect file for $f"
 
   outf=$(mktemp "${TMPDIR:-/tmp/}out.$(basename -s .ob "$f").XXXXXXXXXXXX")
   errf=$(mktemp "${TMPDIR:-/tmp/}err.$(basename -s .ob "$f").XXXXXXXXXXXX")
 
-  tgtf="tests/entries/$(basename -s .ob "$f").expect"
-  resf="tests/entries/$(basename -s .ob "$f").expect2"
+  tgtf="entries/$(basename -s .ob "$f").expect"
+  resf="entries/$(basename -s .ob "$f").expect2"
 
-  $BUILD_DIRECTORY/bin/ob --verbose=0 "$f" \
+  ../$BUILD_DIRECTORY/bin/ob --verbose=0 "$f" \
      > "$outf" \
     2> "$errf" \
 
@@ -32,32 +34,11 @@ do
   echo "-- STDERR --"                   >> "$resf"
   cat "$errf"                           >> "$resf"
 
-  if grep '(any)' "$tgtf"
+  if test -e "$tgtf" && grep -F '(any)' "$tgtf"
   then
-    echo "File cannot be changed."
+    echo "File cannot be modified. Merge manually with the outputs from $BUILD_DIRECTORY"
     rm "$resf"
   else
     mv "$resf" "$tgtf"
-  fi
-done
-
-exit 0
-
-for f in tests/entries/*.ob
-do
-  echo "Generating snapshots for $f"
-
-  basename="$(basename -s .ob $f)"
-
-  if [ ! -e tests/stdout/$basename ]
-  then
-    echo "Capturing stdout..."
-    $BUILD_DIRECTORY/bin/ob --verbose=0 $f --capture-stdout tests/stdout/$basename
-  fi
-
-  if [ ! -e tests/stderr/$basename ]
-  then
-    echo "Capturing stderr..."
-    $BUILD_DIRECTORY/bin/ob --verbose=0 $f --capture-stderr tests/stderr/$basename
   fi
 done

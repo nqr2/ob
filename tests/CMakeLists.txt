@@ -43,75 +43,42 @@ set_property(
     "${CMAKE_CURRENT_BINARY_DIR}/unit-test-script.cmake"
 )
 
-# Hosted tests (expect/snapshot tests on scripts)
+# Hosted tests:
+# - expect tests on scripts (check outputs)
+# - check tests on scripts  (check exit code)
 
 add_executable("xd" "bin/xd.c")
 target_link_libraries("xd" PRIVATE ob::base)
 
-file(GLOB HOSTED_TESTS
-#  "entries/*.ob"
-)
+file(GLOB EXPECT_TESTS "expect/*.ob")
+file(GLOB CHECK_TESTS "check/*.ob")
 
-foreach(test ${HOSTED_TESTS})
-  get_filename_component(basename ${test} NAME_WE)
-  get_filename_component(dirname ${test} DIRECTORY)
+foreach(test ${EXPECT_TESTS})
+  cmake_path(GET test STEM basename)
+  cmake_path(GET test FILENAME filename)
 
-  cmake_path(RELATIVE_PATH test BASE_DIRECTORY ${CMAKE_SOURCE_DIR})
+  add_test(NAME "expect/${basename}"
+   COMMAND ${CMAKE_COMMAND}
+     -D "PROGRAM:STRING=${test}"
+     -D "NAME:STRING=${basename}"
+     -D "FILENAME:STRING=${filename}"
+     -D "EXPECT:STRING=${CMAKE_CURRENT_SOURCE_DIR}/expect/${basename}.expect"
+     -D "OB_COMMAND:STRING=$<TARGET_PROPERTY:ob,BINARY_DIR>/ob"
+     -P "${CMAKE_SOURCE_DIR}/.cmake/expect-test-script.cmake"
+  )
+endforeach()
 
-  set(fails FALSE)
+foreach(test ${CHECK_TESTS})
+  cmake_path(GET test STEM basename)
 
-  if(basename MATCHES "^fail_")
-    set(fails TRUE)
+  add_test(NAME "check/${basename}"
+    COMMAND ob --verbose 0 "${test}"
+  )
+
+  if(${basename} MATCHES "^fail_")
+    set_property(
+      TEST "check/${basename}"
+      PROPERTY WILL_FAIL YES
+    )
   endif()
-
-  add_test(
-    NAME "capture/${basename}"
-    COMMAND
-       ob
-       --capture-stdout "${CMAKE_CURRENT_BINARY_DIR}/${basename}.stdout"
-       --capture-stderr "${CMAKE_CURRENT_BINARY_DIR}/${basename}.stderr"
-       "${test}"
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-  )
-
-  add_test(
-    NAME "expect/${basename}.stdout"
-    COMMAND ${CMAKE_COMMAND}
-      -E compare_files
-      --ignore-eol
-      "${CMAKE_CURRENT_SOURCE_DIR}/stdout/${basename}"
-      "${CMAKE_CURRENT_BINARY_DIR}/${basename}.stdout"
-  )
-
-  add_test(
-    NAME "expect/${basename}.stderr"
-    COMMAND ${CMAKE_COMMAND}
-      -E compare_files
-      --ignore-eol
-      "${CMAKE_CURRENT_SOURCE_DIR}/stderr/${basename}"
-      "${CMAKE_CURRENT_BINARY_DIR}/${basename}.stderr"
-  )
-
-  set_tests_properties(
-    "capture/${basename}"
-    PROPERTIES
-      FIXTURES_SETUP "${basename}"
-      WILL_FAIL ${fails}
-  )
-
-  set_tests_properties(
-    "expect/${basename}.stdout"
-     PROPERTIES
-       DEPENDS "capture/${basename}"
-       FIXTURES_REQUIRED "${basename}"
-       REQUIRED_FILES "${CMAKE_CURRENT_SOURCE_DIR}/stdout/${basename}"
-  )
-
-  set_tests_properties(
-    "expect/${basename}.stderr"
-     PROPERTIES
-       DEPENDS "capture/${basename}"
-       FIXTURES_REQUIRED "${basename}"
-       REQUIRED_FILES "${CMAKE_CURRENT_SOURCE_DIR}/stderr/${basename}"
-  )
 endforeach()
