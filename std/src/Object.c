@@ -71,9 +71,9 @@ void obj_print(ob_Ctx ctx, ob_Obj receiver) {
     printf("#<cmethod:%p>", ptr);
   } break;
 
-  case OB_LIGHTCDATA: {
-    auto data = ob_cast_lightcdata(receiver);
-    printf("#<cdata:%p>", *data);
+  case OB_CDATA: {
+    auto data = ob_cast_cdata(receiver);
+    printf("#<cdata:%p>", data);
   } break;
 
   case OB_ACTIVATION:

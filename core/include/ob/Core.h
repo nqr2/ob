@@ -47,15 +47,15 @@ typedef enum : uint8_t {
   OB_NIL = 0,
 
   /// Interned strings.
-  /// Contains a @ref ob_Str.
+  /// Contains an @ref ob_Str.
   OB_SYMBOL = 1,
 
   /// Uninterned strings.
-  /// Contains a @ref ob_Str.
+  /// Contains an @ref ob_Str.
   OB_STRING = 2,
 
   /// Slot objects.
-  /// Contains a @ref ob_ObjSlots.
+  /// Contains an @ref ob_ObjSlots.
   OB_SLOTS = 3,
 
   /// Number objects.
@@ -67,27 +67,25 @@ typedef enum : uint8_t {
   OB_ARRAY = 5,
 
   /// Closure objects.
-  /// Contains a @ref ob_ObjMethod.
+  /// Contains an @ref ob_ObjMethod.
   OB_METHOD = 6,
 
   /// "Raw" functions from C.
-  /// Contains a @ref ob_FnCMethod.
+  /// Contains an @ref ob_FnCMethod.
   OB_LIGHTCMETHOD = 7,
 
-  /// Annotated functions from C.
-  /// Contains a @ref ob_ObjCMethod.
+  /// Annotated functions from outside `ob`.
+  /// Contains an @ref ob_ObjCMethod.
   OB_CMETHOD = 8,
 
-  /// "Raw" pointers from C.
-  /// Contains a @c void*.
-  OB_LIGHTCDATA = 9,
+  OB_RESERVED_9 = 9,
 
-  /// Annotated data from C.
-  /// Contains a @ref ob_ObjCData.
+  /// Data originating from outside `ob`.
+  /// Contains an @ref ob_ObjCData.
   OB_CDATA = 10,
 
   /// Call stack entries.
-  /// Contains a @ref ob_ObjActivation.
+  /// Contains an @ref ob_ObjActivation.
   OB_ACTIVATION = 11,
 
   OB_RESERVED_c = 12,
@@ -133,7 +131,6 @@ ob_Obj ob_create_array(ob_Ctx ctx);
 ob_Obj ob_create_method(ob_Ctx ctx);
 ob_Obj ob_create_lightcmethod(ob_Ctx ctx, ob_FnCMethod method);
 ob_Obj ob_create_cmethod(ob_Ctx ctx, ob_FnCMethod method, ql_Array parameters);
-ob_Obj ob_create_lightcdata(ob_Ctx ctx, void *cdata);
 ob_Obj ob_create_cdata(ob_Ctx ctx, ob_Obj prototype, ob_FnVisit visit,
                        ob_FnDestroy destructor, void *data);
 
@@ -145,7 +142,6 @@ ql_Array *ob_cast_array(ob_Obj obj);
 ob_ObjMethod *ob_cast_method(ob_Obj obj);
 ob_FnCMethod *ob_cast_lightcmethod(ob_Obj obj);
 ob_ObjCMethod *ob_cast_cmethod(ob_Obj obj);
-void **ob_cast_lightcdata(ob_Obj obj);
 ob_ObjCData *ob_cast_cdata(ob_Obj obj);
 ob_ObjActivation *ob_cast_activation(ob_Obj obj);
 

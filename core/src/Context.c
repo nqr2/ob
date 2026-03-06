@@ -177,15 +177,6 @@ ob_Obj ob_create_lightcmethod(ob_Ctx ctx, ob_FnCMethod method) {
   return obj;
 }
 
-ob_Obj ob_create_lightcdata(ob_Ctx ctx, void *cdata) {
-  auto obj = obctx_allocate(ctx, OB_LIGHTCDATA, sizeof(void *));
-
-  auto data = (void **)ob_get_payload(obj);
-  *data = cdata;
-
-  return obj;
-}
-
 ob_Obj ob_create_cdata(ob_Ctx ctx, ob_Obj prototype, ob_FnVisit visit,
                        ob_FnDestroy destructor, void *data) {
   auto obj = obctx_allocate(ctx, OB_CDATA, sizeof(ob_ObjCData));
@@ -365,8 +356,7 @@ ob_Obj ob_get_prototype(ob_Ctx ctx, ob_Obj obj) {
     return ctx->proto.lightcmethod;
   case OB_CMETHOD:
     return ctx->proto.cmethod;
-  case OB_LIGHTCDATA:
-    return ctx->proto.lightcdata;
+
   case OB_CDATA: {
     ob_ObjCData *data = ob_get_payload(obj);
 
@@ -378,6 +368,7 @@ ob_Obj ob_get_prototype(ob_Ctx ctx, ob_Obj obj) {
   }
   case OB_ACTIVATION:
     return ctx->proto.activation;
+  case OB_RESERVED_9:
   case OB_RESERVED_c:
   case OB_RESERVED_d:
   case OB_RESERVED_e:

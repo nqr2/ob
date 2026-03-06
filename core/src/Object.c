@@ -221,9 +221,7 @@ ob_FnCMethod *ob_cast_lightcmethod(ob_Obj obj) {
 ob_ObjCMethod *ob_cast_cmethod(ob_Obj obj) {
   return cast(obj, OB_CMETHOD);
 }
-void **ob_cast_lightcdata(ob_Obj obj) {
-  return (void **)cast(obj, OB_LIGHTCDATA);
-}
+
 ob_ObjCData *ob_cast_cdata(ob_Obj obj) {
   return cast(obj, OB_CDATA);
 }
