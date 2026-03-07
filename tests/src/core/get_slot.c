@@ -34,7 +34,8 @@ DEFTEST(read_known) {
   auto key = ql_hash_start(4, "five");
   auto sel = obstr_create_literal(ctx, "five");
 
-  ql_table_set(&view->slots, key, five);
+  auto slot = (ob_Slot){.key = sel, .value = five};
+  ql_array_push(&view->slots, sizeof(ob_Slot), &slot);
 
   ob_Obj also_five = nullptr;
 
@@ -61,7 +62,8 @@ DEFTEST(read_known_after_gc) {
   auto key = ql_hash_start(4, "five");
   auto sel = obstr_create_literal(ctx, "five");
 
-  ql_table_set(&view->slots, key, five);
+  auto slot = (ob_Slot){.key = sel, .value = five};
+  ql_array_push(&view->slots, sizeof(ob_Slot), &slot);
 
   ob_Obj also_five = nullptr;
 

@@ -77,6 +77,12 @@ typedef enum {
 
   /// Pop top of stack.
   OB_OP_EXT_POP = 2,
+
+  /// Advance the debug column by 1
+  OB_OP_EXT_DEBUG_CD1 = 3,
+
+  /// Advance the debug column by 2
+  OB_OP_EXT_DEBUG_CD2 = 4,
 } ob_ExtOpcode;
 
 /// @returns A string containing the name of a value from @ref ob_Opcode.

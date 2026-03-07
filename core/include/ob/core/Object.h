@@ -45,9 +45,15 @@ struct ob_Object {
   struct ob_Object *next;
 };
 
+// TODO: The object map optimization, requires factoring out operations on slots
+typedef struct ob_Slot {
+  ob_Str key;
+  ob_Obj value;
+} ob_Slot;
+
 struct ob_ObjSlots {
   ob_Obj prototype;
-  ql_Table slots;
+  ql_ArrayT(ob_Slot) slots;
 };
 
 struct ob_ObjMethod {

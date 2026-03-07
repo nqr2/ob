@@ -120,8 +120,8 @@ void dofile(char const *input_path, FILE *input_file, ob_Serial *srl) {
         char const *name = "???";
 
         if (opcode == OB_OP_FILENAME) {
-          path = code;
-          printf(" in file '%.*s'\n", data, path);
+          path = (char const *)code;
+          printf(" in file '%.*s'\n", (int)data, path);
           code += data;
           continue;
         }
@@ -140,7 +140,7 @@ void dofile(char const *input_path, FILE *input_file, ob_Serial *srl) {
             line += dline;
             column = dcol;
 
-            this_line = code;
+            this_line = (char const *)code;
             code += data;
           }
 
@@ -151,7 +151,7 @@ void dofile(char const *input_path, FILE *input_file, ob_Serial *srl) {
         }
 
         if (opcode == OB_OP_EXTRA) {
-          name = obbc_extopcode_name(data);
+          name = obbc_extopcode_name((int)data);
         } else {
           name = obbc_opcode_name(opcode);
         }

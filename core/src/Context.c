@@ -1,3 +1,4 @@
+#include "ob/Core.h"
 #include <ob/base/Allocator.h>
 #include <ob/base/Array.h>
 #include <ob/base/Assert.h>
@@ -88,11 +89,8 @@ ob_Obj obctx_allocate(ob_Ctx ctx, ob_ObjectTag tag, size_t payload_size) {
   return obj;
 }
 
-ob_Obj ob_create_symbol(ob_Ctx ctx, ob_Str symbol) {
-  auto data = obstr_get_data(ctx, symbol);
-  auto len = obstr_get_length(symbol);
-
-  auto hash = ql_hash_start(len, data);
+ob_Obj ob_create_symbol(ob_Ctx ctx, size_t length, char const *data) {
+  auto hash = ql_hash_start(length, data);
 
   ob_Obj obj = NULL;
 
@@ -101,11 +99,18 @@ ob_Obj ob_create_symbol(ob_Ctx ctx, ob_Str symbol) {
   }
 
   obj = obctx_allocate(ctx, OB_SYMBOL, sizeof(ob_Str));
+  *ob_cast_symbol(obj) = obstr_create(ctx, length, data);
 
-  *ob_cast_symbol(obj) = symbol;
   ql_table_set(&ctx->interned, hash, (void *)obj);
 
   return obj;
+}
+
+ob_Obj ob_intern_symbol(ob_Ctx ctx, ob_Str symbol) {
+  auto data = obstr_get_data(ctx, symbol);
+  auto len = obstr_get_length(symbol);
+
+  return ob_create_symbol(ctx, len, data);
 }
 
 ob_Obj ob_create_string(ob_Ctx ctx, ob_Str string) {
@@ -122,7 +127,7 @@ ob_Obj ob_create_slots(ob_Ctx ctx, ob_Obj prototype) {
 
   ob_ObjSlots *slots = ob_get_payload(obj);
 
-  ql_table_init(&slots->slots, ctx->allocator);
+  ql_array_init(&slots->slots, ctx->allocator);
   slots->prototype = prototype;
 
   return obj;
@@ -368,7 +373,7 @@ ob_Obj ob_get_prototype(ob_Ctx ctx, ob_Obj obj) {
   }
   case OB_ACTIVATION:
     return ctx->proto.activation;
-  case OB_RESERVED_9:
+  case OB_RESERVED_b:
   case OB_RESERVED_c:
   case OB_RESERVED_d:
   case OB_RESERVED_e:
@@ -387,12 +392,24 @@ bool ob_get_slot(ob_Ctx ctx, ob_Obj *slot, ob_Obj obj, ob_Str selector) {
   while ((obj != nullptr) && (obj != ctx->proto.object)) {
     if (OB_ISA(obj, OB_SLOTS)) {
       auto data = ob_cast_slots(obj);
+      auto len = ql_array_length(&data->slots, sizeof(ob_Slot));
 
-      auto str = obstr_get_data(ctx, selector);
-      auto hash = ql_hash_start(selector->length, str);
+      for (size_t i = 0; i < len; i++) {
+        auto got = (ob_Slot *)ql_array_at(&data->slots, sizeof(ob_Slot), i);
 
-      if (ql_table_get(&data->slots, hash, (void **)slot)) {
-        return true;
+        QL_INFO("lookup: their '%.*s' vs my #'%.*s'", selector->length,
+                obstr_get_data(ctx, selector),
+
+                got->key->length, obstr_get_data(ctx, got->key));
+        QL_INFO("%p vs %p", selector, got->key);
+
+        if (selector == got->key) {
+          if (slot != nullptr) {
+            *slot = got->value;
+          }
+
+          return true;
+        }
       }
     }
 
@@ -403,11 +420,19 @@ bool ob_get_slot(ob_Ctx ctx, ob_Obj *slot, ob_Obj obj, ob_Str selector) {
 
   if (obj == ctx->proto.object) {
     auto data = ob_cast_slots(obj);
+    auto len = ql_array_length(&data->slots, sizeof(ob_Slot));
 
-    auto str = obstr_get_data(ctx, selector);
-    auto hash = ql_hash_start(selector->length, str);
+    for (size_t i = 0; i < len; i++) {
+      auto got = (ob_Slot *)ql_array_at(&data->slots, sizeof(ob_Slot), i);
 
-    return ql_table_get(&data->slots, hash, (void **)slot);
+      if (selector == got->key) {
+        if (slot != nullptr) {
+          *slot = got->value;
+        }
+
+        return true;
+      }
+    }
   }
 
   return false;
@@ -477,7 +502,8 @@ void invoke(ob_Ctx ctx, ob_Obj invoked, ob_Obj recv, size_t n_args_passed) {
       QL_DEBUG("set env [%.*s] = %p", obstr_get_length(param),
                obstr_get_data(ctx, param), item);
 
-      ql_table_set(&env->slots, obstr_get_hash(ctx, param), item);
+      auto slot = (ob_Slot){.key = param, .value = item};
+      ql_array_push(&env->slots, sizeof(ob_Slot), &slot);
     }
 
     while (n_remaining-- > 0) {
@@ -526,9 +552,11 @@ void ob_send_ext(ob_Ctx ctx, ob_Obj recv, ob_Str selector, ob_SendFlags flags) {
     QL_DEBUG("missing: %.*s", len, sel);
 
     if (flags & OB_SEND_CMW) {
-      auto cmw = obstr_create_literal(ctx, "callMissing:with:");
+      auto cmw = ob_create_symbol_literal(ctx, "call-missing:with:");
 
-      if (!ob_get_slot(ctx, &invoked, recv, cmw)) {
+      auto cmwsel = *ob_cast_symbol(cmw);
+
+      if (!ob_get_slot(ctx, &invoked, recv, cmwsel)) {
         QL_ASSERT(
             false,
             "#<%p> (%d) missing method: #'%.*s' and could not call missing",
@@ -549,7 +577,7 @@ void ob_send_ext(ob_Ctx ctx, ob_Obj recv, ob_Str selector, ob_SendFlags flags) {
       }
 
       ob_push(ctx, args);
-      ob_push(ctx, ob_create_symbol(ctx, selector));
+      ob_push(ctx, ob_intern_symbol(ctx, selector));
 
       n_args = 2;
     } else {

@@ -9,12 +9,17 @@ static bool slots_at_put(ob_Ctx ctx) {
   auto value = ob_pop(ctx);
   auto key = ob_pop(ctx);
 
-  auto sym = ob_cast_symbol(key);
+  auto sym = *ob_cast_symbol(key);
   auto slots = ob_cast_slots(receiver);
 
-  auto hash = obstr_get_hash(ctx, *sym);
+  auto len = ql_array_length(&slots->slots, sizeof(ob_Slot));
+  for (size_t i = 0; i < len; i++) {
+    auto slot = (ob_Slot *)ql_array_at(&slots->slots, sizeof(ob_Slot), i);
 
-  ql_table_set(&slots->slots, hash, value);
+    if (slot->key == sym) {
+      slot->value = value;
+    }
+  }
 
   return false;
 }
@@ -23,14 +28,22 @@ static bool slots_at(ob_Ctx ctx) {
   auto receiver = ob_get_receiver(ctx);
   auto key = ob_pop(ctx);
 
-  auto sym = ob_cast_symbol(key);
+  auto sym = *ob_cast_symbol(key);
   auto slots = ob_cast_slots(receiver);
 
-  auto hash = obstr_get_hash(ctx, *sym);
-
   ob_Obj obj = nullptr;
-  ql_table_get(&slots->slots, hash, (void **)&obj);
 
+  auto len = ql_array_length(&slots->slots, sizeof(ob_Slot));
+  for (size_t i = 0; i < len; i++) {
+    auto slot = (ob_Slot *)ql_array_at(&slots->slots, sizeof(ob_Slot), i);
+
+    if (slot->key == sym) {
+      ob_push(ctx, slot->value);
+      return true;
+    }
+  }
+
+  // TODO: raise an exn if we found nothing
   ob_push(ctx, obj);
 
   return true;

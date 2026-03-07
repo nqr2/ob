@@ -8,7 +8,7 @@ static bool str_intern(ob_Ctx ctx) {
   auto receiver = ob_get_receiver(ctx);
 
   auto str = ob_cast_string(receiver);
-  auto obj = ob_create_symbol(ctx, *str);
+  auto obj = ob_intern_symbol(ctx, *str);
 
   ob_push(ctx, obj);
 

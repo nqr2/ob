@@ -1,3 +1,4 @@
+#include "ob/Core.h"
 #include <ob/base/Array.h>
 #include <ob/base/Assert.h>
 #include <ob/base/Number.h>
@@ -87,6 +88,28 @@ static void write_obj(ob_Obj object, void *userdata) {
   switch (tag) {
   case OB_NIL: // nothing here
     break;
+
+  case OB_SLOTS: {
+    auto obj = ob_cast_slots(object);
+
+    write_ref(obj->prototype, srl);
+
+    auto len = ql_array_length(&obj->slots, sizeof(ob_Slot));
+
+    write_int(srl, len);
+
+    for (size_t i = 0; i < len; i++) {
+      auto slot = (ob_Slot *)ql_array_at(&obj->slots, sizeof(ob_Slot), i);
+
+      auto length = obstr_get_length(slot->key);
+      auto data = obstr_get_data(srl->ctx, slot->key);
+
+      write_int(srl, length);
+      ql_array_push(&srl->buffer, length, data);
+
+      write_ref(slot->value, srl);
+    }
+  } break;
 
   case OB_SYMBOL: // <length> <characters>
   {
@@ -206,14 +229,39 @@ ob_Obj obsrl_read(ob_Serial *srl) {
       result = NULL;
       break;
 
+    case OB_SLOTS: {
+      size_t ref = 0;
+      head = read_int(head, &ref);
+      auto proto = read_ref(srl, ref);
+
+      result = ob_create_slots(srl->ctx, proto);
+      auto view = ob_cast_slots(result);
+
+      size_t length = 0;
+      size_t key_length = 0;
+      head = read_int(head, &length);
+
+      for (size_t i = 0; i < length; i++) {
+        head = read_int(head, &key_length);
+        ob_Obj okey =
+            ob_create_symbol(srl->ctx, key_length, (char const *)head);
+        head += key_length;
+
+        auto key = *ob_cast_symbol(okey);
+
+        head = read_int(head, &ref);
+        auto value = read_ref(srl, ref);
+
+        auto slot = (ob_Slot){.key = key, .value = value};
+        ql_array_push(&view->slots, sizeof(slot), &slot);
+      }
+    } break;
+
     case OB_SYMBOL: {
       uint64_t length = 0;
       head = read_int(head, &length);
-
-      auto str = obstr_create(srl->ctx, length, (char const *)head);
+      result = ob_create_symbol(srl->ctx, length, (char const *)head);
       head += length;
-
-      result = ob_create_symbol(srl->ctx, str);
     } break;
 
     case OB_STRING: {
@@ -262,10 +310,11 @@ ob_Obj obsrl_read(ob_Serial *srl) {
         uint64_t len = 0;
         head = read_int(head, &len);
 
-        auto str = obstr_create(srl->ctx, len, (char const *)head);
+        auto str = ob_create_symbol(srl->ctx, len, (char const *)head);
         head += len;
 
-        ql_array_push(&method->parameters, sizeof(ob_Str), (void *)&str);
+        ql_array_push(&method->parameters, sizeof(ob_Str),
+                      (void *)ob_cast_symbol(str));
       }
 
       // method->bytecode

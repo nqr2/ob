@@ -77,6 +77,10 @@ char const *obbc_extopcode_name(int ext) {
     return "DUPLICATE";
   case OB_OP_EXT_POP:
     return "POP";
+  case OB_OP_EXT_DEBUG_CD1:
+    return "CD1";
+  case OB_OP_EXT_DEBUG_CD2:
+    return "CD2";
   default:
     return "???";
   }
@@ -176,7 +180,7 @@ void obbc_run(ob_Ctx ctx, size_t len, uint8_t const *code) {
       break;
 
     case OB_OP_EXTRA: {
-      switch (data) {
+      switch ((ob_ExtOpcode)data) {
       case OB_OP_EXT_RETURN:
         break; // TODO: OP_RETURN
       case OB_OP_EXT_DUPLICATE: {
@@ -187,7 +191,11 @@ void obbc_run(ob_Ctx ctx, size_t len, uint8_t const *code) {
       case OB_OP_EXT_POP:
         (void)ob_pop(ctx);
         break;
-      default:
+      case OB_OP_EXT_DEBUG_CD2:
+        here->column += 1;
+        [[fallthrough]];
+      case OB_OP_EXT_DEBUG_CD1:
+        here->column += 1;
         break;
       }
     }; break;

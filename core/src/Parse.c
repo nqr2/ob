@@ -92,9 +92,17 @@ void rdr_emit_debug_file(ob_Rdr rdr) {
 }
 
 void rdr_emit_debug_column(ob_Rdr rdr, size_t cdelta) {
-  obbc_append_insn(&rdr->output->bytecode, OBBC_MAKE(OB_OP_DEBUG, 0));
+  if (cdelta == 1) {
+    obbc_append_insn(&rdr->output->bytecode,
+                     OBBC_MAKE(OB_OP_EXTRA, OB_OP_EXT_DEBUG_CD1));
+  } else if (cdelta == 2) {
+    obbc_append_insn(&rdr->output->bytecode,
+                     OBBC_MAKE(OB_OP_EXTRA, OB_OP_EXT_DEBUG_CD2));
+  } else {
+    obbc_append_insn(&rdr->output->bytecode, OBBC_MAKE(OB_OP_DEBUG, 0));
 
-  write_int(&rdr->output->bytecode, cdelta);
+    write_int(&rdr->output->bytecode, cdelta);
+  }
 }
 
 void rdr_emit_debug_line(ob_Rdr rdr, size_t column, size_t ldelta) {
@@ -192,12 +200,10 @@ static void push_literal(ob_Rdr rdr, ob_Obj obj) {
 static void p_expression(ob_Rdr rdr);
 
 static void p_skip_blank(ob_Rdr rdr) {
-  auto stepped = false;
   auto here = rdr->head;
+
   while (rdr->remaining > 0) {
     if (isspace(*rdr->head)) {
-      stepped = true;
-
       while (isspace(*rdr->head)) {
         rdr_next(rdr);
       }
@@ -206,8 +212,6 @@ static void p_skip_blank(ob_Rdr rdr) {
     }
 
     if (*rdr->head == '"') {
-      stepped = true;
-
       rdr_next(rdr);
 
       while (*rdr->head != '"') {
@@ -222,7 +226,7 @@ static void p_skip_blank(ob_Rdr rdr) {
     break;
   }
 
-  if (stepped) {
+  if (here != rdr->head) {
     rdr_emit_debug_column(rdr, rdr->head - here);
   }
 }
@@ -441,7 +445,7 @@ static void p_symbol(ob_Rdr rdr) {
   sel = obstr_create(rdr->context, sym.size, sym.data);
 
 after_str:
-  auto objsel = ob_create_symbol(rdr->context, sel);
+  auto objsel = ob_intern_symbol(rdr->context, sel);
 
   push_literal(rdr, objsel);
   ql_array_free(&sym);
@@ -535,7 +539,7 @@ static bool p_unary_send(ob_Rdr rdr, bool explicitp) {
       }
 
       auto sel = obstr_create(rdr->context, (rdr->head - here), here);
-      auto objsel = ob_create_symbol(rdr->context, sel);
+      auto objsel = ob_intern_symbol(rdr->context, sel);
 
       auto index = ql_array_length(&rdr->output->literals, sizeof(ob_Obj));
       ql_array_push(&rdr->output->literals, sizeof(ob_Obj),
@@ -572,7 +576,7 @@ static bool p_binary_send(ob_Rdr rdr, bool explicitp) {
       }
 
       auto sel = obstr_create(rdr->context, (rdr->head - here), here);
-      auto objsel = ob_create_symbol(rdr->context, sel);
+      auto objsel = ob_intern_symbol(rdr->context, sel);
 
       p_unary(rdr);
 
@@ -627,7 +631,7 @@ static bool p_keyword_send(ob_Rdr rdr, bool explicitp) {
 
   if (message.size != 0) {
     auto sel = obstr_create(rdr->context, message.size, message.data);
-    auto objsel = ob_create_symbol(rdr->context, sel);
+    auto objsel = ob_intern_symbol(rdr->context, sel);
 
     auto index = ql_array_length(&rdr->output->literals, sizeof(ob_Obj));
     ql_array_push(&rdr->output->literals, sizeof(ob_Obj),

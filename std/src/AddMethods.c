@@ -1,3 +1,4 @@
+#include "ob/Core.h"
 #include <ob/base/Assert.h>
 #include <ob/base/Hash.h>
 #include <ob/bits/AddMethods.h>
@@ -12,10 +13,11 @@ static void add_method(ob_Ctx ctx, ob_Obj target, char const *name,
 
   auto slots = ob_cast_slots(target);
 
-  auto obj = ob_create_lightcmethod(ctx, method);
-  auto hash = ql_hash_start(strlen(name), name);
+  auto key = ob_create_symbol(ctx, strlen(name), name);
+  auto value = ob_create_lightcmethod(ctx, method);
 
-  ql_table_set(&slots->slots, hash, (void *)obj);
+  auto slot = (ob_Slot){.key = *ob_cast_symbol(key), .value = value};
+  ql_array_push(&slots->slots, sizeof(ob_Slot), &slot);
 }
 
 void ob_add_methods(ob_Ctx ctx, ob_Obj target, ob_MethodEntry const *entries) {
