@@ -12,14 +12,7 @@ static bool slots_at_put(ob_Ctx ctx) {
   auto sym = *ob_cast_symbol(key);
   auto slots = ob_cast_slots(receiver);
 
-  auto len = ql_array_length(&slots->slots, sizeof(ob_Slot));
-  for (size_t i = 0; i < len; i++) {
-    auto slot = (ob_Slot *)ql_array_at(&slots->slots, sizeof(ob_Slot), i);
-
-    if (slot->key == sym) {
-      slot->value = value;
-    }
-  }
+  obslot_add(&slots->slots, sym, value);
 
   return false;
 }
@@ -33,17 +26,10 @@ static bool slots_at(ob_Ctx ctx) {
 
   ob_Obj obj = nullptr;
 
-  auto len = ql_array_length(&slots->slots, sizeof(ob_Slot));
-  for (size_t i = 0; i < len; i++) {
-    auto slot = (ob_Slot *)ql_array_at(&slots->slots, sizeof(ob_Slot), i);
-
-    if (slot->key == sym) {
-      ob_push(ctx, slot->value);
-      return true;
-    }
+  if (!obslot_get(&slots->slots, sym, &obj)) {
+    // TODO: raise an exn if we found nothing
   }
 
-  // TODO: raise an exn if we found nothing
   ob_push(ctx, obj);
 
   return true;

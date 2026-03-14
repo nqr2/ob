@@ -51,9 +51,17 @@ typedef struct ob_Slot {
   ob_Obj value;
 } ob_Slot;
 
+typedef struct {
+  ql_ArrayT(ob_Slot) data;
+} ob_Slots;
+
+void obslot_add(ob_Slots *slots, ob_Str key, ob_Obj value);
+bool obslot_remove(ob_Slots *slots, ob_Str key);
+bool obslot_get(ob_Slots *slots, ob_Str key, ob_Obj *out);
+
 struct ob_ObjSlots {
   ob_Obj prototype;
-  ql_ArrayT(ob_Slot) slots;
+  ob_Slots slots;
 };
 
 struct ob_ObjMethod {

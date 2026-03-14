@@ -8,10 +8,8 @@
 static void add_shell_slot(ob_Ctx ctx, ob_ObjSlots *slots, char const *name,
                            ob_Obj value) {
   auto str = obstr_create(ctx, strlen(name), name);
-  auto key = ob_intern_symbol(ctx, str);
-  auto slot = (ob_Slot){.key = *ob_cast_symbol(key), .value = value};
 
-  ql_array_push(&slots->slots, sizeof(ob_Slot), &slot);
+  obslot_add(&slots->slots, str, value);
 }
 
 void oblib_load_shell(ob_Ctx ctx) {

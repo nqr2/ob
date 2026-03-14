@@ -94,12 +94,12 @@ static void write_obj(ob_Obj object, void *userdata) {
 
     write_ref(obj->prototype, srl);
 
-    auto len = ql_array_length(&obj->slots, sizeof(ob_Slot));
+    auto len = ql_array_length(&obj->slots.data, sizeof(ob_Slot));
 
     write_int(srl, len);
 
     for (size_t i = 0; i < len; i++) {
-      auto slot = (ob_Slot *)ql_array_at(&obj->slots, sizeof(ob_Slot), i);
+      auto slot = (ob_Slot *)ql_array_at(&obj->slots.data, sizeof(ob_Slot), i);
 
       auto length = obstr_get_length(slot->key);
       auto data = obstr_get_data(srl->ctx, slot->key);
@@ -252,8 +252,7 @@ ob_Obj obsrl_read(ob_Serial *srl) {
         head = read_int(head, &ref);
         auto value = read_ref(srl, ref);
 
-        auto slot = (ob_Slot){.key = key, .value = value};
-        ql_array_push(&view->slots, sizeof(slot), &slot);
+        obslot_add(&view->slots, key, value);
       }
     } break;
 

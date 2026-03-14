@@ -4,6 +4,61 @@
 #include <ob/core/Object.h>
 #include <ob/core/String.h>
 
+void obslot_add(ob_Slots *slots, ob_Str key, ob_Obj value) {
+  auto len = ql_array_length(&slots->data, sizeof(ob_Slot));
+  size_t index = 0;
+
+  for (; index < len; index++) {
+    auto slot = (ob_Slot *)ql_array_at(&slots->data, sizeof(ob_Slot), index);
+
+    if (slot->key == key) {
+      slot->value = value;
+      return;
+    }
+  }
+
+  auto slot = (ob_Slot){.key = key, .value = value};
+  ql_array_push(&slots->data, sizeof slot, &slot);
+}
+
+bool obslot_remove(ob_Slots *slots, ob_Str key) {
+  auto len = ql_array_length(&slots->data, sizeof(ob_Slot));
+  size_t index = 0;
+  auto found = false;
+
+  for (; index < len; index++) {
+    auto slot = (ob_Slot *)ql_array_at(&slots->data, sizeof(ob_Slot), index);
+    if (slot->key == key) {
+      found = true;
+      break;
+    }
+  }
+
+  if (found) {
+    ql_array_remove(&slots->data, sizeof(ob_Slot), index);
+  }
+
+  return found;
+}
+
+bool obslot_get(ob_Slots *slots, ob_Str key, ob_Obj *out) {
+  auto len = ql_array_length(&slots->data, sizeof(ob_Slot));
+
+  for (size_t index = 0; index < len; index++) {
+    auto slot = (ob_Slot *)ql_array_at(&slots->data, sizeof(ob_Slot), index);
+
+    if (slot->key == key) {
+      if (out != nullptr) {
+        *out = slot->value;
+      }
+
+      return true;
+    }
+  }
+
+  return false;
+}
+
 ob_ObjectTag ob_get_tag(ob_Obj obj) {
   if (obj == NULL) {
     return OB_NIL;
@@ -82,7 +137,7 @@ void obobj_destroy(ob_Obj obj) {
   switch (ob_get_tag(obj)) {
   case OB_SLOTS: {
     ob_ObjSlots *data = ob_get_payload(obj);
-    ql_array_free(&data->slots);
+    ql_array_free(&data->slots.data);
   } break;
 
   case OB_ARRAY: {
@@ -127,9 +182,9 @@ void ob_visit(ob_Obj obj, ob_VisitFlags flags, ob_FnVisit visit,
   case OB_SLOTS: {
     ob_ObjSlots *data = ob_get_payload(obj);
 
-    auto len = ql_array_length(&data->slots, sizeof(ob_Slot));
+    auto len = ql_array_length(&data->slots.data, sizeof(ob_Slot));
     for (size_t i = 0; i < len; i++) {
-      auto slot = (ob_Slot *)ql_array_at(&data->slots, sizeof(ob_Slot), i);
+      auto slot = (ob_Slot *)ql_array_at(&data->slots.data, sizeof(ob_Slot), i);
       obstr_mark(slot->key);
       ob_visit(slot->value, flags, visit, predicate, userdata);
     }

@@ -14,9 +14,7 @@ static bool act_var_is(ob_Ctx ctx) {
   auto sym = *ob_cast_symbol(key);
   auto env = ob_cast_slots(ob_cast_activation(receiver)->env);
 
-  auto slot = (ob_Slot){.key = sym, .value = value};
-  ql_array_push(&env->slots, sizeof(slot), &slot);
-
+  obslot_add(&env->slots, sym, value);
   ob_push(ctx, value);
   return true;
 }

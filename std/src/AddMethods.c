@@ -16,8 +16,7 @@ static void add_method(ob_Ctx ctx, ob_Obj target, char const *name,
   auto key = ob_create_symbol(ctx, strlen(name), name);
   auto value = ob_create_lightcmethod(ctx, method);
 
-  auto slot = (ob_Slot){.key = *ob_cast_symbol(key), .value = value};
-  ql_array_push(&slots->slots, sizeof(ob_Slot), &slot);
+  obslot_add(&slots->slots, *ob_cast_symbol(key), value);
 }
 
 void ob_add_methods(ob_Ctx ctx, ob_Obj target, ob_MethodEntry const *entries) {

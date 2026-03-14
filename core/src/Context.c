@@ -127,7 +127,7 @@ ob_Obj ob_create_slots(ob_Ctx ctx, ob_Obj prototype) {
 
   ob_ObjSlots *slots = ob_get_payload(obj);
 
-  ql_array_init(&slots->slots, ctx->allocator);
+  ql_array_init(&slots->slots.data, ctx->allocator);
   slots->prototype = prototype;
 
   return obj;
@@ -392,24 +392,9 @@ bool ob_get_slot(ob_Ctx ctx, ob_Obj *slot, ob_Obj obj, ob_Str selector) {
   while ((obj != nullptr) && (obj != ctx->proto.object)) {
     if (OB_ISA(obj, OB_SLOTS)) {
       auto data = ob_cast_slots(obj);
-      auto len = ql_array_length(&data->slots, sizeof(ob_Slot));
 
-      for (size_t i = 0; i < len; i++) {
-        auto got = (ob_Slot *)ql_array_at(&data->slots, sizeof(ob_Slot), i);
-
-        QL_INFO("lookup: their '%.*s' vs my #'%.*s'", selector->length,
-                obstr_get_data(ctx, selector),
-
-                got->key->length, obstr_get_data(ctx, got->key));
-        QL_INFO("%p vs %p", selector, got->key);
-
-        if (selector == got->key) {
-          if (slot != nullptr) {
-            *slot = got->value;
-          }
-
-          return true;
-        }
+      if (obslot_get(&data->slots, selector, slot)) {
+        return true;
       }
     }
 
@@ -420,18 +405,9 @@ bool ob_get_slot(ob_Ctx ctx, ob_Obj *slot, ob_Obj obj, ob_Str selector) {
 
   if (obj == ctx->proto.object) {
     auto data = ob_cast_slots(obj);
-    auto len = ql_array_length(&data->slots, sizeof(ob_Slot));
 
-    for (size_t i = 0; i < len; i++) {
-      auto got = (ob_Slot *)ql_array_at(&data->slots, sizeof(ob_Slot), i);
-
-      if (selector == got->key) {
-        if (slot != nullptr) {
-          *slot = got->value;
-        }
-
-        return true;
-      }
+    if (obslot_get(&data->slots, selector, slot)) {
+      return true;
     }
   }
 
@@ -502,8 +478,7 @@ void invoke(ob_Ctx ctx, ob_Obj invoked, ob_Obj recv, size_t n_args_passed) {
       QL_DEBUG("set env [%.*s] = %p", obstr_get_length(param),
                obstr_get_data(ctx, param), item);
 
-      auto slot = (ob_Slot){.key = param, .value = item};
-      ql_array_push(&env->slots, sizeof(ob_Slot), &slot);
+      obslot_add(&env->slots, param, item);
     }
 
     while (n_remaining-- > 0) {
