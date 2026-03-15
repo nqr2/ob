@@ -118,7 +118,7 @@ ob_Ctx ob_create(ql_Allocator *alloc);
 void ob_destroy(ob_Ctx ctx);
 
 #define ob_create_string_literal(Context, Literal)                             \
-  ob_create_string((Context), sizeof(Literal), "" Literal)
+  ob_create_string((Context), sizeof(Literal) - 1, "" Literal)
 
 ob_Obj ob_wrap_string(ob_Ctx ctx, ob_Str string);
 

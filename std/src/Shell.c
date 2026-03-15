@@ -7,7 +7,8 @@
 
 static void add_shell_slot(ob_Ctx ctx, ob_ObjSlots *slots, char const *name,
                            ob_Obj value) {
-  auto str = obstr_create(ctx, strlen(name), name);
+  auto obj = ob_create_string(ctx, strlen(name), name);
+  auto str = *ob_cast_string(obj);
 
   obslot_add(&slots->slots, str, value);
 }
