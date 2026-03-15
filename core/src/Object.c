@@ -4,6 +4,10 @@
 #include <ob/core/Object.h>
 #include <ob/core/String.h>
 
+// TODO: Intern every string, then switch this to pointer comparison
+#include <string.h>
+#define EQ(L, R) (((L)->length == (R)->length) && ((L)->offset == (R)->offset))
+
 void obslot_add(ob_Slots *slots, ob_Str key, ob_Obj value) {
   auto len = ql_array_length(&slots->data, sizeof(ob_Slot));
   size_t index = 0;
@@ -11,7 +15,7 @@ void obslot_add(ob_Slots *slots, ob_Str key, ob_Obj value) {
   for (; index < len; index++) {
     auto slot = (ob_Slot *)ql_array_at(&slots->data, sizeof(ob_Slot), index);
 
-    if (slot->key == key) {
+    if (EQ(slot->key, key)) {
       slot->value = value;
       return;
     }
@@ -28,7 +32,8 @@ bool obslot_remove(ob_Slots *slots, ob_Str key) {
 
   for (; index < len; index++) {
     auto slot = (ob_Slot *)ql_array_at(&slots->data, sizeof(ob_Slot), index);
-    if (slot->key == key) {
+
+    if (EQ(slot->key, key)) {
       found = true;
       break;
     }
@@ -47,7 +52,7 @@ bool obslot_get(ob_Slots *slots, ob_Str key, ob_Obj *out) {
   for (size_t index = 0; index < len; index++) {
     auto slot = (ob_Slot *)ql_array_at(&slots->data, sizeof(ob_Slot), index);
 
-    if (slot->key == key) {
+    if (EQ(slot->key, key)) {
       if (out != nullptr) {
         *out = slot->value;
       }
