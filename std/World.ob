@@ -29,7 +29,7 @@ true at: #then:else: put: {|t f| t value }.
 
 false at: #print put: { 'false' print }.
 
-false at: #then: put: {|t f|}.
+false at: #then: put: { self }.
 false at: #else: put: {|t f| f value }.
 
 false at: #then:else: put: {|t f| f value }.
