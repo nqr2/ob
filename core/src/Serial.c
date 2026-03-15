@@ -111,7 +111,7 @@ static void write_obj(ob_Obj object, void *userdata) {
     }
   } break;
 
-  case OB_STRING: // same
+  case OB_STRING: // <length> <data>
   {
     auto str = ob_cast_string(object);
     auto length = obstr_get_length(*str);

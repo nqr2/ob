@@ -1,4 +1,5 @@
 #include "ob/Core.h"
+#include "ob/base/Table.h"
 #define OB_LOG_MODULE "Parse"
 
 #include <ob/base/Array.h>
@@ -58,6 +59,7 @@ static bool is_word_tail(char chr) {
 
 struct ob_Reader {
   ob_Ctx context;
+  ql_Table known;
   ob_ObjMethod *output;
   size_t remaining;
   char const *head;
@@ -175,13 +177,23 @@ void rdr_takewhile(ob_Rdr rdr, bool (*pred)(char)) {
 }
 
 static void push_literal(ob_Rdr rdr, ob_Obj obj) {
-  auto index = ql_array_length(&rdr->output->literals, sizeof(ob_Obj));
+  size_t idx = 0;
+
+  if (ql_table_get(&rdr->known, (uint64_t)obj, (void **)&idx)) {
+    idx = obbc_append_index(&rdr->output->bytecode, idx);
+    obbc_append_insn(&rdr->output->bytecode, OBBC_MAKE(OB_OP_PUSH, idx));
+    return;
+  }
+
+  idx = ql_array_length(&rdr->output->literals, sizeof(ob_Obj));
   ql_array_push(&rdr->output->literals, sizeof(ob_Obj), (void const *)&obj);
 
-  QL_DEBUG("push literal: %zu", index);
+  ql_table_set(&rdr->known, (uint64_t)obj, (void *)idx);
 
-  index = obbc_append_index(&rdr->output->bytecode, index);
-  obbc_append_insn(&rdr->output->bytecode, OBBC_MAKE(OB_OP_PUSH, index));
+  QL_DEBUG("push literal: %zu", idx);
+
+  idx = obbc_append_index(&rdr->output->bytecode, idx);
+  obbc_append_insn(&rdr->output->bytecode, OBBC_MAKE(OB_OP_PUSH, idx));
 }
 
 /*
@@ -289,8 +301,11 @@ static void p_array(ob_Rdr rdr) {
 static void p_method(ob_Rdr rdr) {
   auto original = rdr->output;
 
+  auto old_known = rdr->known;
+
   auto new = ob_create_method(rdr->context);
   auto method = ob_cast_method(new);
+  ql_table_init(&rdr->known, rdr->context->allocator);
 
   // TODO: Handle self-referential objects in obj_visit, then uncomment this.
   // method->parent = obrdr_get_method(rdr);
@@ -349,7 +364,10 @@ static void p_method(ob_Rdr rdr) {
     p_skip_blank(rdr);
   }
 
+  ql_table_free(&rdr->known);
+
   rdr->output = original;
+  rdr->known = old_known;
 
   push_literal(rdr, new);
 
@@ -513,6 +531,18 @@ static void emit_send(ob_Rdr rdr, size_t index, bool explicitp) {
                    OBBC_MAKE((explicitp ? OB_OP_SEND : OB_OP_IMPLICIT), index));
 }
 
+static void emit_send2(ob_Rdr rdr, ob_Obj sel, bool explicitp) {
+  size_t index = 0;
+
+  if (!ql_table_get(&rdr->known, (uint64_t)sel, (void **)&index)) {
+    index = ql_array_length(&rdr->output->literals, sizeof(ob_Obj));
+    ql_array_push(&rdr->output->literals, sizeof(ob_Obj), (void const *)&sel);
+    ql_table_set(&rdr->known, (uint64_t)sel, (void *)index);
+  }
+
+  emit_send(rdr, index, explicitp);
+}
+
 // primary . {unary-message}
 // if we found a keyword instead, backtrack
 static bool p_unary_send(ob_Rdr rdr, bool explicitp) {
@@ -539,11 +569,7 @@ static bool p_unary_send(ob_Rdr rdr, bool explicitp) {
 
       auto objsel = ob_create_string(rdr->context, (rdr->head - here), here);
 
-      auto index = ql_array_length(&rdr->output->literals, sizeof(ob_Obj));
-      ql_array_push(&rdr->output->literals, sizeof(ob_Obj),
-                    (void const *)&objsel);
-
-      emit_send(rdr, index, explicitp);
+      emit_send2(rdr, objsel, explicitp);
 
       // recv of next message is already in stack
       explicitp = true;
@@ -573,16 +599,11 @@ static bool p_binary_send(ob_Rdr rdr, bool explicitp) {
         rdr_next(rdr);
       }
 
-      auto sel = obstr_create(rdr->context, (rdr->head - here), here);
-      auto objsel = ob_wrap_string(rdr->context, sel);
+      auto sel = ob_create_string(rdr->context, (rdr->head - here), here);
 
       p_unary(rdr);
 
-      auto index = ql_array_length(&rdr->output->literals, sizeof(ob_Obj));
-      ql_array_push(&rdr->output->literals, sizeof(ob_Obj),
-                    (void const *)&objsel);
-
-      emit_send(rdr, index, explicitp);
+      emit_send2(rdr, sel, explicitp);
 
       explicitp = true;
       continue;
@@ -628,14 +649,8 @@ static bool p_keyword_send(ob_Rdr rdr, bool explicitp) {
   }
 
   if (message.size != 0) {
-    auto sel = obstr_create(rdr->context, message.size, message.data);
-    auto objsel = ob_wrap_string(rdr->context, sel);
-
-    auto index = ql_array_length(&rdr->output->literals, sizeof(ob_Obj));
-    ql_array_push(&rdr->output->literals, sizeof(ob_Obj),
-                  (void const *)&objsel);
-
-    emit_send(rdr, index, explicitp);
+    auto sel = ob_create_string(rdr->context, message.size, message.data);
+    emit_send2(rdr, sel, explicitp);
   }
 
   ql_array_free(&message);
@@ -720,11 +735,14 @@ ob_Rdr obrdr_create(ob_Ctx ctx) {
 
   rdr->context = ctx;
   rdr->output = ob_get_payload(ob_create_method(ctx));
+  ql_table_init(&rdr->known, ctx->allocator);
 
   return rdr;
 }
 
 void obrdr_free(ob_Rdr rdr) {
+  ql_table_free(&rdr->known);
+
   ql_deallocate(rdr->context->allocator, sizeof(struct ob_Reader), rdr);
 
   // rdr->output is taken by the GC

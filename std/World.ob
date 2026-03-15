@@ -13,7 +13,7 @@ Nil at: #nil? put: true.
 Method at: #value put: { self call: [] }.
 Method at: #call put: (Method at: #value).
 
-(Slots at: #at:put:) callIn: Object with: [
+(Slots at: #at:put:) call-in: Object with: [
   #Override_:With_: . (Slots at: #at:put:)
 ].
 
