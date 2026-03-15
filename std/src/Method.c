@@ -53,6 +53,6 @@ static bool method_callin(ob_Ctx ctx) {
 void oblib_load_method(ob_Ctx ctx) {
   ob_add_methods(ctx, ctx->proto.method,
                  (ob_MethodEntry[]){{"call:", method_call},
-                                    {"callIn:with:", method_callin},
+                                    {"call-in:with:", method_callin},
                                     OB_METHODS_END});
 }

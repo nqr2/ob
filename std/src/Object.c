@@ -145,7 +145,7 @@ static bool o__has_method(ob_Ctx ctx) {
 void oblib_load_object(ob_Ctx ctx) {
   ob_add_methods(ctx, ctx->proto.object,
                  (ob_MethodEntry[]){{"print", o__print},
-                                    {"sharesAddressWith:", o__share},
+                                    {"shares-address-with:", o__share},
                                     {"prototype", o__prototype},
                                     {"self", o__self},
                                     {"send:with:", o__send},

@@ -13,6 +13,7 @@ void oblib_load_all(ob_Ctx ctx) {
   oblib_load_string(ctx);
   oblib_load_slots(ctx);
   oblib_load_activation(ctx);
+
   oblib_load_shell(ctx);
 
   oblib_load_world(ctx);
