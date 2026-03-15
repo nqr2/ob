@@ -43,8 +43,8 @@ struct ob_Context {
    * @c proto.object itself.
    */
   struct {
-    ob_Obj object, nil, symbol, string, slots, number, array, method,
-        lightcmethod, cmethod, lightcdata, cdata, activation;
+    ob_Obj object, nil, string, slots, number, array, method, lightcmethod,
+        cmethod, cdata, activation;
   } proto;
 
   /// Objects that are guaranteed to exist.

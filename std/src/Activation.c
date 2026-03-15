@@ -11,7 +11,7 @@ static bool act_var_is(ob_Ctx ctx) {
   auto value = ob_pop(ctx);
   auto key = ob_pop(ctx);
 
-  auto sym = *ob_cast_symbol(key);
+  auto sym = *ob_cast_string(key);
   auto env = ob_cast_slots(ob_cast_activation(receiver)->env);
 
   obslot_add(&env->slots, sym, value);
@@ -49,7 +49,7 @@ static bool act_cmw(ob_Ctx ctx) {
   auto selector = ob_pop(ctx);
   auto args = ob_pop(ctx);
 
-  auto sel = *ob_cast_symbol(selector);
+  auto sel = *ob_cast_string(selector);
 
   while (act != NULL) {
     QL_INFO("try on env");

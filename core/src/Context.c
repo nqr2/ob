@@ -34,7 +34,7 @@ ob_Ctx ob_create(ql_Allocator *alloc) {
   ctx->proto.object = ob_create_slots(ctx, NULL);
 
   ctx->proto.nil = ob_create_slots(ctx, NULL);
-  ctx->proto.symbol = ob_create_slots(ctx, NULL);
+
   ctx->proto.string = ob_create_slots(ctx, NULL);
   ctx->proto.slots = ob_create_slots(ctx, NULL);
   ctx->proto.number = ob_create_slots(ctx, NULL);
@@ -42,7 +42,6 @@ ob_Ctx ob_create(ql_Allocator *alloc) {
   ctx->proto.method = ob_create_slots(ctx, NULL);
   ctx->proto.lightcmethod = ob_create_slots(ctx, ctx->proto.method);
   ctx->proto.cmethod = ob_create_slots(ctx, ctx->proto.method);
-  ctx->proto.lightcdata = ob_create_slots(ctx, NULL);
   ctx->proto.cdata = ob_create_slots(ctx, NULL);
   ctx->proto.activation = ob_create_slots(ctx, NULL);
 
@@ -89,7 +88,16 @@ ob_Obj obctx_allocate(ob_Ctx ctx, ob_ObjectTag tag, size_t payload_size) {
   return obj;
 }
 
-ob_Obj ob_create_symbol(ob_Ctx ctx, size_t length, char const *data) {
+ob_Obj ob_wrap_string(ob_Ctx ctx, ob_Str string) {
+  auto obj = obctx_allocate(ctx, OB_STRING, sizeof(ob_Str));
+
+  auto str = (ob_Str *)ob_get_payload(obj);
+  *str = string;
+
+  return obj;
+}
+
+ob_Obj ob_create_string(ob_Ctx ctx, size_t length, char const *data) {
   auto hash = ql_hash_start(length, data);
 
   ob_Obj obj = NULL;
@@ -98,26 +106,10 @@ ob_Obj ob_create_symbol(ob_Ctx ctx, size_t length, char const *data) {
     return obj;
   }
 
-  obj = obctx_allocate(ctx, OB_SYMBOL, sizeof(ob_Str));
-  *ob_cast_symbol(obj) = obstr_create(ctx, length, data);
+  auto str = obstr_create(ctx, length, data);
+  obj = ob_wrap_string(ctx, str);
 
   ql_table_set(&ctx->interned, hash, (void *)obj);
-
-  return obj;
-}
-
-ob_Obj ob_intern_symbol(ob_Ctx ctx, ob_Str symbol) {
-  auto data = obstr_get_data(ctx, symbol);
-  auto len = obstr_get_length(symbol);
-
-  return ob_create_symbol(ctx, len, data);
-}
-
-ob_Obj ob_create_string(ob_Ctx ctx, ob_Str string) {
-  auto obj = obctx_allocate(ctx, OB_STRING, sizeof(ob_Str));
-
-  auto str = (ob_Str *)ob_get_payload(obj);
-  *str = string;
 
   return obj;
 }
@@ -206,7 +198,6 @@ static void gc_mark(ob_Ctx ctx) {
   ob_mark(ctx->proto.object);
 
   ob_mark(ctx->proto.nil);
-  ob_mark(ctx->proto.symbol);
   ob_mark(ctx->proto.string);
   ob_mark(ctx->proto.slots);
   ob_mark(ctx->proto.number);
@@ -214,7 +205,6 @@ static void gc_mark(ob_Ctx ctx) {
   ob_mark(ctx->proto.method);
   ob_mark(ctx->proto.lightcmethod);
   ob_mark(ctx->proto.cmethod);
-  ob_mark(ctx->proto.lightcdata);
   ob_mark(ctx->proto.cdata);
   ob_mark(ctx->proto.activation);
 
@@ -338,8 +328,6 @@ ob_Obj ob_get_prototype(ob_Ctx ctx, ob_Obj obj) {
   switch (ob_get_tag(obj)) {
   case OB_NIL:
     return ctx->proto.nil;
-  case OB_SYMBOL:
-    return ctx->proto.symbol;
   case OB_STRING:
     return ctx->proto.string;
   case OB_SLOTS: {
@@ -373,6 +361,7 @@ ob_Obj ob_get_prototype(ob_Ctx ctx, ob_Obj obj) {
   }
   case OB_ACTIVATION:
     return ctx->proto.activation;
+  case OB_RESERVED_1:
   case OB_RESERVED_b:
   case OB_RESERVED_c:
   case OB_RESERVED_d:
@@ -527,9 +516,9 @@ void ob_send_ext(ob_Ctx ctx, ob_Obj recv, ob_Str selector, ob_SendFlags flags) {
     QL_DEBUG("missing: %.*s", len, sel);
 
     if (flags & OB_SEND_CMW) {
-      auto cmw = ob_create_symbol_literal(ctx, "call-missing:with:");
+      auto cmw = ob_create_string_literal(ctx, "call-missing:with:");
 
-      auto cmwsel = *ob_cast_symbol(cmw);
+      auto cmwsel = *ob_cast_string(cmw);
 
       if (!ob_get_slot(ctx, &invoked, recv, cmwsel)) {
         QL_ASSERT(
@@ -552,7 +541,7 @@ void ob_send_ext(ob_Ctx ctx, ob_Obj recv, ob_Str selector, ob_SendFlags flags) {
       }
 
       ob_push(ctx, args);
-      ob_push(ctx, ob_intern_symbol(ctx, selector));
+      ob_push(ctx, ob_wrap_string(ctx, selector));
 
       n_args = 2;
     } else {
@@ -565,9 +554,9 @@ void ob_send_ext(ob_Ctx ctx, ob_Obj recv, ob_Str selector, ob_SendFlags flags) {
 
   if (n_args != 0) {
     if (ob_get_tag(invoked) == OB_STRING) {
-      auto is = *ob_cast_string(invoked);
-      QL_ERROR("tried to invoke: '%.*s'", obstr_get_length(is),
-               obstr_get_data(ctx, is));
+      auto ist = *ob_cast_string(invoked);
+      QL_ERROR("tried to invoke: '%.*s'", obstr_get_length(ist),
+               obstr_get_data(ctx, ist));
     }
 
     QL_ASSERT(is_invocable, "tried to invoke a non-method object %p (%d)",

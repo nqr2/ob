@@ -120,7 +120,7 @@ void obbc_run(ob_Ctx ctx, size_t len, uint8_t const *code) {
       auto literal =
           *(ob_Obj *)ql_array_at(&method->literals, sizeof(ob_Obj), data);
 
-      auto selector = *ob_cast_symbol(literal);
+      auto selector = *ob_cast_string(literal);
 
       QL_DEBUG("send: #'%.*s'", obstr_get_length(selector),
                obstr_get_data(ctx, selector));
@@ -141,7 +141,7 @@ void obbc_run(ob_Ctx ctx, size_t len, uint8_t const *code) {
       auto literal =
           *(ob_Obj *)ql_array_at(&method->literals, sizeof(ob_Obj), data);
 
-      auto selector = *ob_cast_symbol(literal);
+      auto selector = *ob_cast_string(literal);
 
       ob_send(ctx, ctx->this_activation, selector);
     }; break;

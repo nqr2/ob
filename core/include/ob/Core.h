@@ -46,11 +46,7 @@ typedef enum : uint8_t {
   /// Cannot contain anything.
   OB_NIL = 0,
 
-  /// Interned strings.
-  /// Contains an @ref ob_Str.
-  OB_SYMBOL = 1,
-
-  /// Uninterned strings.
+  /// Interned, immutable strings.
   /// Contains an @ref ob_Str.
   OB_STRING = 2,
 
@@ -86,6 +82,7 @@ typedef enum : uint8_t {
   /// Contains an @ref ob_ObjActivation.
   OB_ACTIVATION = 10,
 
+  OB_RESERVED_1 = 1,
   OB_RESERVED_b = 11,
   OB_RESERVED_c = 12,
   OB_RESERVED_d = 13,
@@ -120,12 +117,12 @@ ob_Ctx ob_create(ql_Allocator *alloc);
 /// Destroy an interpreter context.
 void ob_destroy(ob_Ctx ctx);
 
-#define ob_create_symbol_literal(Context, Literal)                             \
-  ob_create_symbol((Context), sizeof(Literal), "" Literal)
+#define ob_create_string_literal(Context, Literal)                             \
+  ob_create_string((Context), sizeof(Literal), "" Literal)
 
-ob_Obj ob_create_symbol(ob_Ctx ctx, size_t length, const char *data);
-ob_Obj ob_intern_symbol(ob_Ctx ctx, ob_Str symbol);
-ob_Obj ob_create_string(ob_Ctx ctx, ob_Str string);
+ob_Obj ob_wrap_string(ob_Ctx ctx, ob_Str string);
+
+ob_Obj ob_create_string(ob_Ctx ctx, size_t length, char const *data);
 ob_Obj ob_create_slots(ob_Ctx ctx, ob_Obj prototype);
 ob_Obj ob_create_number(ob_Ctx ctx, ql_Number number);
 ob_Obj ob_create_integer(ob_Ctx ctx, int64_t number);
@@ -137,7 +134,6 @@ ob_Obj ob_create_cmethod(ob_Ctx ctx, ob_FnCMethod method, ql_Array parameters);
 ob_Obj ob_create_cdata(ob_Ctx ctx, ob_Obj prototype, ob_FnVisit visit,
                        ob_FnDestroy destructor, void *data);
 
-ob_Str *ob_cast_symbol(ob_Obj obj);
 ob_Str *ob_cast_string(ob_Obj obj);
 ob_ObjSlots *ob_cast_slots(ob_Obj obj);
 ql_Number *ob_cast_number(ob_Obj obj);

@@ -15,11 +15,6 @@ void obj_print(ob_Ctx ctx, ob_Obj receiver) {
     printf("nil");
     break;
 
-  case OB_SYMBOL: {
-    auto str = ob_cast_symbol(receiver);
-    printf("#'%.*s'", (int)obstr_get_length(*str), obstr_get_data(ctx, *str));
-  } break;
-
   case OB_STRING: {
     auto str = ob_cast_string(receiver);
     printf("'%.*s'", (int)obstr_get_length(*str), obstr_get_data(ctx, *str));
@@ -139,7 +134,7 @@ static bool o__has_method(ob_Ctx ctx) {
   auto receiver = ob_get_receiver(ctx);
   auto selector = ob_pop(ctx);
 
-  auto sel = *ob_cast_symbol(selector);
+  auto sel = *ob_cast_string(selector);
 
   bool got = ob_get_slot(ctx, NULL, receiver, sel);
 

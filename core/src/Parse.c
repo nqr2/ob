@@ -409,7 +409,7 @@ static ob_Str p_string_inner(ob_Rdr rdr) {
 
 static void p_string(ob_Rdr rdr) {
   auto str = p_string_inner(rdr);
-  auto obj = ob_create_string(rdr->context, str);
+  auto obj = ob_wrap_string(rdr->context, str);
 
   push_literal(rdr, obj);
 }
@@ -419,7 +419,7 @@ static void p_symbol(ob_Rdr rdr) {
 
   if (*rdr->head == '\'') {
     auto sel = p_string_inner(rdr);
-    auto objsel = ob_intern_symbol(rdr->context, sel);
+    auto objsel = ob_wrap_string(rdr->context, sel);
     push_literal(rdr, objsel);
     return;
   }
@@ -444,7 +444,7 @@ static void p_symbol(ob_Rdr rdr) {
   QL_DEBUG("symbol: '%.*s'", (rdr->head - begin), begin);
   ql_array_push(&sym, sizeof(char) * (rdr->head - begin), begin);
 
-  auto objsel = ob_create_symbol(rdr->context, sym.size, sym.data);
+  auto objsel = ob_create_string(rdr->context, sym.size, sym.data);
 
   push_literal(rdr, objsel);
   ql_array_free(&sym);
@@ -537,7 +537,7 @@ static bool p_unary_send(ob_Rdr rdr, bool explicitp) {
         return explicitp;
       }
 
-      auto objsel = ob_create_symbol(rdr->context, (rdr->head - here), here);
+      auto objsel = ob_create_string(rdr->context, (rdr->head - here), here);
 
       auto index = ql_array_length(&rdr->output->literals, sizeof(ob_Obj));
       ql_array_push(&rdr->output->literals, sizeof(ob_Obj),
@@ -574,7 +574,7 @@ static bool p_binary_send(ob_Rdr rdr, bool explicitp) {
       }
 
       auto sel = obstr_create(rdr->context, (rdr->head - here), here);
-      auto objsel = ob_intern_symbol(rdr->context, sel);
+      auto objsel = ob_wrap_string(rdr->context, sel);
 
       p_unary(rdr);
 
@@ -629,7 +629,7 @@ static bool p_keyword_send(ob_Rdr rdr, bool explicitp) {
 
   if (message.size != 0) {
     auto sel = obstr_create(rdr->context, message.size, message.data);
-    auto objsel = ob_intern_symbol(rdr->context, sel);
+    auto objsel = ob_wrap_string(rdr->context, sel);
 
     auto index = ql_array_length(&rdr->output->literals, sizeof(ob_Obj));
     ql_array_push(&rdr->output->literals, sizeof(ob_Obj),

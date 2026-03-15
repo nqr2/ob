@@ -73,12 +73,12 @@ void dofile(char const *input_path, FILE *input_file, ob_Serial *srl) {
     printf("\t@ %4lu: %p\n", offset, (void *)obj);
     printf("tag: %d\n", ob_get_tag(obj));
 
-    if (ob_get_tag(obj) == OB_SYMBOL) {
-      auto sym = *ob_cast_symbol(obj);
+    if (ob_get_tag(obj) == OB_STRING) {
+      auto sym = *ob_cast_string(obj);
       auto data = obstr_get_data(srl->ctx, sym);
       auto len = obstr_get_length(sym);
 
-      printf("symbol: #'%.*s'\n", (int)len, data);
+      printf("string: '%.*s'\n", (int)len, data);
     }
 
     if (ob_get_tag(obj) == OB_METHOD) {

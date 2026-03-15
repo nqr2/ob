@@ -111,15 +111,6 @@ static void write_obj(ob_Obj object, void *userdata) {
     }
   } break;
 
-  case OB_SYMBOL: // <length> <characters>
-  {
-    auto str = ob_cast_symbol(object);
-    auto length = obstr_get_length(*str);
-    auto data = obstr_get_data(srl->ctx, *str);
-
-    write_int(srl, length);
-    ql_array_push(&srl->buffer, length, data);
-  } break;
   case OB_STRING: // same
   {
     auto str = ob_cast_string(object);
@@ -244,10 +235,10 @@ ob_Obj obsrl_read(ob_Serial *srl) {
       for (size_t i = 0; i < length; i++) {
         head = read_int(head, &key_length);
         ob_Obj okey =
-            ob_create_symbol(srl->ctx, key_length, (char const *)head);
+            ob_create_string(srl->ctx, key_length, (char const *)head);
         head += key_length;
 
-        auto key = *ob_cast_symbol(okey);
+        auto key = *ob_cast_string(okey);
 
         head = read_int(head, &ref);
         auto value = read_ref(srl, ref);
@@ -256,21 +247,12 @@ ob_Obj obsrl_read(ob_Serial *srl) {
       }
     } break;
 
-    case OB_SYMBOL: {
-      uint64_t length = 0;
-      head = read_int(head, &length);
-      result = ob_create_symbol(srl->ctx, length, (char const *)head);
-      head += length;
-    } break;
-
     case OB_STRING: {
       uint64_t length = 0;
       head = read_int(head, &length);
 
-      auto str = obstr_create(srl->ctx, length, (char const *)head);
+      result = ob_create_string(srl->ctx, length, (char const *)head);
       head += length;
-
-      result = ob_create_string(srl->ctx, str);
     } break;
 
     case OB_NUMBER: {
@@ -309,11 +291,11 @@ ob_Obj obsrl_read(ob_Serial *srl) {
         uint64_t len = 0;
         head = read_int(head, &len);
 
-        auto str = ob_create_symbol(srl->ctx, len, (char const *)head);
+        auto str = ob_create_string(srl->ctx, len, (char const *)head);
         head += len;
 
         ql_array_push(&method->parameters, sizeof(ob_Str),
-                      (void *)ob_cast_symbol(str));
+                      (void *)ob_cast_string(str));
       }
 
       // method->bytecode

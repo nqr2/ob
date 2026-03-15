@@ -13,10 +13,10 @@ static void add_method(ob_Ctx ctx, ob_Obj target, char const *name,
 
   auto slots = ob_cast_slots(target);
 
-  auto key = ob_create_symbol(ctx, strlen(name), name);
+  auto key = ob_create_string(ctx, strlen(name), name);
   auto value = ob_create_lightcmethod(ctx, method);
 
-  obslot_add(&slots->slots, *ob_cast_symbol(key), value);
+  obslot_add(&slots->slots, *ob_cast_string(key), value);
 }
 
 void ob_add_methods(ob_Ctx ctx, ob_Obj target, ob_MethodEntry const *entries) {

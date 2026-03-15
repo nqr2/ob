@@ -9,7 +9,7 @@ static bool slots_at_put(ob_Ctx ctx) {
   auto value = ob_pop(ctx);
   auto key = ob_pop(ctx);
 
-  auto sym = *ob_cast_symbol(key);
+  auto sym = *ob_cast_string(key);
   auto slots = ob_cast_slots(receiver);
 
   obslot_add(&slots->slots, sym, value);
@@ -21,7 +21,7 @@ static bool slots_at(ob_Ctx ctx) {
   auto receiver = ob_get_receiver(ctx);
   auto key = ob_pop(ctx);
 
-  auto sym = *ob_cast_symbol(key);
+  auto sym = *ob_cast_string(key);
   auto slots = ob_cast_slots(receiver);
 
   ob_Obj obj = nullptr;

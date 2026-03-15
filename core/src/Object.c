@@ -4,10 +4,6 @@
 #include <ob/core/Object.h>
 #include <ob/core/String.h>
 
-// TODO: Intern every string, then switch this to pointer comparison
-#include <string.h>
-#define EQ(L, R) (((L)->length == (R)->length) && ((L)->offset == (R)->offset))
-
 void obslot_add(ob_Slots *slots, ob_Str key, ob_Obj value) {
   auto len = ql_array_length(&slots->data, sizeof(ob_Slot));
   size_t index = 0;
@@ -15,7 +11,7 @@ void obslot_add(ob_Slots *slots, ob_Str key, ob_Obj value) {
   for (; index < len; index++) {
     auto slot = (ob_Slot *)ql_array_at(&slots->data, sizeof(ob_Slot), index);
 
-    if (EQ(slot->key, key)) {
+    if (slot->key == key) {
       slot->value = value;
       return;
     }
@@ -33,7 +29,7 @@ bool obslot_remove(ob_Slots *slots, ob_Str key) {
   for (; index < len; index++) {
     auto slot = (ob_Slot *)ql_array_at(&slots->data, sizeof(ob_Slot), index);
 
-    if (EQ(slot->key, key)) {
+    if (slot->key == key) {
       found = true;
       break;
     }
@@ -52,7 +48,7 @@ bool obslot_get(ob_Slots *slots, ob_Str key, ob_Obj *out) {
   for (size_t index = 0; index < len; index++) {
     auto slot = (ob_Slot *)ql_array_at(&slots->data, sizeof(ob_Slot), index);
 
-    if (EQ(slot->key, key)) {
+    if (slot->key == key) {
       if (out != nullptr) {
         *out = slot->value;
       }
@@ -105,8 +101,7 @@ void ob_mark(ob_Obj obj) {
   }
 
   switch (obj->header.tag) {
-  case OB_STRING:
-  case OB_SYMBOL: {
+  case OB_STRING: {
     auto str = (ob_Str *)ob_get_payload(obj);
     obstr_mark(*str);
   } break;
@@ -248,10 +243,6 @@ static void *cast(ob_Obj obj, ob_ObjectTag tag) {
   auto got = ob_get_tag(obj);
   QL_ASSERT(tag == got, "expected tag %d, got tag %d", tag, got);
   return ob_get_payload(obj);
-}
-
-ob_Str *ob_cast_symbol(ob_Obj obj) {
-  return (ob_Str *)cast(obj, OB_SYMBOL);
 }
 
 ob_Str *ob_cast_string(ob_Obj obj) {
